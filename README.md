@@ -29,7 +29,7 @@ conference</a>
 Link to <a href="https://www.fruct.org/publications/volume-32/fruct32/files/Sta.pdf">Paper
 PDF</a> <a href = "https://youtu.be/8jUGZxco73o">Video presentation</a>
 
-<img src="kohmar_screen.png" width="400" />
+<img src="docs/images/kohmar_screen.png" width="400" />
 
 
 Installation and running:

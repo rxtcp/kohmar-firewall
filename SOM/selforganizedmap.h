@@ -7,14 +7,17 @@
 #ifndef SELFORGANIZEDMAP_H
 #define SELFORGANIZEDMAP_H
 
+#include <qmath.h>
+
+#include <QObject>
+
 #include "neuron.h"
 #include "samplesom.h"
-#include <QObject>
-#include <qmath.h>
 
 class SelfOrganizedMap : public QObject {
   Q_OBJECT
-private:
+
+ private:
   int N;
   int M;
   int dimension;
@@ -26,24 +29,30 @@ private:
   QList<Neuron *> network;
   QList<SampleSom *> *samples;
 
-public:
+ public:
   explicit SelfOrganizedMap(int n, int m, int _dimension, int _Iters = 100,
                             double _R = 2, double _G = 2, double _lambda = 2,
                             double _eta = 2, QObject *parent = 0);
+
   void learn(QList<SampleSom *> *_samples);
+
   int recognize(SampleSom *sample);
+
   Neuron *getNeuron(int i, int j);
+
   int getN() { return N; }
   int getM() { return M; }
 
-private:
+ private:
   int getWinnerFor(SampleSom *sample);
+
   double distance(SampleSom *x1, Neuron *x2);
+
   double distanceNeurons(int a, int b);
 
-signals:
+ signals:
 
-public slots:
+ public slots:
 };
 
-#endif // SELFORGANIZEDMAP_H
+#endif  // SELFORGANIZEDMAP_H

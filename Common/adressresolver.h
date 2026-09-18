@@ -13,9 +13,10 @@
 #include <QStringList>
 
 class AdressResolver {
-public:
+ public:
   AdressResolver();
+
   static QList<QHostAddress> resolve(QString hostName);
 };
 
-#endif // ADRESSRESOLVER_H
+#endif  // ADRESSRESOLVER_H

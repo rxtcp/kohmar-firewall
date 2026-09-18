@@ -8,7 +8,7 @@
  * Class for providing service exception
  */
 class ServiceException : public std::ios_base::failure {
-public:
+ public:
   ServiceException(const std::string &str) : std::ios_base::failure(str) {}
 };
 
@@ -16,18 +16,19 @@ public:
  * Abstract class for providing background services
  */
 class Service {
-public:
+ public:
   Service();
-  virtual void setup() = 0; // install a service in background
-  virtual void stop() = 0;  // stop service
+
+  virtual void setup() = 0;  // install a service in background
+  virtual void stop() = 0;   // stop service
   void setName(std::string name) {
     this->name = name;
-  } // set name of sth service
+  }  // set name of sth service
   std::string getName() { return name; }
 
   virtual ~Service();
 
-private:
+ private:
   std::string name;
 };
 

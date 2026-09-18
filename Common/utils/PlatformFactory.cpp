@@ -4,11 +4,6 @@ using namespace std;
 
 // platform specific UNIX includes
 #if defined(__GNUC__) && defined(__unix__)
-#include "DaemonService.h"
-#include "PosixThread.h"
-#include "UnixLowLevelSocket.h"
-#include "UnixSemaphore.h"
-
 #include <errno.h>
 #include <fcntl.h>
 #include <pthread.h>
@@ -20,6 +15,11 @@ using namespace std;
 #include <sys/stat.h>
 #include <syslog.h>
 #include <unistd.h>
+
+#include "DaemonService.h"
+#include "PosixThread.h"
+#include "UnixLowLevelSocket.h"
+#include "UnixSemaphore.h"
 
 // windows includes - not implemented
 #elif defined(WIN32)
@@ -35,7 +35,6 @@ PlatformFactory::PlatformFactory() {}
  * factory to create new lowlevel thread
  */
 LowLevelThread *PlatformFactory::createLowLevelThread() {
-
 #if defined(__GNUC__) && defined(__unix__)
   return new PosixThread();
 #elif defined(WIN32)
@@ -47,19 +46,18 @@ LowLevelThread *PlatformFactory::createLowLevelThread() {
  * factory to create low level socket
  */
 LowLevelSocket *PlatformFactory::createLowLevelSocket() {
-
 #if defined(__GNUC__) && defined(__unix__)
   return new UnixLowLevelSocket();
 #elif defined(WIN32)
   // return something else
 #endif
 }
+
 /*
  * factory to create semaphore
  */
 
 Semaphore *PlatformFactory::createSemaphore() {
-
 #if defined(__GNUC__) && defined(__unix__)
 
   return new UnixSemaphore();
@@ -70,8 +68,8 @@ Semaphore *PlatformFactory::createSemaphore() {
 }
 
 /* how can we calculate a file for pid storing? */
-std::string
-PlatformFactory::calculateFilenameToStorePID(std::string processName) {
+std::string PlatformFactory::calculateFilenameToStorePID(
+    std::string processName) {
   return "/var/run/" + processName + ".pid";
 }
 
@@ -79,7 +77,6 @@ PlatformFactory::calculateFilenameToStorePID(std::string processName) {
  *  create a platform specific background service - for *nix it is a daemon
  */
 Service *PlatformFactory::createService() {
-
 #if defined(__GNUC__) && defined(__unix__)
 
   return new DaemonService();
@@ -109,7 +106,7 @@ bool PlatformFactory::checkRunningAndSavePID(std::string processName) {
   if (lockf(fd, F_TLOCK, 0)) {
     if (errno == EACCES || errno == EAGAIN) {
       close(fd);
-      return 1; // already locked - by another process instance
+      return 1;  // already locked - by another process instance
     }
     throw ServiceException("can`t lock PID file");
   }
@@ -147,7 +144,7 @@ bool PlatformFactory::checkRunningAndSavePID(std::string processName, int pid) {
   if (lockf(fd, F_TLOCK, 0)) {
     if (errno == EACCES || errno == EAGAIN) {
       close(fd);
-      return 1; // already locked - by another process instance
+      return 1;  // already locked - by another process instance
     }
     throw ServiceException("can`t lock PID file");
   }
@@ -181,8 +178,7 @@ int PlatformFactory::findPID(std::string processName) {
   }
   char buf[255];
   memset(buf, 0, sizeof(buf));
-  if (read(fd, buf, sizeof(buf)) <= 0)
-    return -1;
+  if (read(fd, buf, sizeof(buf)) <= 0) return -1;
   close(fd);
 
   return atoi(buf);

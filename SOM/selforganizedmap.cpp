@@ -19,8 +19,7 @@ SelfOrganizedMap::SelfOrganizedMap(int n, int m, int _dimension, int _Iters,
   N = n;
   M = m;
 
-  for (int i = 0; i < N * M; i++)
-    network.append(new Neuron(dimension));
+  for (int i = 0; i < N * M; i++) network.append(new Neuron(dimension));
 }
 
 void SelfOrganizedMap::learn(QList<SampleSom *> *_samples) {
@@ -44,7 +43,7 @@ void SelfOrganizedMap::learn(QList<SampleSom *> *_samples) {
       // modif neurons
       double d0 = distance(
           samples->at(i),
-          network[winner]); // distance from the winning neuron to the image
+          network[winner]);  // distance from the winning neuron to the image
       double d;
 
       for (int n = 0; n < N * M; n++) {
@@ -52,8 +51,8 @@ void SelfOrganizedMap::learn(QList<SampleSom *> *_samples) {
                 winner, n) /*distance((SampleSom*)network[winner], network[n])*/
             <= R) {
           d = distance(samples->at(i),
-                       network[n]); // distance from the current neuron inside
-                                    // the circle to the image
+                       network[n]);  // distance from the current neuron inside
+          // the circle to the image
 
           G = exp((double)-1 * ((d0 - d) * (d0 - d) / (lambda * lambda)));
           // GArray[n] = G;
@@ -63,13 +62,12 @@ void SelfOrganizedMap::learn(QList<SampleSom *> *_samples) {
                   (samples->at(i)->getAnomaly() - network[n]->getAnomaly()));
 
           for (int j = 0; j < dimension; j++) {
-            network[n]->setKoeff(j, network[n]->getKoeff(j) +
-                                        eta * G *
-                                            (samples->at(i)->getKoeff(j) -
-                                             network[n]->getKoeff(j)));
+            network[n]->setKoeff(
+                j, network[n]->getKoeff(j) + eta * G *
+                                                 (samples->at(i)->getKoeff(j) -
+                                                  network[n]->getKoeff(j)));
 
-            if (network[n]->getAnomaly() > 100)
-              network[n]->setAnomaly(100);
+            if (network[n]->getAnomaly() > 100) network[n]->setAnomaly(100);
           }
         } else {
         }

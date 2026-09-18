@@ -5,6 +5,7 @@
  */
 
 #include "ads_settings_dialog.h"
+
 #include "ui_ads_settings_dialog.h"
 
 AdsSettingsDialog::AdsSettingsDialog(QWidget *parent,

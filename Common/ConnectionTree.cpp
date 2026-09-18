@@ -85,7 +85,6 @@ void ConnectionTree::insertLeaf(unsigned int _ip_src, unsigned int _ip_dest,
           par = sta[UV];
       }
       while (flag) {
-
         if (t == NULL)
           flag = false;
         else {
@@ -93,34 +92,33 @@ void ConnectionTree::insertLeaf(unsigned int _ip_src, unsigned int _ip_dest,
             t->bal++;
           else
             t->bal--;
-          if (t->bal == 0)
-            flag = false;
+          if (t->bal == 0) flag = false;
           if (t->bal == 2) {
             switch (tt->bal) {
-            case 1: {
-              move(true, t, par);
-              flag = false;
-              break;
-            }
-            case -1: {
-              move(false, tt, t);
-              move(true, t, par);
-              flag = false;
-            }
+              case 1: {
+                move(true, t, par);
+                flag = false;
+                break;
+              }
+              case -1: {
+                move(false, tt, t);
+                move(true, t, par);
+                flag = false;
+              }
             }
           }
           if (t->bal == -2) {
             switch (tt->bal) {
-            case -1: {
-              move(false, t, par);
-              flag = false;
-              break;
-            }
-            case 1: {
-              move(true, tt, t);
-              move(false, t, par);
-              flag = false;
-            }
+              case -1: {
+                move(false, t, par);
+                flag = false;
+                break;
+              }
+              case 1: {
+                move(true, tt, t);
+                move(false, t, par);
+                flag = false;
+              }
             }
           }
         }
@@ -152,8 +150,7 @@ ConnectionTreeNode *ConnectionTree::traverse(bool deleteall) {
   ConnectionTreeNode *sta[MAX];
   int stp[MAX];
   int UV = -1;
-  for (int i = 0; i < MAX; i++)
-    stp[i] = 0;
+  for (int i = 0; i < MAX; i++) stp[i] = 0;
   ConnectionTreeNode *tn = root;
   UV++;
   sta[UV] = tn;
@@ -167,12 +164,11 @@ ConnectionTreeNode *ConnectionTree::traverse(bool deleteall) {
     stp[UV] = 1;
   }
 
-  while (1) // LPK
+  while (1)  // LPK
   {
     if (tn != NULL) {
       if (stp[UV] == 3) {
-        if (sk == count / 2)
-          result = tn;
+        if (sk == count / 2) result = tn;
         sk++;
         if (deleteall) {
           delete tn;
@@ -324,11 +320,9 @@ void ConnectionTree::del(unsigned int _ip_src, unsigned int _ip_dest,
             root = NULL;
             delete tn1;
           } else {
-            p = st[UV]; //--];
-            if (tn1 == p->left)
-              p->left = NULL;
-            if (tn1 == p->right)
-              p->right = NULL;
+            p = st[UV];  //--];
+            if (tn1 == p->left) p->left = NULL;
+            if (tn1 == p->right) p->right = NULL;
             delete tn1;
           }
         } else {
@@ -337,11 +331,9 @@ void ConnectionTree::del(unsigned int _ip_src, unsigned int _ip_dest,
               if (tn1 == root)
                 root = tn1->left;
               else {
-                p = st[UV]; //--];
-                if (tn1 == p->left)
-                  p->left = tn1->left;
-                if (tn1 == p->right)
-                  p->right = tn1->left;
+                p = st[UV];  //--];
+                if (tn1 == p->left) p->left = tn1->left;
+                if (tn1 == p->right) p->right = tn1->left;
               }
               delete tn1;
             }
@@ -349,11 +341,9 @@ void ConnectionTree::del(unsigned int _ip_src, unsigned int _ip_dest,
               if (tn1 == root)
                 root = tn1->right;
               else {
-                p = st[UV]; //--];
-                if (tn1 == p->left)
-                  p->left = tn1->right;
-                if (tn1 == p->right)
-                  p->right = tn1->right;
+                p = st[UV];  //--];
+                if (tn1 == p->left) p->left = tn1->right;
+                if (tn1 == p->right) p->right = tn1->right;
               }
               delete tn1;
             }
@@ -381,56 +371,53 @@ void ConnectionTree::del(unsigned int _ip_src, unsigned int _ip_dest,
       else {
         int pred = t0->bal;
 
-        if (left)
-          t0->bal--;
-        if (right)
-          t0->bal++;
+        if (left) t0->bal--;
+        if (right) t0->bal++;
         balanceCount(root);
-        if (pred == 0 && (t0->bal == -1 || t0->bal == 1))
-          flag = false;
+        if (pred == 0 && (t0->bal == -1 || t0->bal == 1)) flag = false;
         if (t0->bal == 2) {
           switch (t0->left->bal) {
-          case 0:
-          case 1: {
-            move(1, t0, par);
-            if (par)
-              t0 = par->right;
-            else
-              t0 = 0; /*flag=false*/
-            break;
-          }
-          case -1: {
-            move(0, t0->left, t0);
-            move(1, t0, par);
-            if (par)
-              t0 = par->right;
-            else
-              t0 = 0; /*flag=false*/
-            ;
-            break;
-          }
+            case 0:
+            case 1: {
+              move(1, t0, par);
+              if (par)
+                t0 = par->right;
+              else
+                t0 = 0; /*flag=false*/
+              break;
+            }
+            case -1: {
+              move(0, t0->left, t0);
+              move(1, t0, par);
+              if (par)
+                t0 = par->right;
+              else
+                t0 = 0; /*flag=false*/
+              ;
+              break;
+            }
           }
         }
         if (t0->bal == -2) {
           switch (t0->right->bal) {
-          case 0:
-          case -1: {
-            move(0, t0, par); /*flag=false*/
-            if (par)
-              t0 = par->left;
-            else
-              t0 = 0;
-            break;
-          }
-          case 1: {
-            move(1, t0->right, t0);
-            move(0, t0, par); /*flag=false*/
-            if (par)
-              t0 = par->left;
-            else
-              t0 = 0;
-            break;
-          }
+            case 0:
+            case -1: {
+              move(0, t0, par); /*flag=false*/
+              if (par)
+                t0 = par->left;
+              else
+                t0 = 0;
+              break;
+            }
+            case 1: {
+              move(1, t0->right, t0);
+              move(0, t0, par); /*flag=false*/
+              if (par)
+                t0 = par->left;
+              else
+                t0 = 0;
+              break;
+            }
           }
         }
       }
@@ -499,16 +486,13 @@ void ConnectionTree::move(bool right, ConnectionTreeNode *tn,
       tn->bal = 1;
       y->bal = -1;
     }
-  }
-
-  else {
+  } else {
     y = tn->right;
     if (father != NULL) {
       if (tn == father->left)
         father->left = y;
       else
         father->right = y;
-
     } else
       root = y;
     tn->right = y->left;
@@ -545,15 +529,13 @@ void ConnectionTree::leftRootRight(void) {
   ConnectionTreeNode *sta[MAX];
   int stp[MAX];
   int UV = -1;
-  for (int i = 0; i < MAX; i++)
-    stp[i] = 0;
+  for (int i = 0; i < MAX; i++) stp[i] = 0;
   ConnectionTreeNode *tn = root;
   UV++;
   sta[UV] = tn;
   stp[UV] = 1;
 
   while (tn) {
-
     UV++;
     tn = tn->left;
     sta[UV] = tn;
@@ -599,7 +581,7 @@ void ConnectionTree::print(void) {
   int left_id, right_id;
   // printf("\n-------------------------");
   // printf("\n|  K  | Bal |  L  |  P  |");
-  while (flag) // KLP
+  while (flag)  // KLP
   {
     if (tn == NULL) {
       if (UV == -1)
@@ -643,8 +625,7 @@ ConnectionTreeNode *ConnectionTree::find(unsigned int _ip_src,
                                          unsigned int _ip_dest,
                                          unsigned int _port_src,
                                          unsigned int _port_dest) {
-  if (root == NULL)
-    return NULL;
+  if (root == NULL) return NULL;
 
   ConnectionTreeNode *res = NULL;
   ConnectionTreeNode *t = root;
@@ -712,8 +693,7 @@ int ConnectionTree::balanceCount(ConnectionTreeNode *_root) {
       }
     } else {
       t->bal = height(t->left) - height(t->right);
-      if (t->bal == 2)
-        need++;
+      if (t->bal == 2) need++;
       st[++uv] = t;
       t = t->left;
     }
@@ -730,7 +710,7 @@ bool ConnectionTree::isEqual(ConnectionTreeNode *n1, ConnectionTreeNode *n2) {
 }
 
 bool ConnectionTree::isGreather(ConnectionTreeNode *n1,
-                                ConnectionTreeNode *n2) // n1 > n2 ?
+                                ConnectionTreeNode *n2)  // n1 > n2 ?
 {
   if (n1->ip_src > n2->ip_src)
     return 1;

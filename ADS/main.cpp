@@ -8,14 +8,16 @@
 #define ADS_QT
 #endif
 
+#include <pthread.h>
+
+#include <QApplication>
+#include <QDebug>
+#include <QMessageBox>
+
 #include "../Common/netlinkmanager.h"
 #include "../Common/packsreceiver.h"
 #include "../PST/pst_predictor.h"
 #include "mainwindow.h"
-#include <QApplication>
-#include <QDebug>
-#include <QMessageBox>
-#include <pthread.h>
 
 bool checkModLoaded();
 
@@ -29,34 +31,34 @@ int main(int argc, char *argv[]) {
   QApplication a(argc, argv);
 
   /*
-      if(checkModLoaded())
-      {
-          qDebug() << "Module is already loaded!";
-      }
-      else
-      {
+    if(checkModLoaded())
+    {
+        qDebug() << "Module is already loaded!";
+    }
+    else
+    {
 
-          qDebug() << "Module is not loaded! Loading...";//printf ("module is
-  not loaded! Loading...\n"); QMessageBox msgBox; msgBox.setText("Module is not
-  loaded! Loading..."); msgBox.show();
+        qDebug() << "Module is not loaded! Loading...";//printf ("module is
+not loaded! Loading...\n"); QMessageBox msgBox; msgBox.setText("Module is not
+loaded! Loading..."); msgBox.show();
 
-          //system("insmod ../Common/netfilter.ko");
+        //system("insmod ../Common/netfilter.ko");
 
-          if(checkModLoaded())
-              qDebug() << "Module loaded!";//printf ("module loaded!\n");
-          else {
-              qDebug() << "Error! Module not loaded!";
-              msgBox.close();
-              msgBox.setText("Ошибка! Сетевой экран не запущен!");
-              msgBox.exec();
-              return 0;
-          }
-          msgBox.close();
-          //qDebug() << "Module is not loaded!";
+        if(checkModLoaded())
+            qDebug() << "Module loaded!";//printf ("module loaded!\n");
+        else {
+            qDebug() << "Error! Module not loaded!";
+            msgBox.close();
+            msgBox.setText("Ошибка! Сетевой экран не запущен!");
+            msgBox.exec();
+            return 0;
+        }
+        msgBox.close();
+        //qDebug() << "Module is not loaded!";
 
-          return 0;
-      }
-  */
+        return 0;
+    }
+*/
 
   qDebug() << "starting pack rcv";
   PacksReceiver *packs_receiver = new PacksReceiver();
@@ -83,7 +85,7 @@ bool checkModLoaded() {
   char buf[16];
 
   if (fread(buf, 1, sizeof(buf), fd) >
-      0) // if there is some result the module must be loaded
+      0)  // if there is some result the module must be loaded
     return true;
   else
     return false;

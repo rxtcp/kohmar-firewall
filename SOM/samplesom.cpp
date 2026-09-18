@@ -5,6 +5,7 @@
  */
 
 #include "samplesom.h"
+
 #include <fstream>
 
 SampleSom::SampleSom(int _dimension) : Neuron(_dimension) {}
@@ -20,8 +21,9 @@ QList<SampleSom *> SampleSom::loadFromFile(QString file_name) {
   std::fstream file("flow.samples", std::ios::in);
 
   if (!file.is_open()) {
-    msgBox.setText("The file containing the training sample for the traffic "
-                   "flow system is not open!");
+    msgBox.setText(
+        "The file containing the training sample for the traffic "
+        "flow system is not open!");
     msgBox.exec();
     return res;
   }
@@ -39,8 +41,7 @@ QList<SampleSom *> SampleSom::loadFromFile(QString file_name) {
     }
     res.append(sample);
     max--;
-    if (max == 0)
-      break;
+    if (max == 0) break;
   }
 
   file.close();

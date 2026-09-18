@@ -39,7 +39,7 @@ PacksReceiver::PacksReceiver() : StdThread() {
   bufferLength = 0;
   mmapBufSize = 0;
 
-  sem_output = new UnixSemaphore(); // sems for queue locking
+  sem_output = new UnixSemaphore();  // sems for queue locking
   sem_send = new UnixSemaphore();
   sem_pause_kernel_reader = new UnixSemaphore();
   sem_is_learn_tcp = new UnixSemaphore();
@@ -69,10 +69,9 @@ PacksReceiver::PacksReceiver() : StdThread() {
 }
 
 void PacksReceiver::run() {
-
   string daemonName = "readerd";
 
-  signal(SIGPIPE, SIG_IGN); // ignore SIGPIPE for send() error recovery
+  signal(SIGPIPE, SIG_IGN);  // ignore SIGPIPE for send() error recovery
 
 #ifndef ADS_QT
   cout << "Backend for send data from sniffer to remote" << endl << endl;
@@ -119,7 +118,6 @@ void PacksReceiver::run() {
   mmapBufSize = cfgReader.getGlobalProperty("sniffer_memory_map_size", 0);
 
   if (isDaemon) {
-
   } else {
     // no daemon
     ReaderDaemonWork();
@@ -128,58 +126,58 @@ void PacksReceiver::run() {
 
 const char *PacksReceiver::protocol_from_number(int n) {
   switch (n) {
-  case 0:
-    return "tcp_dummy";
-  case 1:
-    return "icmp";
-  case 2:
-    return "igmp";
-  case 4:
-    return "ipip";
-  case 6:
-    return "tcp";
-  case 8:
-    return "egp";
-  case 12:
-    return "pup";
-  case 17:
-    return "udp";
-  case 22:
-    return "idp";
-  case 29:
-    return "tp";
-  case 41:
-    return "ipv6_header";
-  case 43:
-    return "ipv6_routing";
-  case 44:
-    return "ipv6_fragment";
-  case 46:
-    return "vsvp";
-  case 47:
-    return "gre";
-  case 50:
-    return "esp";
-  case 51:
-    return "ah";
-  case 58:
-    return "icmpv6";
-  case 59:
-    return "ipv6_none";
-  case 60:
-    return "ipv6_dstopts";
-  case 92:
-    return "mtp";
-  case 98:
-    return "encap";
-  case 103:
-    return "pim";
-  case 108:
-    return "comp";
-  case 132:
-    return "sctp";
-  case 255:
-    return "raw";
+    case 0:
+      return "tcp_dummy";
+    case 1:
+      return "icmp";
+    case 2:
+      return "igmp";
+    case 4:
+      return "ipip";
+    case 6:
+      return "tcp";
+    case 8:
+      return "egp";
+    case 12:
+      return "pup";
+    case 17:
+      return "udp";
+    case 22:
+      return "idp";
+    case 29:
+      return "tp";
+    case 41:
+      return "ipv6_header";
+    case 43:
+      return "ipv6_routing";
+    case 44:
+      return "ipv6_fragment";
+    case 46:
+      return "vsvp";
+    case 47:
+      return "gre";
+    case 50:
+      return "esp";
+    case 51:
+      return "ah";
+    case 58:
+      return "icmpv6";
+    case 59:
+      return "ipv6_none";
+    case 60:
+      return "ipv6_dstopts";
+    case 92:
+      return "mtp";
+    case 98:
+      return "encap";
+    case 103:
+      return "pim";
+    case 108:
+      return "comp";
+    case 132:
+      return "sctp";
+    case 255:
+      return "raw";
   }
   return "unknown";
 }
@@ -197,7 +195,7 @@ void PacksReceiver::setIsLearnFlow(bool _isLearn) {
   sem_is_learn_flow->wait();
   isLearnFlow = _isLearn;
   /*if(isLearnFlow == true)
-      flow_learning_samples.clear();*/
+    flow_learning_samples.clear();*/
   sem_is_learn_flow->post();
 }
 
@@ -207,7 +205,7 @@ void PacksReceiver::OutputThread::processing_packet(const char *data, int len) {
   // qDebug() << "processing";
   stringstream os;
 
-  iphdr *iph; // = (iphdr*) (data);
+  iphdr *iph;  // = (iphdr*) (data);
   struct tcphdr *tcp_header;
   struct udphdr *udp_header;
 
@@ -228,7 +226,7 @@ void PacksReceiver::OutputThread::processing_packet(const char *data, int len) {
   ip_dest = iph->daddr;
   ip_src = iph->saddr;
 
-  if (!(isIpFromLAN(ip_dest) || isIpFromLAN(ip_src))) // packs not for me
+  if (!(isIpFromLAN(ip_dest) || isIpFromLAN(ip_src)))  // packs not for me
     return;
 
   if (iph->protocol == 6) {
@@ -336,33 +334,34 @@ void PacksReceiver::OutputThread::processing_packet(const char *data, int len) {
         os << "states: " << new_node.states;
 
         if (src_port == 80 || dest_port == 80 || src_port == 8080 ||
-            dest_port == 8080) // HTTP
+            dest_port == 8080)  // HTTP
         {
           anomaly = receiver->http_predictor->logEval(new_node.states);
           os << "     http_logEval = " << anomaly;
           predictor = 1;
         } else if (src_port == 21 || src_port == 20 || dest_port == 21 ||
-                   dest_port == 20) // FTP
+                   dest_port == 20)  // FTP
         {
           anomaly = receiver->ftp_predictor->logEval(new_node.states);
           os << "     ftp_logEval = " << anomaly;
           predictor = 2;
-        } else if (src_port == 443 || dest_port == 443) // HTTPS
+        } else if (src_port == 443 || dest_port == 443)  // HTTPS
         {
           anomaly = receiver->https_predictor->logEval(new_node.states);
           os << "     https_logEval = " << anomaly;
           predictor = 3;
-        } else if (src_port == 22 || dest_port == 22) // SSH
+        } else if (src_port == 22 || dest_port == 22)  // SSH
         {
           anomaly = receiver->ssh_predictor->logEval(new_node.states);
           os << "     ssh_logEval = " << anomaly;
           predictor = 4;
-        } else if (src_port == 23 || dest_port == 23) // TELNET
+        } else if (src_port == 23 || dest_port == 23)  // TELNET
         {
           anomaly = receiver->telnet_predictor->logEval(new_node.states);
           os << "     telnet_logEval = " << anomaly;
           predictor = 5;
-        } else { // COMMON
+        } else {
+          // COMMON
           anomaly = receiver->common_predictor->logEval(new_node.states);
           os << "     common_logEval = " << anomaly;
           predictor = 6;
@@ -372,7 +371,6 @@ void PacksReceiver::OutputThread::processing_packet(const char *data, int len) {
       }
 
       flow_new_tcp_conn_count++;
-
     } else if (iph->protocol == 17) {
     }
 
@@ -385,12 +383,10 @@ void PacksReceiver::OutputThread::processing_packet(const char *data, int len) {
     conn_to_add_state->sem->wait();
 
     if (iph->protocol == 6) {
-
       addStateToTcpConnection(conn_to_add_state, cur_state);
 
       receiver->sem_is_learn_tcp->wait();
       if (receiver->isLearnTcp) {
-
         if (receiver->packCanLearned(dest_port, src_port)) {
           addStateToLearningString(conn_to_add_state, cur_state);
           os << " states: " << conn_to_add_state->states;
@@ -403,7 +399,7 @@ void PacksReceiver::OutputThread::processing_packet(const char *data, int len) {
         os << " state = " << conn_to_add_state->states;
 
         if (src_port == 80 || dest_port == 80 || src_port == 8080 ||
-            dest_port == 8080) // HTTP
+            dest_port == 8080)  // HTTP
         {
           anomaly =
               receiver->http_predictor->logEval(conn_to_add_state->states);
@@ -411,29 +407,30 @@ void PacksReceiver::OutputThread::processing_packet(const char *data, int len) {
           os << "     http_logEval = " << anomaly;
           predictor = 1;
         } else if (src_port == 21 || src_port == 20 || dest_port == 21 ||
-                   dest_port == 20) // FTP
+                   dest_port == 20)  // FTP
         {
           anomaly = receiver->ftp_predictor->logEval(conn_to_add_state->states);
           os << "     ftp_logEval = " << anomaly;
           predictor = 2;
-        } else if (src_port == 443 || dest_port == 443) // HTTPS
+        } else if (src_port == 443 || dest_port == 443)  // HTTPS
         {
           anomaly =
               receiver->https_predictor->logEval(conn_to_add_state->states);
           os << "     https_logEval = " << anomaly;
           predictor = 3;
-        } else if (src_port == 22 || dest_port == 22) // SSH
+        } else if (src_port == 22 || dest_port == 22)  // SSH
         {
           anomaly = receiver->ssh_predictor->logEval(conn_to_add_state->states);
           os << "     ssh_logEval = " << anomaly;
           predictor = 4;
-        } else if (src_port == 23 || dest_port == 23) // TELNET
+        } else if (src_port == 23 || dest_port == 23)  // TELNET
         {
           anomaly =
               receiver->telnet_predictor->logEval(conn_to_add_state->states);
           os << "     telnet_logEval = " << anomaly;
           predictor = 5;
-        } else { // COMMON
+        } else {
+          // COMMON
           anomaly =
               receiver->common_predictor->logEval(conn_to_add_state->states);
           os << "     common_logEval = " << anomaly;
@@ -475,14 +472,14 @@ void PacksReceiver::OutputThread::processing_packet(const char *data, int len) {
 
     double size_average = (double)flow_size / receiver->flow_packs_max_count;
     int diff_ip_percent =
-        flow_diff_ip_src_count; //(double) (flow_diff_ip_src_count * 100) /
-                                // receiver->flow_packs_max_count;
+        flow_diff_ip_src_count;  //(double) (flow_diff_ip_src_count * 100) /
+    // receiver->flow_packs_max_count;
     double low_active_percent =
         (double)(flow_low_active_conn_count * 100) /
         (receiver->connections_tcp.count() + receiver->connections_udp.count());
     int tcp_percent =
-        flow_new_tcp_conn_count; //(double) (flow_new_tcp_conn_count * 100) /
-                                 // receiver->connections_tcp.count();//receiver->flow_packs_max_count;
+        flow_new_tcp_conn_count;  //(double) (flow_new_tcp_conn_count * 100) /
+    // receiver->connections_tcp.count();//receiver->flow_packs_max_count;
     double udp_percent =
         (double)(flow_udp_count * 100) / receiver->flow_packs_max_count;
     double icmp_count_percent =
@@ -606,7 +603,6 @@ void PacksReceiver::OutputThread::addTcpAnomalyToQueue(ConnectionTreeNode *node,
 }
 
 int PacksReceiver::ReaderDaemonWork() {
-
   flagStopOutput = 0;
   flagStopKernelReader = 0;
   OutputThread *othread;
@@ -635,13 +631,10 @@ int PacksReceiver::ReaderDaemonStopWork() {
 int PacksReceiver::ReaderDaemonRereadConfig() { return 0; }
 
 void PacksReceiver::OutputThread::run() {
-
   DataSaved *data = NULL;
 
   while (!this->is_stopped) {
-
-    if (receiver->flagStopOutput)
-      break;
+    if (receiver->flagStopOutput) break;
 
     if (receiver->outputQueue.empty()) {
       // waiting for data in queue
@@ -651,27 +644,26 @@ void PacksReceiver::OutputThread::run() {
       pthread_mutex_unlock(&(receiver->mutex_kernel_data_arrive));
     }
 
-    receiver->sem_output->wait();           // lock
-    if (!receiver->outputQueue.empty()) {   // if anything exist in queue
-      data = receiver->outputQueue.front(); // get it
+    receiver->sem_output->wait();  // lock
+    if (!receiver->outputQueue.empty()) {
+      // if anything exist in queue
+      data = receiver->outputQueue.front();  // get it
       receiver->outputQueue.pop();
-      receiver->sem_output->post(); // unlock
+      receiver->sem_output->post();  // unlock
     } else {
       receiver->outputQueue.pop();
-      receiver->sem_output->post(); // unlock
+      receiver->sem_output->post();  // unlock
       continue;
     }
 
-    if (!data)
-      continue;
+    if (!data) continue;
 
     // print packets here!!!!
 
     //*********************************************************
 
     char *buf2 = data->buffer;
-    if (!buf2)
-      continue; //?
+    if (!buf2) continue;  //?
 
     int N = *((int *)buf2);
     buf2 += sizeof(int);
@@ -716,11 +708,10 @@ void PacksReceiver::OutputThread::run() {
 }
 
 void PacksReceiver::KernelDataReaderThread::run() {
-
-  char *output_buf; // sender buffers
+  char *output_buf;  // sender buffers
   char *output_buf_start;
 
-  output_buf = new char[receiver->bufferLength]; // see private data later
+  output_buf = new char[receiver->bufferLength];  // see private data later
   if (output_buf == NULL) {
 #ifdef ADS_QT
     qDebug() << "Can't alloc memory for Remote's buffer";
@@ -784,7 +775,7 @@ void PacksReceiver::KernelDataReaderThread::run() {
   char *ps_header_start =
       (char *)mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
   if (ps_header_start == (void *)-1) {
-    return; // exit(1);
+    return;  // exit(1);
   }
 
   snifferLastReadIndex = s_packet_req.tp_frame_nr;
@@ -792,9 +783,7 @@ void PacksReceiver::KernelDataReaderThread::run() {
   char *pkt;
 
   while (true) {
-
-    if (receiver->flagStopKernelReader)
-      break;
+    if (receiver->flagStopKernelReader) break;
 
     if (receiver->needPauseKernelReader) {
       // notify we are here
@@ -819,8 +808,7 @@ void PacksReceiver::KernelDataReaderThread::run() {
 
     snifferLastReadIndex = *((int *)ps_header_start);
 
-    if (ourLastWroteIndex + 1 > s_packet_req.tp_frame_nr)
-      ourLastWroteIndex = 0;
+    if (ourLastWroteIndex + 1 > s_packet_req.tp_frame_nr) ourLastWroteIndex = 0;
     if (snifferLastReadIndex >= s_packet_req.tp_frame_nr)
       snifferLastReadIndex = 1;
 
@@ -832,8 +820,8 @@ void PacksReceiver::KernelDataReaderThread::run() {
     bool repeatFromOneFlag = 0;
 
     if (snifferLastReadIndex != ourLastWroteIndex) {
-
-      if (a > b) { // this interval has new packets
+      if (a > b) {
+        // this interval has new packets
         b = s_packet_req.tp_frame_nr;
         repeatFromOneFlag = 1;
       }
@@ -842,7 +830,7 @@ void PacksReceiver::KernelDataReaderThread::run() {
       //		s_packet_req.tp_frame_nr, repeatFromOneFlag);
 
       output_buf = output_buf_start;
-      output_buf += sizeof(int); // place for packets count
+      output_buf += sizeof(int);  // place for packets count
 
       for (int i = a; i <= b; i++) {
         if (i == b)
@@ -865,11 +853,10 @@ void PacksReceiver::KernelDataReaderThread::run() {
           pkt = (char *)(ps_header + sizeof(NewPacketHeader));
           // iph = (iphdr *)pkt;
           {
-
-            *((short *)output_buf) = hdr->size; // first put size
+            *((short *)output_buf) = hdr->size;  // first put size
             output_buf += sizeof(short);
             memcpy(output_buf, pkt,
-                   hdr->size); // minus mac header
+                   hdr->size);  // minus mac header
 
             output_buf += (hdr->size);
 
@@ -933,8 +920,7 @@ void PacksReceiver::KernelDataReaderThread::run() {
         break;
       else {
         if (today.tv_sec == timetoexpire.tv_sec)
-          if (today.tv_usec * 1000000 > timetoexpire.tv_nsec)
-            break;
+          if (today.tv_usec * 1000000 > timetoexpire.tv_nsec) break;
       }
     } while (true);
     //-- end of sleep
@@ -943,7 +929,7 @@ void PacksReceiver::KernelDataReaderThread::run() {
 
 QList<char *> PacksReceiver::getLerningStrings(int learned_proto,
                                                int *len_to_save) {
-  (void)learned_proto; // unused
+  (void)learned_proto;  // unused
   int len;
   int max_len = 0;
   QList<char *> res;
@@ -956,14 +942,12 @@ QList<char *> PacksReceiver::getLerningStrings(int learned_proto,
     sem_con_tcp->wait();
     qDebug() << "FALSE11";
     foreach (tn, connections_tcp) {
-
       if (packCanLearned(tn.port_dest, tn.port_src)) {
         if (tn.learning_string[0]) {
           res.append(tn.learning_string);
 
           len = strlen(tn.learning_string);
-          if (len > max_len)
-            max_len = len;
+          if (len > max_len) max_len = len;
 
           tn.learning_string = new char[1];
           tn.learning_string[0] = 0;
@@ -1044,7 +1028,7 @@ void PacksReceiver::loadSettings() {
   int flow_limit;
   int r = 0;
   char ip[] = "192.168.64.3";
-  my_ip = ip_str_to_hl(ip); // todo detect!
+  my_ip = ip_str_to_hl(ip);  // todo detect!
 
   os.clear();
 
@@ -1114,8 +1098,7 @@ void PacksReceiver::loadSettings() {
     os << "tcp_anomaly_depth=" << states_count << endl;
     os << "tcp_anomaly_limit=" << tcp_anomaly_limit << endl;
     os << "tcp_generate_rules=" << tcp_generate_rules << endl;
-    if (r)
-      os << "ads.settings loaded" << endl;
+    if (r) os << "ads.settings loaded" << endl;
   }
 
   // os << endl;
@@ -1150,14 +1133,11 @@ bool PacksReceiver::packCanLearned(unsigned int port_dest,
     if (port_dest == 21 || port_dest == 20 || port_src == 21 || port_src == 20)
       res = true;
   } else if (learnedProtocol == LEARN_HTTPS) {
-    if (port_dest == 443 || port_src == 443)
-      res = true;
+    if (port_dest == 443 || port_src == 443) res = true;
   } else if (learnedProtocol == LEARN_SSH) {
-    if (port_dest == 22 || port_src == 22)
-      res = true;
+    if (port_dest == 22 || port_src == 22) res = true;
   } else if (learnedProtocol == LEARN_TELNET) {
-    if (port_dest == 23 || port_src == 23)
-      res = true;
+    if (port_dest == 23 || port_src == 23) res = true;
   } else if (learnedProtocol == LEARN_ALL) {
     res = true;
   }
@@ -1229,7 +1209,6 @@ bool PacksReceiver::OutputThread::isIpFromLAN(unsigned int ip) {
 }
 
 unsigned int PacksReceiver::ip_str_to_hl(char *ip_str) {
-
   /*convert the string to byte array first, e.g.: from "131.132.162.25" to
    * [131][132][162][25]*/
   unsigned char ip_array[4];
@@ -1310,23 +1289,23 @@ void PacksReceiver::setFlowPacksMaxCount(int _max) {
 
 void PacksReceiver::retrainPredictor(char *seq, int predictor) {
   switch (predictor) {
-  case 1:
-    http_predictor->retrainForSeq(seq);
-    break;
-  case 2:
-    ftp_predictor->retrainForSeq(seq);
-    break;
-  case 3:
-    https_predictor->retrainForSeq(seq);
-    break;
-  case 4:
-    ssh_predictor->retrainForSeq(seq);
-    break;
-  case 5:
-    telnet_predictor->retrainForSeq(seq);
-    break;
-  case 6:
-    common_predictor->retrainForSeq(seq);
-    break;
+    case 1:
+      http_predictor->retrainForSeq(seq);
+      break;
+    case 2:
+      ftp_predictor->retrainForSeq(seq);
+      break;
+    case 3:
+      https_predictor->retrainForSeq(seq);
+      break;
+    case 4:
+      ssh_predictor->retrainForSeq(seq);
+      break;
+    case 5:
+      telnet_predictor->retrainForSeq(seq);
+      break;
+    case 6:
+      common_predictor->retrainForSeq(seq);
+      break;
   }
 }

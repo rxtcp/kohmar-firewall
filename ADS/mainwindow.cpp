@@ -5,6 +5,7 @@
  */
 
 #include "mainwindow.h"
+
 #include "ui_mainwindow.h"
 //
 
@@ -66,7 +67,7 @@ MainWindow::MainWindow(QWidget *parent, NetLinkManager *mng,
   sem_dynamic_rules = new UnixSemaphore();
   sem_settings_tcp = new UnixSemaphore();
 
-  nlManager = NULL; // mng; /todo check!
+  nlManager = NULL;  // mng; /todo check!
   packs_receiver = _packs_receiver;
   run_pause = true;
 
@@ -144,7 +145,9 @@ MainWindow::~MainWindow() {
   delete ui;
 
   struct Rule *r = new Rule;
-  foreach (r, *ads_rules) { nlManager->deleteRuleFromKernel(r); }
+  foreach (r, *ads_rules) {
+    nlManager->deleteRuleFromKernel(r);
+  }
 
   nlManager->closeNetlinkSocket();
   tcp_anomaly_reader->terminate();
@@ -164,7 +167,9 @@ void MainWindow::on_MainWindow_destroyed() {}
 
 void MainWindow::loadRulesToKernel() {
   Rule *r = new Rule;
-  foreach (r, *user_rules) { nlManager->sendRuleToKernel(r); }
+  foreach (r, *user_rules) {
+    nlManager->sendRuleToKernel(r);
+  }
 }
 
 void MainWindow::learnTcp() {
@@ -309,8 +314,7 @@ void MainWindow::on_tableWidgetSOM_cellClicked(int row, int column) {
   int max = n->getDimension();
   for (int i = 0; i < max; i++) {
     double k = n->getKoeff(i);
-    if (k < 10e-3)
-      k = 0;
+    if (k < 10e-3) k = 0;
     txt += QString::number(k, 'g', 3) + "\n";
   }
 

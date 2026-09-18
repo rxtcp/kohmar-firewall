@@ -36,9 +36,9 @@ struct MyPacket {
   unsigned int in_out;
   unsigned int src_ip;
   unsigned int dest_ip;
-  int src_port; // 0~2^32
+  int src_port;  // 0~2^32
   int dest_port;
-  unsigned int proto; // 0: all, 1: tcp, 2: udp 3: icmp
+  unsigned int proto;  // 0: all, 1: tcp, 2: udp 3: icmp
 
   bool urg;
   bool ack;
@@ -51,12 +51,12 @@ struct MyPacket {
 struct DynamicRuleFromKernel {
   int id_rule;
   unsigned int in_out;
-  unsigned int src_ip; //
-  int src_port;        // 0~2^32
+  unsigned int src_ip;  //
+  int src_port;         // 0~2^32
   unsigned int dest_ip;
   int dest_port;
-  unsigned int proto;  // 0: all, 1: tcp, 2: udp
-  unsigned int action; // 0: for block, 1: for unblock
+  unsigned int proto;   // 0: all, 1: tcp, 2: udp
+  unsigned int action;  // 0: for block, 1: for unblock
 };
 
 #ifdef KERNEL_NETFILTER
@@ -83,18 +83,18 @@ struct Command {
 struct RuleListItem {
   int id_rule;
   unsigned int in_out;
-  unsigned int src_ip;      //
-  unsigned int src_netmask; //
-  int src_port;             // 0~2^32
+  unsigned int src_ip;       //
+  unsigned int src_netmask;  //
+  int src_port;              // 0~2^32
   unsigned int dest_ip;
   unsigned int dest_netmask;
   int dest_port;
-  unsigned int proto;  // 0: all, 1: tcp, 2: udp
-  unsigned int action; // 0: for block, 1: for unblock
+  unsigned int proto;   // 0: all, 1: tcp, 2: udp
+  unsigned int action;  // 0: for block, 1: for unblock
   struct list_head list;
 };
 
-#endif // KERNEL_NETFILTER
+#endif  // KERNEL_NETFILTER
 
 #ifndef KERNEL_NETFILTER
 
@@ -128,7 +128,7 @@ struct CommandToAds {
   int id_rule;
 };
 
-//#ifdef ADS_QT
+// #ifdef ADS_QT
 
 #include <QString>
 
@@ -144,10 +144,12 @@ struct Rule {
   QString host_name_dest;
   QString host_name_src;
 };
-//#endif
+
+// #endif
+
+#include <vector>
 
 #include "utils/UnixSemaphore.h"
-#include <vector>
 
 struct AnomalyNodeTCP {
   unsigned int src_ip;
@@ -172,7 +174,7 @@ struct AnomalyNodeFlow {
   // int flow_diff_ports_count;
   double anomaly;
   //
-  int winner; // for som visualization
+  int winner;  // for som visualization
 };
 
 struct ConnectionTreeNode {
@@ -199,8 +201,8 @@ struct ConnectionTreeNode {
   int id;
 };
 
-//#endif // ADS_QT
+// #endif // ADS_QT
 
-#endif // KERNEL_NETFILTER
+#endif  // KERNEL_NETFILTER
 
-#endif // STRUCTS_H
+#endif  // STRUCTS_H

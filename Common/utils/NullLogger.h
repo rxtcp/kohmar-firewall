@@ -4,9 +4,11 @@
 #include "Logger.h"
 
 class NullLogger : public Logger {
-public:
+ public:
   NullLogger();
+
   void log(std::string logMessage) { (void)logMessage; }
+
   virtual ~NullLogger();
 };
 

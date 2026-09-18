@@ -4,22 +4,21 @@
  * @authors Staroletov, Chudov
  */
 
-#include <cstdlib>
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <sstream>
-
-#include <sys/stat.h>
-#include <sys/sysmacros.h>
-
 #include <errno.h>
 #include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/sysmacros.h>
 #include <unistd.h>
+
+#include <cstdlib>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
 
 #include "../Common/utils/ConfigReader.h"
 #include "../Common/utils/Logger.h"
@@ -54,8 +53,9 @@ bool connect() {
   logger->log("Connecting to device...");
   fd = open("/dev/ads_drv_setup", O_WRONLY);
   if (fd == -1) {
-    logger->log("Can't access character data device /dev/ads_drv_setup! Module "
-                "works wrong");
+    logger->log(
+        "Can't access character data device /dev/ads_drv_setup! Module "
+        "works wrong");
     return false;
   }
   return true;
@@ -81,7 +81,6 @@ void start() {
   connect();
 
   if (sniffer == "on") {
-
     logger->log("Configuring module priority...");
     sprintf(buf, "pr %s\n", prior.c_str());
     r = write(fd, buf, strlen(buf));
@@ -170,10 +169,9 @@ void start() {
   }
 
   (void)r;
- }
+}
 
 void stop() {
-
   logger->log("STOPPING");
 
   logger->log("Stop ads userspace apps...");
@@ -195,7 +193,6 @@ void stop() {
 }
 
 int main(int argc, char **argv) {
-
   if (argc != 2 || (strcmp(argv[1], "stop") && strcmp(argv[1], "start") &&
                     strcmp(argv[1], "restart"))) {
     cout << "ads .ko configurator. Usage ads_drvctl start|stop|restart" << endl;

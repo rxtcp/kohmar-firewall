@@ -12,17 +12,17 @@
 #include <QThread>
 #include <QTime>
 
-#include "anomaly_frame.h"
-
 #include "../Common/netlinkmanager.h"
 #include "../Common/packsreceiver.h"
 #include "../Common/structs.h"
 #include "../Common/utils/UnixSemaphore.h"
 #include "../SOM/samplesom.h"
+#include "anomaly_frame.h"
 
 class AnomalyReaderFlow : public QThread {
   Q_OBJECT
-public:
+
+ public:
   explicit AnomalyReaderFlow(
       QObject *parent = 0, QTableWidget *_som_table = 0,
       QTableWidget *_anomalies_table = 0, QTableWidget *_rules_table = 0,
@@ -31,14 +31,16 @@ public:
       int *_limit_flow = 0, UnixSemaphore *_sem_dynamic_rules = 0,
       bool *_gen_rules = 0, UnixSemaphore *_sem_settings = 0,
       int *_flow_drop_ports = 0, int *_id_rules_dyn = 0);
+
   void run();
+
   SampleSom *getSample(int ind);
 
-signals:
+ signals:
 
-public slots:
+ public slots:
 
-private:
+ private:
   QListWidget *alist;
   QTableWidget *rules_table;
   QTableWidget *anomalies_table;
@@ -61,8 +63,10 @@ private:
   QList<SampleSom *> samples;
 
   QString getStrIp(unsigned int ip);
+
   bool isIpFromLAN(unsigned int ip);
+
   bool isRuleExist(Rule *rule_to_check);
 };
 
-#endif // ANOMALY_READER_FLOW_H
+#endif  // ANOMALY_READER_FLOW_H

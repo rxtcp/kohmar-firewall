@@ -13,16 +13,16 @@
 #include <QThread>
 #include <QTime>
 
-#include "anomaly_frame.h"
-
 #include "../Common/netlinkmanager.h"
 #include "../Common/packsreceiver.h"
 #include "../Common/structs.h"
 #include "../Common/utils/UnixSemaphore.h"
+#include "anomaly_frame.h"
 
 class AnomalyReaderTcp : public QThread {
   Q_OBJECT
-public:
+
+ public:
   explicit AnomalyReaderTcp(
       QObject *parent = 0, QTableWidget *_anomalies_table = 0,
       QTableWidget *_rules_table = 0, PacksReceiver *_receiver = 0,
@@ -34,7 +34,7 @@ public:
 
   void run();
 
-private:
+ private:
   QListWidget *alist;
   QTableWidget *anomalies_table;
   QTableWidget *rules_table;
@@ -55,12 +55,14 @@ private:
   UnixSemaphore *sem_settings;
 
   QString getStrIp(unsigned int ip);
+
   bool isIpFromLAN(unsigned int ip);
+
   bool isRuleExist(Rule *rule_to_check);
 
-signals:
+ signals:
 
-public slots:
+ public slots:
 };
 
-#endif // ANOMALYREADER_H
+#endif  // ANOMALYREADER_H

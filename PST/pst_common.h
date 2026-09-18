@@ -9,4 +9,4 @@
 
 typedef char BYTE;
 
-#endif // PST_COMMON_H
+#endif  // PST_COMMON_H

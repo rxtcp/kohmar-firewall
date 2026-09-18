@@ -7,8 +7,9 @@
 #ifndef ADS_SETTINGS_DIALOG_H
 #define ADS_SETTINGS_DIALOG_H
 
-#include "../Common/structs.h"
 #include <QDialog>
+
+#include "../Common/structs.h"
 
 namespace Ui {
 class AdsSettingsDialog;
@@ -17,19 +18,21 @@ class AdsSettingsDialog;
 class AdsSettingsDialog : public QDialog {
   Q_OBJECT
 
-public:
+ public:
   explicit AdsSettingsDialog(QWidget *parent = 0,
                              UnixSemaphore *_sem_settings_tcp = 0,
                              int *_tcp_depth = 0, int *_tcp_limit = 0,
                              bool *_tcp_gen_rules = 0, int *_tcp_ports = 0,
                              int *_flow_limit = 0, bool *_flow_gen_rules = 0,
                              int *_flow_max_packs = 0);
+
   ~AdsSettingsDialog();
 
-private slots:
+ private slots:
+
   void on_buttonBox_accepted();
 
-private:
+ private:
   Ui::AdsSettingsDialog *ui;
   int *tcp_depth;
   int *tcp_limit;
@@ -43,4 +46,4 @@ private:
   UnixSemaphore *sem_settings_tcp;
 };
 
-#endif // ADS_SETTINGS_DIALOG_H
+#endif  // ADS_SETTINGS_DIALOG_H

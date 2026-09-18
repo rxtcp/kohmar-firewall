@@ -5,6 +5,7 @@
  */
 
 #include "pst_builder.h"
+
 #include <QDebug>
 #include <string>
 using namespace std;
@@ -66,8 +67,7 @@ PstNode *PstBuilder::build(Samples *_samples, double pMin, double alpha,
       addToTree(str, strNSymProb, nextSymProbMin);
     }
 
-    if ((int)str.size() < strMaxLength)
-      updateQueryStrs(str, strNSymProb, pMin);
+    if ((int)str.size() < strMaxLength) updateQueryStrs(str, strNSymProb, pMin);
   }
 
   return pstRoot;
@@ -81,8 +81,7 @@ void PstBuilder::init(double pMin, double nextSymProbMin) {
   int numOfSamples = samples->numOfSamples();
   int allLength = samples->sizeAll();
 
-  for (int i = 0; i < alphabetSize; i++)
-    strCharHits[i] = 0;
+  for (int i = 0; i < alphabetSize; i++) strCharHits[i] = 0;
 
   for (int val = 0, sampleSize = 0, sampleID = 0; sampleID < numOfSamples;
        sampleID++) {
@@ -113,8 +112,7 @@ void PstBuilder::init(double pMin, double nextSymProbMin) {
 
   double *rootsProb = new double[alphabetSize];
 
-  for (int i = 0; i < alphabetSize; i++)
-    rootsProb[i] = prob[i];
+  for (int i = 0; i < alphabetSize; i++) rootsProb[i] = prob[i];
 
   pstRoot = createPstRoot(smooth(rootsProb, nextSymProbMin));
 }
@@ -134,7 +132,7 @@ double *PstBuilder::smooth(double *prob, double nsMinP) {
 PstNode *PstBuilder::createPstRoot(double *nextSymProb) {
   std::string str;
 
-  PstNode *root = new PstNode(str, nextSymProb, alphabetSize); //!!
+  PstNode *root = new PstNode(str, nextSymProb, alphabetSize);  //!!
   return root;
 }
 
@@ -153,16 +151,14 @@ void PstBuilder::initHitCounts(string &str) {
   // BYTE * strBytes;
   for (int sampleID = 0, numOfSamples = samples->numOfSamples();
        sampleID < numOfSamples; sampleID++) {
-    for (int i = 0; i < alphabetSize; i++)
-      isUpdatePerSample[i] = true;
+    for (int i = 0; i < alphabetSize; i++) isUpdatePerSample[i] = true;
 
     sampleSize = samples->sizeSample(sampleID);
     loopTest = sampleSize - strSize;
 
     for (int i = 0, j = 0; i < loopTest; i++) {
       for (j = 0; j < strSize; j++) {
-        if (samples->getElem(sampleID, i + j) != str[j])
-          break;
+        if (samples->getElem(sampleID, i + j) != str[j]) break;
       }
 
       if (j == strSize) {

@@ -5,6 +5,7 @@
  */
 
 #include "learning_flow_dialog.h"
+
 #include "ui_learning_flow_dialog.h"
 
 LearningFlowDialog::LearningFlowDialog(QWidget *parent,
@@ -41,7 +42,9 @@ void LearningFlowDialog::on_pushButton_2_clicked() {
       packs_receiver->getFlowLearningSamplesFromQueue();
 
   SampleSom *s;
-  foreach (s, cur_samples) { samples.append(s); }
+  foreach (s, cur_samples) {
+    samples.append(s);
+  }
 
   packs_receiver->clearFlowLearningSamples();
 
@@ -80,8 +83,7 @@ void LearningFlowDialog::on_pushButton_3_clicked() {
 
   dim = samples[0]->getDimension();
 
-  if (retrain)
-    fprintf(file, "%d\n\n", dim);
+  if (retrain) fprintf(file, "%d\n\n", dim);
 
   SampleSom *s;
   foreach (s, samples) {
@@ -113,17 +115,17 @@ void LearningFlowDialog::on_pushButton_4_clicked() {
     int ret = msgBox.exec();
 
     switch (ret) {
-    case QMessageBox::Cancel:
-      return;
-      break;
-    case QMessageBox::Ok: {
-      isLearn = false;
-      packs_receiver->setIsLearnFlow(false);
-      packs_receiver->clearFlowLearningSamples();
-      this->close();
-    } break;
-    default:
-      return;
+      case QMessageBox::Cancel:
+        return;
+        break;
+      case QMessageBox::Ok: {
+        isLearn = false;
+        packs_receiver->setIsLearnFlow(false);
+        packs_receiver->clearFlowLearningSamples();
+        this->close();
+      } break;
+      default:
+        return;
     }
   } else
     this->close();

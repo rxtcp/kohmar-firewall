@@ -7,27 +7,25 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include <stdio.h>
+#include <string.h>
+
 #include <QGridLayout>
 #include <QMainWindow>
 #include <QMessageBox>
 
-#include <stdio.h>
-#include <string.h>
-
-#include "ads_settings_dialog.h"
-#include "anomaly_frame.h"
-#include "learning_flow_dialog.h"
-#include "learning_tcp_dialog.h"
-#include "rulesform.h"
-
-#include "anomaly_reader_flow.h"
-#include "anomaly_reader_tcp.h"
-
 #include "../Common/netlinkmanager.h"
 #include "../Common/packsreceiver.h"
 #include "../Common/structs.h"
-//#include "../Common/ConnectionTree.h"
-//#include "../Common/adressresolver.h"
+#include "ads_settings_dialog.h"
+#include "anomaly_frame.h"
+#include "anomaly_reader_flow.h"
+#include "anomaly_reader_tcp.h"
+#include "learning_flow_dialog.h"
+#include "learning_tcp_dialog.h"
+#include "rulesform.h"
+// #include "../Common/ConnectionTree.h"
+// #include "../Common/adressresolver.h"
 
 namespace Ui {
 class MainWindow;
@@ -36,31 +34,44 @@ class MainWindow;
 class MainWindow : public QMainWindow {
   Q_OBJECT
 
-public:
+ public:
   explicit MainWindow(QWidget *parent = 0, NetLinkManager *mng = 0,
                       PacksReceiver *_packs_receiver = 0);
+
   ~MainWindow();
 
-private slots:
+ private slots:
+
   void showRulesForm();
+
   void learnTcp();
+
   void learnFlow();
+
   void showSettings();
+
   void run_pause_firewall();
+
   void showAbout();
+
   void on_MainWindow_destroyed();
+
   void on_pushButtonFalseAlarm_clicked();
+
   void on_pushButtonFalseAlarmFlow_clicked();
+
   void on_tableWidgetSOM_cellClicked(int row, int column);
 
-private:
+ private:
   Ui::MainWindow *ui;
   // QSqlDatabase dBase;
   QList<Rule *> *user_rules;
   QList<Rule *> *ads_rules;
   NetLinkManager *nlManager;
   PacksReceiver *packs_receiver;
+
   void loadRulesToKernel();
+
   bool isLearnTcp;
   bool run_pause;
 
@@ -88,4 +99,4 @@ private:
   int id_rule_dynamic;
 };
 
-#endif // MAINWINDOW_H
+#endif  // MAINWINDOW_H

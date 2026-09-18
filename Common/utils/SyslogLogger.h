@@ -7,10 +7,13 @@
  * Realization of logging using syslog
  */
 class SyslogLogger : public Logger {
-public:
+ public:
   SyslogLogger();
+
   void log(std::string logMessage);
+
   void setName(std::string name);
+
   virtual ~SyslogLogger();
 };
 

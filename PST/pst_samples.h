@@ -7,24 +7,33 @@
 #ifndef SAMPLES_H
 #define SAMPLES_H
 
-#include "pst_common.h"
 #include <stdio.h>
 #include <string.h>
+
 #include <vector>
 
+#include "pst_common.h"
+
 class Samples {
-private:
+ private:
   std::vector<char *> samples;
 
-public:
+ public:
   Samples();
+
   void add(char *smp);
+
   BYTE getElem(int sampleIndex, int index);
+
   int sizeSample(int sampleIndex);
+
   int sizeAll();
+
   int numOfSamples();
+
   int loadFromFile(const char *filename);
+
   char *getSample(int index);
 };
 
-#endif // SAMPLES_H
+#endif  // SAMPLES_H

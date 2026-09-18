@@ -9,19 +9,23 @@
 
 #ifndef ADS_DAEMON
 #include <QMessageBox>
-#endif // ADS_DAEMON
+#endif  // ADS_DAEMON
 
 #include "QtSql"
 #include "adressresolver.h"
 #include "structs.h"
 
 class DbManager {
-public:
+ public:
   DbManager();
+
   static void addToDb(Rule *r);
+
   static void updateInDb(Rule *r);
+
   static void removeFromDb(int id);
+
   static QList<Rule *> *getRulesFromDb();
 };
 
-#endif // DBMANAGER_H
+#endif  // DBMANAGER_H

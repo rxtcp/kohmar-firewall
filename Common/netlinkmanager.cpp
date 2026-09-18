@@ -9,17 +9,17 @@
 NetLinkManager::NetLinkManager(int group) {
 #ifndef ADS_DAEMON
   QMessageBox msgBox;
-#endif // ADS_DAEMON
+#endif  // ADS_DAEMON
 
   int res;
 
   /* We create a Netlink socket, specify our own family (NETLINK_USER) */
   if ((netlink_sock = socket(PF_NETLINK, SOCK_RAW, group)) < 0) {
-// perror("Netlink Socket");
+    // perror("Netlink Socket");
 #ifndef ADS_DAEMON
     msgBox.setText("NetLink socket creation error");
     msgBox.exec();
-#endif // ADS_DAEMON
+#endif  // ADS_DAEMON
     qDebug() << "NetLink socket creation error";
     return;
   }
@@ -30,8 +30,8 @@ NetLinkManager::NetLinkManager(int group) {
   memset(&nl_src_addr, 0, sizeof(nl_src_addr));
   nl_src_addr.nl_family = AF_NETLINK;
   nl_src_addr.nl_pid =
-      getpid(); // pthread_self() << 16 | getpid();//pthread_self();//(pid_t)
-                // syscall (SYS_gettid);
+      getpid();  // pthread_self() << 16 | getpid();//pthread_self();//(pid_t)
+  // syscall (SYS_gettid);
   nl_src_addr.nl_groups = 0;
 
   res =
@@ -40,7 +40,7 @@ NetLinkManager::NetLinkManager(int group) {
 #ifndef ADS_DAEMON
     msgBox.setText("NetLink socket bind error");
     msgBox.exec();
-#endif // ADS_DAEMON
+#endif  // ADS_DAEMON
 
     qDebug() << "NetLink socket bind error";
     return;
@@ -59,7 +59,7 @@ NetLinkManager::NetLinkManager(int group) {
 #ifndef ADS_DAEMON
     msgBox.setText("Memory allocation error for NetLink socket");
     msgBox.exec();
-#endif // ADS_DAEMON
+#endif  // ADS_DAEMON
     qDebug() << "Memory allocation error for NetLink socket";
     return;
   }
@@ -86,7 +86,7 @@ NetLinkManager::NetLinkManager(int group) {
 #ifndef ADS_DAEMON
     msgBox.setText("Memory allocation error for NetLink socket");
     msgBox.exec();
-#endif // ADS_DAEMON
+#endif  // ADS_DAEMON
     qDebug() << "Memory allocation error for NetLink socket";
     return;
   }
@@ -133,7 +133,7 @@ bool NetLinkManager::sendCommand(struct Command com) {
 void NetLinkManager::sendRuleToKernel(Rule *r) {
 #ifndef ADS_DAEMON
   QMessageBox msgBox;
-#endif // ADS_DAEMON
+#endif  // ADS_DAEMON
 
   qDebug() << "[Netlink - qstring] ip_src=" + r->ip_src +
                   " ip_dest=" + r->ip_dest;
@@ -163,7 +163,7 @@ void NetLinkManager::sendRuleToKernel(Rule *r) {
     rule_to_kernel.ip_dest = NULL;
   else {
     // qDebug() << "[NetlinkManager] ip_dest...";
-    rule_to_kernel.ip_dest = __ip_dest; // r->ip_dest.toUtf8().data();
+    rule_to_kernel.ip_dest = __ip_dest;  // r->ip_dest.toUtf8().data();
   }
 
   rule_to_kernel.port_dest = r->port_dest;
@@ -182,7 +182,7 @@ void NetLinkManager::sendRuleToKernel(Rule *r) {
 #ifndef ADS_DAEMON
     // msgBox.setText("Error! Rule was not added!");
     // msgBox.exec();
-#endif // ADS_DAEMON
+#endif  // ADS_DAEMON
 
     qDebug() << "Error! Rule was not added!";
   }
@@ -191,7 +191,7 @@ void NetLinkManager::sendRuleToKernel(Rule *r) {
 void NetLinkManager::deleteRuleFromKernel(Rule *r) {
 #ifndef ADS_DAEMON
   QMessageBox msgBox;
-#endif // ADS_DAEMON
+#endif  // ADS_DAEMON
 
   struct RuleToKernel rule_to_kernel;
   struct Command command;
@@ -223,7 +223,7 @@ void NetLinkManager::deleteRuleFromKernel(Rule *r) {
 #ifndef ADS_DAEMON
     msgBox.setText("Error! Rule was not deleted!");
     msgBox.exec();
-#endif // ADS_DAEMON
+#endif  // ADS_DAEMON
 
     qDebug() << "Error! Rule was not deleted!";
   }
@@ -232,7 +232,7 @@ void NetLinkManager::deleteRuleFromKernel(Rule *r) {
 void NetLinkManager::updateRuleInKernel(Rule *r) {
 #ifndef ADS_DAEMON
   QMessageBox msgBox;
-#endif // ADS_DAEMON
+#endif  // ADS_DAEMON
 
   struct RuleToKernel rule_to_kernel;
   struct Command command;
@@ -264,7 +264,7 @@ void NetLinkManager::updateRuleInKernel(Rule *r) {
 #ifndef ADS_DAEMON
     msgBox.setText("Error! Rule was not changed!");
     msgBox.exec();
-#endif // ADS_DAEMON
+#endif  // ADS_DAEMON
 
     qDebug() << "Error! Rule was not changed!";
   }

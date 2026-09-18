@@ -7,10 +7,11 @@
  *Realization of the abstract class Logger which uses std::cout
  */
 class PrintfLogger : public Logger {
-public:
+ public:
   PrintfLogger();
-  void log(std::string logMessage); // log() realization with cout
-  void log_n(char c);               // log() realization with cout
+
+  void log(std::string logMessage);  // log() realization with cout
+  void log_n(char c);                // log() realization with cout
 
   virtual ~PrintfLogger();
 };

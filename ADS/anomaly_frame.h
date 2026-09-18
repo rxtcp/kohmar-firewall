@@ -7,7 +7,6 @@
 #ifndef MYFRAME_H
 #define MYFRAME_H
 
-#include "../Common/utils/UnixSemaphore.h"
 #include <QDateTime>
 #include <QDebug>
 #include <QFrame>
@@ -16,18 +15,27 @@
 #include <QScrollArea>
 #include <QVBoxLayout>
 
+#include "../Common/utils/UnixSemaphore.h"
+
 class AnomalyTcpFrame : public QFrame {
   Q_OBJECT
-public:
+
+ public:
   explicit AnomalyTcpFrame(QObject *parent = 0, int _anomaly_limit = 40);
+
   void paintGraphic();
+
   void addPoint(double y);
+
   void setLimit(int _limit);
+
   void clear();
 
-private:
+ private:
   void paintEvent(QPaintEvent *);
+
   void drawScale();
+
   int whatToDraw;
   int curX;
   int anomaly_limit;
@@ -35,12 +43,12 @@ private:
   QDateTime prevTime;
   UnixSemaphore *sem;
 
-signals:
+ signals:
 
-public slots:
+ public slots:
 
-protected slots:
+ protected slots:
   // void draw();
 };
 
-#endif // MYFRAME_H
+#endif  // MYFRAME_H

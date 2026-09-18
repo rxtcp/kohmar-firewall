@@ -20,6 +20,7 @@ public:
   }
 
   Task(int taskNum) : taskNum(taskNum) {}
+
   virtual ~Task() {}
 };
 
@@ -30,12 +31,15 @@ keeping track of idle threads and ynchronizations between all threads.
 class TaskPool {
 public:
   TaskPool();
+
   TaskPool(int maxTasksCount);
+
   virtual ~TaskPool();
 
   void stopAllTasks(int maxPollSecs);
 
   bool addTask(Task *task);
+
   bool fetchWork(Task **task);
 
   void initialize();

@@ -10,7 +10,9 @@
 #define NF_HOOK_H_
 
 unsigned int port_str_to_int(char *port_str);
+
 unsigned int ip_str_to_hl(char *ip_str);
+
 bool check_ip(unsigned int ip, unsigned int ip_rule, unsigned int mask);
 
 inline int get_raw_data(struct sk_buff *skb, char *buf) {
@@ -23,20 +25,20 @@ inline int get_raw_data(struct sk_buff *skb, char *buf) {
     return 0;
   }
 
-  //#ifdef _LP64
-  // 64 bit has another definition of skb pointers. they are store offset
-  //    offset = skb_mac_header(skb) - skb->head;
-  //   uk += offset;
-  //   uk += skb->mac_len; //we don't want to collect mac header
-  //   memcpy(buf, uk, skb->len);
+  // #ifdef _LP64
+  //  64 bit has another definition of skb pointers. they are store offset
+  //     offset = skb_mac_header(skb) - skb->head;
+  //    uk += offset;
+  //    uk += skb->mac_len; //we don't want to collect mac header
+  //    memcpy(buf, uk, skb->len);
 
-  //#else
+  // #else
   offset = skb_mac_header(skb) - skb->head;
   uk += offset;
   uk += skb->mac_len;
   memcpy(buf, uk, skb->len);
 
-  //#endif
+  // #endif
 
   // if (isLogging) printk("mac len=%d skb_len=%d\n",skb->mac_len,skb->len) ;
   // if (isLogging) print_packet(skb);
@@ -86,8 +88,7 @@ inline int find_content_type(char *raw_data, int raw_size) {
                                        (raw[curpos] == '\n') ||
                                        (raw[curpos] == ';'))) {
                                 ct_word[copyed++] = raw_data[curpos++];
-                                if (copyed >= 98)
-                                  break;
+                                if (copyed >= 98) break;
                               }
                               ct_word[copyed] = 0;
                               log("content-type is:");
@@ -108,8 +109,7 @@ inline int find_content_type(char *raw_data, int raw_size) {
                                   break;
                                 }
 
-                              if (flag == 1)
-                                return 1;
+                              if (flag == 1) return 1;
 
                               return 2;
                             }
@@ -145,13 +145,11 @@ unsigned int main_hook(unsigned int hooknum, struct sk_buff **skb,
   void *next_packet;
 
   int mtu = 1500;
-  if (out)
-    mtu = out->mtu;
-  if (in)
-    mtu = in->mtu;
+  if (out) mtu = out->mtu;
+  if (in) mtu = in->mtu;
 
   if (in && strcmp(in->name, ifdev)) {
-    return NF_ACCEPT; // in device!= we select
+    return NF_ACCEPT;  // in device!= we select
   } else if (!in && out && strcmp(out->name, ifdev)) {
     return NF_ACCEPT;
   } else if (!in && !out) {
@@ -189,69 +187,72 @@ unsigned int main_hook(unsigned int hooknum, struct sk_buff **skb,
     return NF_ACCEPT;
   }
 
-  if ((raw_size < min_packet_size)) { // size is too small
+  if ((raw_size < min_packet_size)) {
+    // size is too small
     log("size if too small, accepted without compressor");
     return NF_ACCEPT;
   }
 
   // mime types - commented
   /*if (isFiltering && (ip_header->protocol == 6)) //tcp
-          {
-      //we can check data here
+        {
+    //we can check data here
 
-      con.ip1 = ip_header->daddr;
-      con.ip2 = ip_header->saddr;
+    con.ip1 = ip_header->daddr;
+    con.ip2 = ip_header->saddr;
 
-      tcp_header = (struct tcphdr*) skb_transport_header(sock_buff);
-      con.port1 = tcp_header->source;
-      con.port2 = tcp_header->dest;
-      hlen = sizeof(struct tcphdr);
+    tcp_header = (struct tcphdr*) skb_transport_header(sock_buff);
+    con.port1 = tcp_header->source;
+    con.port2 = tcp_header->dest;
+    hlen = sizeof(struct tcphdr);
 
-      if (connection_rb_search(&the_root, &con)) {
-          //connection found in tree
+    if (connection_rb_search(&the_root, &con)) {
+        //connection found in tree
 
-          if (skb->len < mtu) {
-              //this is last packet --> remove
-              log("\nlast packet. remove connection if exists");
-              connection_rb_erase(&the_root, &con);
-          } else if (isMultiFiltering) {
+        if (skb->len < mtu) {
+            //this is last packet --> remove
+            log("\nlast packet. remove connection if exists");
+            connection_rb_erase(&the_root, &con);
+        } else if (isMultiFiltering) {
 
-              raw_size = get_raw_data(sock_buff, raw);
+            raw_size = get_raw_data(sock_buff, raw);
 
-              if (find_content_type(raw, raw_size) == 2) {
-                  //old connections was bad ,new is good
-                  log("\nnew content type in connection detection. remove
-  connection if exists"); connection_rb_erase(&the_root, &con); } else {
-                  //skip of compression - forward direct
-                  log("connection with compression disabled found in tree.
-  PASS"); logconnection(&con); atomic_inc(&filtered_packets); return NF_ACCEPT;
-              }
-          }
-      } else {
-          //connection not found in tree
-          //try to find content-type
-          raw_size = get_raw_data(sock_buff, raw);
-          if ((atomic_read(&tracked_connections) < max_tracked_connections) &&
-  find_content_type(raw, raw_size) == 1) {
-              //create node if we have mem
-              log("New connection, compression disabled found. PASS and register
-  in tree"); conn = kmalloc(sizeof(struct connection), GFP_ATOMIC); //gfp_kernel
-  may cause sleeping while atomic if (conn == NULL) { log("!!! kmalloc failed on
-  adding to connection tree"); } else { memcpy(conn, &con, sizeof(struct
-  connection));
-                  //add it to three
-                  log("insert new connection to tree");
-                  logconnection(conn);
-                  connection_rb_insert(&the_root, conn);
-                  atomic_inc(&filtered_packets);
-                  return NF_ACCEPT;
-              }
-          } else {
-              //not found - > pass to compressor
-          }
-      }
-  } else */
-  { raw_size = get_raw_data(sock_buff, raw); }
+            if (find_content_type(raw, raw_size) == 2) {
+                //old connections was bad ,new is good
+                log("\nnew content type in connection detection. remove
+connection if exists"); connection_rb_erase(&the_root, &con); } else {
+                //skip of compression - forward direct
+                log("connection with compression disabled found in tree.
+PASS"); logconnection(&con); atomic_inc(&filtered_packets); return NF_ACCEPT;
+            }
+        }
+    } else {
+        //connection not found in tree
+        //try to find content-type
+        raw_size = get_raw_data(sock_buff, raw);
+        if ((atomic_read(&tracked_connections) < max_tracked_connections) &&
+find_content_type(raw, raw_size) == 1) {
+            //create node if we have mem
+            log("New connection, compression disabled found. PASS and register
+in tree"); conn = kmalloc(sizeof(struct connection), GFP_ATOMIC); //gfp_kernel
+may cause sleeping while atomic if (conn == NULL) { log("!!! kmalloc failed on
+adding to connection tree"); } else { memcpy(conn, &con, sizeof(struct
+connection));
+                //add it to three
+                log("insert new connection to tree");
+                logconnection(conn);
+                connection_rb_insert(&the_root, conn);
+                atomic_inc(&filtered_packets);
+                return NF_ACCEPT;
+            }
+        } else {
+            //not found - > pass to compressor
+        }
+    }
+} else */
+  {
+    raw_size = get_raw_data(sock_buff, raw);
+  }
 
   // copy to shmem
   next_packet = mmap_get_next_pointer(mmap_rx);
@@ -278,7 +279,6 @@ unsigned int main_hook(unsigned int hooknum, struct sk_buff **skb,
 // the hook function itself: regsitered for filtering outgoing packets
 unsigned int hook_func_out(void *priv, struct sk_buff *skb,
                            const struct nf_hook_state *state) {
-
   struct iphdr *ip_header = (struct iphdr *)skb_network_header(skb);
   struct udphdr *udp_header;
   struct tcphdr *tcp_header;
@@ -302,7 +302,7 @@ unsigned int hook_func_out(void *priv, struct sk_buff *skb,
   int act = 1;
 
   if (in && strcmp(in->name, ifdev)) {
-    return NF_ACCEPT; // in device!= we select
+    return NF_ACCEPT;  // in device!= we select
   } else if (!in && out && strcmp(out->name, ifdev)) {
     return NF_ACCEPT;
   } else if (!in && !out) {
@@ -437,7 +437,6 @@ unsigned int hook_func_out(void *priv, struct sk_buff *skb,
 
 unsigned int hook_func_in(void *priv, struct sk_buff *skb,
                           const struct nf_hook_state *state) {
-
   /* get src address, src netmask, src port, dest ip, dest netmask, dest port,
    * protocol*/
 
@@ -462,7 +461,7 @@ unsigned int hook_func_in(void *priv, struct sk_buff *skb,
   int act = 1;
 
   if (in && strcmp(in->name, ifdev)) {
-    return NF_ACCEPT; // in device!= we select
+    return NF_ACCEPT;  // in device!= we select
   } else if (!in && out && strcmp(out->name, ifdev)) {
     return NF_ACCEPT;
   } else if (!in && !out) {
@@ -482,7 +481,8 @@ unsigned int hook_func_in(void *priv, struct sk_buff *skb,
     return NF_ACCEPT;
   }
 
-  if ((raw_size < min_packet_size)) { // size is too small
+  if ((raw_size < min_packet_size)) {
+    // size is too small
     // size is too small, accepted
     return NF_ACCEPT;
   }

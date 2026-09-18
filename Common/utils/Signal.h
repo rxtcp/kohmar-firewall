@@ -9,19 +9,20 @@
  * Abstract class for providing signal capabilities
  */
 class Signal {
-public:
-  static const bool ROLE_WAITER = false; // we are waiting for a signal
-  static const bool ROLE_SENDER = true;  // we are sending the signal
+ public:
+  static const bool ROLE_WAITER = false;  // we are waiting for a signal
+  static const bool ROLE_SENDER = true;   // we are sending the signal
 
   Signal(std::string name, bool role) {
     this->name = name;
     this->role = role;
   }
-  virtual void signal() = 0; // do signal
-  virtual void wait() = 0;   // wait signal
+
+  virtual void signal() = 0;  // do signal
+  virtual void wait() = 0;    // wait signal
   virtual ~Signal();
 
-protected:
+ protected:
   std::string name;
   bool role;
 };

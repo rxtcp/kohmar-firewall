@@ -26,6 +26,7 @@ void UnixLowLevelSocket::setSendBufSize(int buf) {
   int sndsize = buf;
   setsockopt(sd, SOL_SOCKET, SO_SNDBUF, (char *)&sndsize, (int)sizeof(sndsize));
 }
+
 void UnixLowLevelSocket::setRcvBufSize(int buf) {
   int sndsize = buf;
   setsockopt(sd, SOL_SOCKET, SO_RCVBUF, (char *)&sndsize, (int)sizeof(sndsize));
@@ -33,7 +34,6 @@ void UnixLowLevelSocket::setRcvBufSize(int buf) {
 
 /* send the data by socket */
 int UnixLowLevelSocket::send(const char *buf, int size) {
-
   // sem->wait() ;
   // std::cout<<"send() calling\n" ;
   int r;
@@ -56,7 +56,6 @@ int UnixLowLevelSocket::send(const char *buf, int size) {
 /* bind and listen in one method */
 void UnixLowLevelSocket::bindAndListen(std::string address, int port,
                                        int protocol, int queueSize) {
-
   // if reuse is set
   if (reuse) {
     const int on = 1;
@@ -87,7 +86,7 @@ void UnixLowLevelSocket::bindAndListen(std::string address, int port,
     if (bind(sd, (struct sockaddr *)(&saun), len) < 0)
       throw SocketException("bind");
   } break;
-    //....
+  //....
   default:
     throw SocketException("bind_unknown_protocol");
   }
@@ -164,10 +163,9 @@ void UnixLowLevelSocket::connect(std::string address, int port, int protocol) {
     }
 
     this->addr = address.c_str(); //
-
   } break;
 
-  //....
+    //....
   default:
     throw SocketException("bad_socket_protocol");
   }
@@ -178,7 +176,6 @@ void UnixLowLevelSocket::connect(std::string address, int port, int protocol) {
  * receive the data
  */
 int UnixLowLevelSocket::receive(char *buf, int size) {
-
   int r;
   if (!this->unblocking) {
     // blocking
@@ -239,7 +236,7 @@ void UnixLowLevelSocket::bindAndListen(int address, int port, int protocol,
   case LowLevelSocket::AF_UNIX_: {
     throw SocketException("not implemented");
   } break;
-    //....
+  //....
   default:
     throw SocketException("bind_unknown_protocol");
   }
@@ -253,7 +250,6 @@ void UnixLowLevelSocket::bindAndListen(int address, int port, int protocol,
  * init socket
  */
 void UnixLowLevelSocket::initialize(int domain, int type, int protocol) {
-
   // create semaphore - we can use platform factory-but we work on unix version
   // now
   sem = new UnixSemaphore();
@@ -272,7 +268,7 @@ void UnixLowLevelSocket::initialize(int domain, int type, int protocol) {
     sdomain = AF_UNIX;
 
     break;
-    //...
+  //...
   default:
     sdomain = AF_INET;
   }
@@ -292,6 +288,7 @@ void UnixLowLevelSocket::initialize(int domain, int type, int protocol) {
   const int on = 1;
   setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 }
+
 /*
  * close socket
  */

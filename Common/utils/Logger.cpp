@@ -1,10 +1,9 @@
 #include "Logger.h"
 
-
 Logger::Logger() {
-	// TODO Auto-generated constructor stub
+  // TODO Auto-generated constructor stub
 }
 
 Logger::~Logger() {
-	// TODO Auto-generated destructor stub
+  // TODO Auto-generated destructor stub
 }

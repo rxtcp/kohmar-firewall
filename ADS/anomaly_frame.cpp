@@ -21,63 +21,63 @@ AnomalyTcpFrame::AnomalyTcpFrame(QObject *parent, int _anomaly_limit)
   sem = new UnixSemaphore();
 
   /*
-  QScrollArea *scroll = new QScrollArea;
+QScrollArea *scroll = new QScrollArea;
 
-  QVBoxLayout *layout = new QVBoxLayout;
-  layout->addWidget(scroll);
+QVBoxLayout *layout = new QVBoxLayout;
+layout->addWidget(scroll);
 
-  this->setLayout(layout);
-  */
+this->setLayout(layout);
+*/
 }
 
 void AnomalyTcpFrame::paintEvent(QPaintEvent *e) {
   switch (whatToDraw) {
-  case 0: {
-    QPainter p;    // our painter
-    p.begin(this); // start painting the widget
-    p.setPen(QPen(Qt::black, 1));
-    p.drawLine(0, 0, this->width(), 0);
-    p.drawLine(0, 0, 0, this->height());
-    p.drawLine(this->width() - 1, 0, this->width() - 1, this->height() - 1);
-    p.drawLine(0, this->height() - 1, this->width() - 1, this->height() - 1);
-    p.setPen(QPen(Qt::red, 1));
-    p.drawLine(0, this->height() - anomaly_limit * this->height() / 100,
-               this->width() - 1,
-               this->height() - anomaly_limit * this->height() / 100);
-    p.end(); // painting done
+    case 0: {
+      QPainter p;     // our painter
+      p.begin(this);  // start painting the widget
+      p.setPen(QPen(Qt::black, 1));
+      p.drawLine(0, 0, this->width(), 0);
+      p.drawLine(0, 0, 0, this->height());
+      p.drawLine(this->width() - 1, 0, this->width() - 1, this->height() - 1);
+      p.drawLine(0, this->height() - 1, this->width() - 1, this->height() - 1);
+      p.setPen(QPen(Qt::red, 1));
+      p.drawLine(0, this->height() - anomaly_limit * this->height() / 100,
+                 this->width() - 1,
+                 this->height() - anomaly_limit * this->height() / 100);
+      p.end();  // painting done
 
-    drawScale();
-  } break;
+      drawScale();
+    } break;
 
-  case 1: {
-    QPainter p;    // our painter
-    p.begin(this); // start painting the widget
-    p.setPen(QPen(Qt::red, 1));
-    p.drawLine(0, this->height() - anomaly_limit * this->height() / 100,
-               this->width() - 1,
-               this->height() - anomaly_limit * this->height() / 100);
-    p.setPen(QPen(Qt::black, 1));
-    p.drawLine(0, 0, this->width(), 0);
-    p.drawLine(0, 0, 0, this->height());
-    p.drawLine(this->width() - 1, 0, this->width() - 1, this->height() - 1);
-    p.drawLine(0, this->height() - 1, this->width() - 1, this->height() - 1);
+    case 1: {
+      QPainter p;     // our painter
+      p.begin(this);  // start painting the widget
+      p.setPen(QPen(Qt::red, 1));
+      p.drawLine(0, this->height() - anomaly_limit * this->height() / 100,
+                 this->width() - 1,
+                 this->height() - anomaly_limit * this->height() / 100);
+      p.setPen(QPen(Qt::black, 1));
+      p.drawLine(0, 0, this->width(), 0);
+      p.drawLine(0, 0, 0, this->height());
+      p.drawLine(this->width() - 1, 0, this->width() - 1, this->height() - 1);
+      p.drawLine(0, this->height() - 1, this->width() - 1, this->height() - 1);
 
-    // int width = this->width();
-    // int height = this->height();
+      // int width = this->width();
+      // int height = this->height();
 
-    p.setPen(QPen(Qt::blue, 1));
-    sem->wait();
-    for (int i = 0; i < points.count() - 1; i++) {
-      // qDebug() << "y = " << QString::number(points[i]->y());
-      p.drawLine(points[i]->x(), points[i]->y(), points[i + 1]->x(),
-                 points[i + 1]->y());
-    }
-    sem->post();
+      p.setPen(QPen(Qt::blue, 1));
+      sem->wait();
+      for (int i = 0; i < points.count() - 1; i++) {
+        // qDebug() << "y = " << QString::number(points[i]->y());
+        p.drawLine(points[i]->x(), points[i]->y(), points[i + 1]->x(),
+                   points[i + 1]->y());
+      }
+      sem->post();
 
-    p.end(); // painting done
+      p.end();  // painting done
 
-    drawScale();
-  } break;
+      drawScale();
+    } break;
   }
 }
 
@@ -88,7 +88,8 @@ void AnomalyTcpFrame::paintGraphic() {
 
 void AnomalyTcpFrame::addPoint(double y) {
   double yy;
-  if (prevTime.msecsTo(QDateTime::currentDateTime()) < 100) { // too fast
+  if (prevTime.msecsTo(QDateTime::currentDateTime()) < 100) {
+    // too fast
     prevTime = QDateTime::currentDateTime();
     return;
   }
@@ -98,8 +99,7 @@ void AnomalyTcpFrame::addPoint(double y) {
     QPoint *p0 = points.at(0);
     sem->wait();
     points.removeAt(0);
-    if (p0)
-      delete[] p0;
+    if (p0) delete[] p0;
     sem->post();
 
     curX -= 4;
@@ -107,7 +107,9 @@ void AnomalyTcpFrame::addPoint(double y) {
     QPoint *p;
 
     sem->wait();
-    foreach (p, points) { p->setX(p->x() - 4); }
+    foreach (p, points) {
+      p->setX(p->x() - 4);
+    }
     sem->post();
   }
 
@@ -149,8 +151,8 @@ void AnomalyTcpFrame::setLimit(int _limit) {
 }
 
 void AnomalyTcpFrame::drawScale() {
-  QPainter p;    // our painter
-  p.begin(this); // start painting the widget
+  QPainter p;     // our painter
+  p.begin(this);  // start painting the widget
   p.setPen(QPen(Qt::black, 1));
   p.setFont(QFont("Arial", 7, -1, false));
 
@@ -161,5 +163,5 @@ void AnomalyTcpFrame::drawScale() {
 
   p.drawText(2, 8, QString::number(100));
 
-  p.end(); // painting done
+  p.end();  // painting done
 }

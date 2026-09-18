@@ -5,6 +5,7 @@
  */
 
 #include "pst_node.h"
+
 #include <QDebug>
 using namespace std;
 
@@ -17,8 +18,7 @@ PstNode::PstNode() {
   nextSymProbability = new double[ABSIZE];
   childrens = new PstNode *[ABSIZE];
 
-  for (int i = 0; i < absize; i++)
-    childrens[i] = NULL;
+  for (int i = 0; i < absize; i++) childrens[i] = NULL;
 
   isLeaf = true;
 
@@ -36,8 +36,7 @@ PstNode::PstNode(int alphabetSize) {
   nextSymProbability = new double[absize];
   childrens = new PstNode *[absize];
 
-  for (int i = 0; i < absize; i++)
-    childrens[i] = NULL;
+  for (int i = 0; i < absize; i++) childrens[i] = NULL;
 
   isLeaf = true;
 }
@@ -51,8 +50,7 @@ PstNode::PstNode(string _idStr, double *_nextSymProbability, int alphabetSize) {
   absize = alphabetSize;
   childrens = new PstNode *[absize];
 
-  for (int i = 0; i < absize; i++)
-    childrens[i] = NULL;
+  for (int i = 0; i < absize; i++) childrens[i] = NULL;
 }
 
 PstNode *PstNode::get(string str) {
@@ -62,15 +60,16 @@ PstNode *PstNode::get(string str) {
     return this;
   } else {
     int nextSymIndex = str[strLen - 1];
-    char ch = str[strLen - 1]; // last
+    char ch = str[strLen - 1];  // last
     // str.erase(strLen - 1);
-    str[strLen - 1] = '\0'; // LEAVE?
+    str[strLen - 1] = '\0';  // LEAVE?
 
     if (childrens[nextSymIndex] != NULL) {
       PstNode *ret = childrens[nextSymIndex]->get(str);
       str[strLen - 1] = ch;
       return ret;
-    } else { // therefore this corresponds to the largest suffix
+    } else {
+      // therefore this corresponds to the largest suffix
       str[strLen - 1] = ch;
       return this;
     }
@@ -94,8 +93,7 @@ void PstNode::insert(char symbol, double *_nextSymProbability) {
   if (isLeaf) {
     isLeaf = false;
     childrens = new PstNode *[absize];
-    for (int i = 0; i < absize; i++)
-      childrens[i] = NULL;
+    for (int i = 0; i < absize; i++) childrens[i] = NULL;
   }
 
   // char strDest = new char[2];
@@ -143,12 +141,10 @@ QString PstNode::printMe() {
 }
 
 void PstNode::printRecursively(int parent, double prob) {
-
   node_id++;
   int my_node = node_id;
 
   if (idStr != "") {
-
     treeDot += "node" + QString::number(node_id) + "[label =\"[" +
                QString::fromStdString(idStr) + "]" + "\n" + str2flags(idStr) +
                "\"];\n";
@@ -182,7 +178,6 @@ int PstNode::subTreeHeight() {
   if (isLeaf) {
     return 0;
   } else {
-
     for (int i = 0, childH; i < absize; ++i) {
       if (childrens[i] != NULL) {
         childH = childrens[i]->subTreeHeight();
@@ -195,15 +190,13 @@ int PstNode::subTreeHeight() {
 }
 
 void PstNode::predict(double *pArr) {
-  for (int i = 0; i < absize; i++)
-    pArr[i] = nextSymProbability[i];
+  for (int i = 0; i < absize; i++) pArr[i] = nextSymProbability[i];
 }
 
 void PstNode::retrainProbs(double addKoeff, int index) {
   nextSymProbability[index] += addKoeff;
 
   for (int i = 0; i < absize; i++) {
-    if (i != index)
-      nextSymProbability[i] -= (double)addKoeff / (absize - 1);
+    if (i != index) nextSymProbability[i] -= (double)addKoeff / (absize - 1);
   }
 }

@@ -12,24 +12,31 @@
 class Neuron : public QObject {
   Q_OBJECT
 
-private:
+ private:
   int dimension;
   double *koeffs;
   double anomaly;
 
-public:
+ public:
   explicit Neuron(int _dimension, QObject *parent = 0);
+
   bool setKoeffs(double *_koeffs);
+
   bool setKoeff(int index, double value);
+
   int getDimension();
+
   double *getKoeffs();
+
   double getKoeff(int index);
+
   void setAnomaly(double _anomaly);
+
   double getAnomaly();
 
-signals:
+ signals:
 
-public slots:
+ public slots:
 };
 
-#endif // NEURON_H
+#endif  // NEURON_H

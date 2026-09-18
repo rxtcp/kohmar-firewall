@@ -77,13 +77,10 @@ int Samples::loadFromFile(const char *filename) {
 
         len = strlen(smp);
 
-        if (len > maxlen)
-          maxlen = len;
-
+        if (len > maxlen) maxlen = len;
       } else
         break;
     }
-
   } catch (...) {
     res = -1;
   }

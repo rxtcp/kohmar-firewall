@@ -5,6 +5,7 @@
  */
 
 #include "addruleform.h"
+
 #include "ui_addruleform.h"
 
 AddRuleForm::AddRuleForm(QWidget *parent, QList<Rule *> *_list, Rule *_rule)
@@ -137,8 +138,9 @@ void AddRuleForm::on_pushButtonOk_clicked() {
           }
         }
       } else {
-        msg.setText("Source IP specified is incorrect! (when changing, only "
-                    "the IP address can be specified)");
+        msg.setText(
+            "Source IP specified is incorrect! (when changing, only "
+            "the IP address can be specified)");
         msg.exec();
         return;
       }
@@ -168,8 +170,9 @@ void AddRuleForm::on_pushButtonOk_clicked() {
           }
         }
       } else {
-        msg.setText("Dst IP specified is incorrect! (when changing, only the "
-                    "IP address can be specified)");
+        msg.setText(
+            "Dst IP specified is incorrect! (when changing, only the "
+            "IP address can be specified)");
         msg.exec();
         return;
       }

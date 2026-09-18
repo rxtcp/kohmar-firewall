@@ -7,10 +7,10 @@
 #ifndef LEARNING_FLOW_DIALOG_H
 #define LEARNING_FLOW_DIALOG_H
 
+#include <stdio.h>
+
 #include <QDialog>
 #include <QMessageBox>
-
-#include <stdio.h>
 
 #include "../Common/packsreceiver.h"
 #include "../Common/structs.h"
@@ -22,19 +22,25 @@ class LearningFlowDialog;
 class LearningFlowDialog : public QDialog {
   Q_OBJECT
 
-public:
+ public:
   explicit LearningFlowDialog(QWidget *parent = 0,
                               PacksReceiver *_packs_receiver = 0);
+
   ~LearningFlowDialog();
 
-private slots:
+ private slots:
+
   void on_pushButton_clicked();
+
   void on_pushButton_2_clicked();
+
   void on_pushButton_3_clicked();
+
   void on_pushButton_4_clicked();
+
   void on_horizontalSlider_valueChanged(int value);
 
-private:
+ private:
   Ui::LearningFlowDialog *ui;
 
   bool isLearn;
@@ -43,4 +49,4 @@ private:
   QList<SampleSom *> samples;
 };
 
-#endif // LEARNING_FLOW_DIALOG_H
+#endif  // LEARNING_FLOW_DIALOG_H

@@ -1,9 +1,4 @@
 #include "DaemonService.h"
-#include "SyslogLogger.h"
-
-#include "Logger.h"
-#include "PlatformFactory.h"
-#include "PrintfLogger.h"
 
 #include <errno.h>
 #include <execinfo.h>
@@ -19,13 +14,21 @@
 #include <unistd.h>
 #include <wait.h>
 
+#include "Logger.h"
+#include "PlatformFactory.h"
+#include "PrintfLogger.h"
+#include "SyslogLogger.h"
+
 using namespace std;
 
 #include "DaemonService.h"
 
 int (*DaemonService::startFunc)() = NULL;
+
 int (*DaemonService::stopFunc)() = NULL;
+
 int (*DaemonService::rereadCfgFun)() = NULL;
+
 Logger *DaemonService::logger = NULL;
 Logger *DaemonService::sysLogger = NULL;
 
@@ -41,16 +44,14 @@ void DaemonService::signal_handler(int sig, siginfo_t *si, void *ptr) {
 
   if (sig == SIGUSR1) {
     sysLogger->log("Received user signal.");
-    if (rereadCfgFun != NULL)
-      (*rereadCfgFun)();
+    if (rereadCfgFun != NULL) (*rereadCfgFun)();
 
     return;
   }
 
   if (sig == SIGTERM) {
     sysLogger->log("Received sigterm signal. Stopping...");
-    if (stopFunc != NULL)
-      (*stopFunc)();
+    if (stopFunc != NULL) (*stopFunc)();
     exit(CHILD_NEED_TERMINATE);
   }
 
@@ -75,8 +76,7 @@ void DaemonService::signal_handler(int sig, siginfo_t *si, void *ptr) {
   }
   sysLogger->log("Stopped");
 
-  if (stopFunc != NULL)
-    (*stopFunc)();
+  if (stopFunc != NULL) (*stopFunc)();
   // we need a child restart
   exit(CHILD_NEED_RESTART);
 }
@@ -89,7 +89,6 @@ DaemonService::DaemonService() {
  * Demonize the current process.
  */
 void DaemonService::setup() {
-
   sysLogger = new SyslogLogger();
   sysLogger->setName(logger->getName());
 
@@ -108,9 +107,8 @@ void DaemonService::setup() {
   // fork process and disconnect it from parent
   if ((pid = fork()) < 0) {
     throw ServiceException("fork error");
-
   } else if (0 != pid) {
-    exit(0); // stop parent process
+    exit(0);  // stop parent process
   }
 
   // create seance
@@ -128,7 +126,6 @@ void DaemonService::setup() {
   // fork again
   if ((pid = fork()) < 0) {
     throw ServiceException("fork error");
-
   } else if (0 != pid) {
     exit(0);
   }
@@ -138,8 +135,7 @@ void DaemonService::setup() {
     throw ServiceException("can`t chdir() to /");
   }
   // close all resources
-  if (limits.rlim_max == RLIM_INFINITY)
-    limits.rlim_max = 1024;
+  if (limits.rlim_max == RLIM_INFINITY) limits.rlim_max = 1024;
 
   u_int32_t idx;
   for (idx = 0; idx < limits.rlim_max; ++idx) {
@@ -172,21 +168,18 @@ void DaemonService::setup() {
  */
 
 void DaemonService::stop() {
-
   // get pid from pid file of running daemon
   int pid = PlatformFactory::getInstance()->findPID(this->getName());
   // check running
   if (pid == -1) {
     sysLogger->log("Error. Daemon is not running");
     throw ServiceException("Daemon is not running");
-
   } else
     // kill it
     PlatformFactory::getInstance()->kill(pid);
 }
 
 void DaemonService::stopWorker() {
-
   // get pid from pid file of running daemon
   int pid =
       PlatformFactory::getInstance()->findPID(this->getName() + "_worker");
@@ -200,7 +193,6 @@ void DaemonService::stopWorker() {
 }
 
 void DaemonService::sendUserSignalToWorker() {
-
   // get pid from pid file of running daemon
   int pid =
       PlatformFactory::getInstance()->findPID(this->getName() + "_worker");
@@ -208,7 +200,6 @@ void DaemonService::sendUserSignalToWorker() {
   if (pid == -1) {
     sysLogger->log("Error. Worker daemon is not running");
     throw ServiceException("Worker daemon is not running");
-
   } else
     // kill it
     PlatformFactory::getInstance()->killWithSignal(pid, SIGUSR1);
@@ -227,10 +218,10 @@ int DaemonService::workProc() {
   sigact.sa_sigaction = signal_handler;
   sigemptyset(&sigact.sa_mask);
 
-  sigaction(SIGFPE, &sigact, 0);  // FPU
-  sigaction(SIGILL, &sigact, 0);  // wrong instruction
-  sigaction(SIGSEGV, &sigact, 0); // segfault
-  sigaction(SIGBUS, &sigact, 0);  // bus memory error
+  sigaction(SIGFPE, &sigact, 0);   // FPU
+  sigaction(SIGILL, &sigact, 0);   // wrong instruction
+  sigaction(SIGSEGV, &sigact, 0);  // segfault
+  sigaction(SIGBUS, &sigact, 0);   // bus memory error
   sigaction(SIGTERM, &sigact, 0);
   sigaction(SIGUSR1, &sigact, 0);
 
@@ -259,8 +250,7 @@ int DaemonService::workProc() {
 
       if (signo == SIGUSR1) {
         // reread config
-        if (rereadCfgFun != NULL)
-          (*rereadCfgFun)();
+        if (rereadCfgFun != NULL) (*rereadCfgFun)();
       } else {
         break;
       }
@@ -279,7 +269,6 @@ int DaemonService::workProc() {
 void DaemonService::startWithMonitoring(int (*startFunc)(void),
                                         int (*stopFunc)(void),
                                         int (*rereadCfgFun)(void)) {
-
   this->startFunc = startFunc;
   this->stopFunc = stopFunc;
   this->rereadCfgFun = rereadCfgFun;
@@ -317,12 +306,11 @@ void DaemonService::startWithMonitoring(int (*startFunc)(void),
       // we are child
       status = this->workProc();
       exit(status);
-    } else // parent
+    } else  // parent
     {
       sigwaitinfo(&sigset, &siginfo);
       sysLogger->log("Monitor: wait status...");
       if (siginfo.si_signo == SIGCHLD) {
-
         sysLogger->log("Monitor: got child status...");
         wait(&status);
 
@@ -332,16 +320,16 @@ void DaemonService::startWithMonitoring(int (*startFunc)(void),
         if (status == CHILD_NEED_TERMINATE) {
           sysLogger->log("Monitor: children stopped");
           break;
-        } else if (status == CHILD_NEED_RESTART) // restart
+        } else if (status == CHILD_NEED_RESTART)  // restart
         {
           sysLogger->log("Monitor: children restart");
         }
-      } else if (siginfo.si_signo == SIGUSR1) // reread config
+      } else if (siginfo.si_signo == SIGUSR1)  // reread config
       {
         sysLogger->log("Monitor: resend signal to pid=" +
                        PrintfLogger::itos(pid));
-        kill(pid, SIGUSR1); // resend signal
-        need_start = 0;     // don't restart
+        kill(pid, SIGUSR1);  // resend signal
+        need_start = 0;      // don't restart
       } else {
         sysLogger->log("Monitor: signal " +
                        string(strsignal(siginfo.si_signo)));

@@ -20,17 +20,21 @@ class LearningTcpDialog;
 class LearningTcpDialog : public QDialog {
   Q_OBJECT
 
-public:
+ public:
   explicit LearningTcpDialog(QWidget *parent = 0,
                              PacksReceiver *_packs_receiver = 0);
+
   ~LearningTcpDialog();
 
-private slots:
+ private slots:
+
   void on_pushButton_clicked();
+
   void on_pushButton_2_clicked();
+
   void on_pushButton_3_clicked();
 
-private:
+ private:
   Ui::LearningTcpDialog *ui;
   int learned_protocol;
   bool isLearn;
@@ -39,4 +43,4 @@ private:
   void closeEvent(QCloseEvent *event);
 };
 
-#endif // LEARNING_TCP_DIALOG_H
+#endif  // LEARNING_TCP_DIALOG_H

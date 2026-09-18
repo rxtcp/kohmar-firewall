@@ -13,7 +13,6 @@ AnomalyReaderFlow::AnomalyReaderFlow(
     int *_limit_flow, UnixSemaphore *_sem_dynamic_rules, bool *_gen_rules,
     UnixSemaphore *_sem_settings, int *_flow_drop_ports, int *_id_rules_dyn)
     : QThread(parent) {
-
   som_table = _som_table;
   anomalies_table = _anomalies_table;
   rules_table = _rules_table;
@@ -76,7 +75,6 @@ void AnomalyReaderFlow::run() {
       sem_settings->wait();
 
       if (anomaly_node.anomaly >= *limit_flow) {
-
         timeItem = new QTableWidgetItem();
         valItem = new QTableWidgetItem();
         typeItem = new QTableWidgetItem();
@@ -85,11 +83,11 @@ void AnomalyReaderFlow::run() {
         valItem->setText(QString::number(anomaly_node.anomaly));
 
         /*if(anomaly_node.flow_icmp_count > 70)
-            typeItem->setText("ICMP-flood");
-        else if(anomaly_node.flow_new_tcp_conn_count > 30)
-            typeItem->setText("TCP-DDoS");
-        else typeItem->setText("Смешанный");
-        */
+    typeItem->setText("ICMP-flood");
+else if(anomaly_node.flow_new_tcp_conn_count > 30)
+    typeItem->setText("TCP-DDoS");
+else typeItem->setText("Смешанный");
+*/
 
         SampleSom *smp = new SampleSom(8);
         smp->setKoeff(0, anomaly_node.flow_size_average);
@@ -119,7 +117,7 @@ void AnomalyReaderFlow::run() {
           rule_new->in_out = 1;
           rule_new->port_dest = -1;
           rule_new->port_src = -1;
-          rule_new->ip_dest = "192.168.2.1"; // TODO : get my IP
+          rule_new->ip_dest = "192.168.2.1";  // TODO : get my IP
           rule_new->ip_src = "-";
           port_dest_str = "Any";
           port_src_str = "Any";
@@ -162,8 +160,7 @@ void AnomalyReaderFlow::run() {
             rules_table->setItem(col_rules, 5, portDestItem);
 
             col_rules++;
-            *(id_rule--); // todo: check
-
+            *(id_rule--);  // todo: check
           } else
             delete rule_new;
 
@@ -172,8 +169,8 @@ void AnomalyReaderFlow::run() {
       }
 
       sem_settings->post();
-
-    } else { // pause
+    } else {
+      // pause
       this->msleep(100);
     }
   }

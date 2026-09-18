@@ -45,7 +45,9 @@ struct pkt_mmap {
 static struct pkt_mmap *mmap_rx;
 
 static int packet_mmap(struct vm_area_struct *vma, struct pkt_mmap *p_mmap);
+
 static void packet_mm_open_tx(struct vm_area_struct *vma) {}
+
 static void packet_mm_close_tx(struct vm_area_struct *vma) {}
 
 static const struct vm_operations_struct packet_mmap_ops_tx = {
@@ -55,6 +57,7 @@ static const struct vm_operations_struct packet_mmap_ops_tx = {
 
 // RX
 static void packet_mm_open_rx(struct vm_area_struct *vma) {}
+
 static void packet_mm_close_rx(struct vm_area_struct *vma) {}
 
 static const struct vm_operations_struct packet_mmap_ops_rx = {
@@ -64,7 +67,9 @@ static const struct vm_operations_struct packet_mmap_ops_rx = {
 
 /* methods of the character device */
 static int mmap_open_rx(struct inode *inode, struct file *filp);
+
 static int mmap_release_rx(struct inode *inode, struct file *filp);
+
 static int mmap_mmap_rx(struct file *filp, struct vm_area_struct *vma);
 
 /* the file operations, i.e. all character device methods */
@@ -90,8 +95,7 @@ static int packet_mmap(struct vm_area_struct *vma, struct pkt_mmap *p_mmap) {
   int err = -EINVAL;
   int i;
 
-  if (vma->vm_pgoff)
-    return -EINVAL;
+  if (vma->vm_pgoff) return -EINVAL;
 
   expected_size = 0;
 
@@ -100,16 +104,13 @@ static int packet_mmap(struct vm_area_struct *vma, struct pkt_mmap *p_mmap) {
         p_mmap->rb->pg_vec_len * p_mmap->rb->pg_vec_pages * PAGE_SIZE;
   }
 
-  if (expected_size == 0)
-    goto out;
+  if (expected_size == 0) goto out;
 
   size = vma->vm_end - vma->vm_start;
-  if (size != expected_size)
-    goto out;
+  if (size != expected_size) goto out;
 
   start = vma->vm_start;
-  if (p_mmap->rb->pg_vec == NULL)
-    return 0;
+  if (p_mmap->rb->pg_vec == NULL) return 0;
 
   for (i = 0; i < p_mmap->rb->pg_vec_len; i++) {
     struct page *page = virt_to_page(p_mmap->rb->pg_vec[i]);
@@ -117,8 +118,7 @@ static int packet_mmap(struct vm_area_struct *vma, struct pkt_mmap *p_mmap) {
 
     for (pg_num = 0; pg_num < p_mmap->rb->pg_vec_pages; pg_num++, page++) {
       err = vm_insert_page(vma, start, page);
-      if (unlikely(err))
-        goto out;
+      if (unlikely(err)) goto out;
       start += PAGE_SIZE;
     }
   }
@@ -140,8 +140,7 @@ static void free_pg_vec(char **pg_vec, unsigned int order, unsigned int len) {
   int i;
 
   for (i = 0; i < len; i++) {
-    if (likely(pg_vec[i]))
-      free_pages((unsigned long)pg_vec[i], order);
+    if (likely(pg_vec[i])) free_pages((unsigned long)pg_vec[i], order);
   }
   kfree(pg_vec);
 }
@@ -152,13 +151,11 @@ static char **alloc_pg_vec(struct tpacket_req *req, int order) {
   int i;
 
   pg_vec = kzalloc(block_nr * sizeof(char *), GFP_KERNEL);
-  if (unlikely(!pg_vec))
-    goto out;
+  if (unlikely(!pg_vec)) goto out;
 
   for (i = 0; i < block_nr; i++) {
     pg_vec[i] = alloc_one_pg_vec_page(order);
-    if (unlikely(!pg_vec[i]))
-      goto out_free_pgvec;
+    if (unlikely(!pg_vec[i])) goto out_free_pgvec;
     memset(pg_vec[i], 0, req->tp_block_size);
   }
 
@@ -200,8 +197,8 @@ inline static void *mmap_get_next_pointer(struct pkt_mmap *p_mmap) {
   frame_offset = p_mmap->number_packets % p_mmap->rb->frames_per_block;
 
   *((int *)p_mmap->rb->pg_vec[0]) =
-      p_mmap->number_packets; // 0 index is reserved to put here the last added
-                              // number
+      p_mmap->number_packets;  // 0 index is reserved to put here the last added
+  // number
 
   return p_mmap->rb->pg_vec[pg_vec_pos] +
          (frame_offset * p_mmap->rb->frame_size);
@@ -226,8 +223,8 @@ int init_mmap_all(int buf_size, char *chardevname, struct pkt_mmap *p_mmap,
   // 1. fill req
   p_mmap->req = kmalloc(sizeof(struct tpacket_req), GFP_ATOMIC);
   memset(p_mmap->req, 0, sizeof(*p_mmap->req));
-  p_mmap->req->tp_block_size = 4096; // one page max
-  p_mmap->req->tp_frame_size = 2048; // greater then mtu size
+  p_mmap->req->tp_block_size = 4096;  // one page max
+  p_mmap->req->tp_frame_size = 2048;  // greater then mtu size
   p_mmap->req->tp_block_nr = block_count;
   p_mmap->req->tp_frame_nr = block_count * 2;
 

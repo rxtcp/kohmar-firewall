@@ -5,6 +5,7 @@
  */
 
 #include "pst_predictor.h"
+
 #include <QDebug>
 
 PstPredictor::PstPredictor() {
@@ -59,8 +60,7 @@ double PstPredictor::logEval(char *seq) {
   // eval *= NEGTIVE_INVERSE_LOG_2;
   eval *= -1.0;
 
-  if (eval > MAX_VAL)
-    eval = MAX_VAL;
+  if (eval > MAX_VAL) eval = MAX_VAL;
 
   delete[] pArr;
 

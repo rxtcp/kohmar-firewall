@@ -7,8 +7,6 @@
 #ifndef KERNEL_NETFILTER
 #define KERNEL_NETFILTER
 
-#include "../config.h"
-
 #include <linux/cdev.h>
 #include <linux/errno.h>
 #include <linux/fs.h>
@@ -33,17 +31,19 @@
 #include <linux/udp.h>
 #include <linux/version.h>
 #include <linux/vmalloc.h>
-//#include <asm/current.h>
-//#include <asm/segment.h>
-//#include <asm/uaccess.h>
+
+#include "../config.h"
+// #include <asm/current.h>
+// #include <asm/segment.h>
+// #include <asm/uaccess.h>
 #include <asm/atomic.h>
 #include <net/ip.h>
 #include <net/sock.h>
 
 #if DEBUG
-#define log(S)                                                                 \
-  if (isLogging) {                                                             \
-    printk("[ads_drv] %s\n", S);                                               \
+#define log(S)                   \
+  if (isLogging) {               \
+    printk("[ads_drv] %s\n", S); \
   }
 #else
 #define log(S) ;
@@ -171,7 +171,7 @@ unsigned int ip_str_to_hl(char *ip_str) {
 /* check the two input IP addresses, if they match, only the first few bits
  * (masked bits) are compared */
 bool check_ip(unsigned int ip, unsigned int ip_rule, unsigned int mask) {
-  unsigned int tmp = ntohl(ip); // network to host long
+  unsigned int tmp = ntohl(ip);  // network to host long
   int cmp_len = 32;
   int i = 0, j = 0;
   if (mask != 0) {
@@ -208,27 +208,21 @@ void allocate_memory(void) {
 void free_memory(void) {
   int f;
   log("free mem");
-  if (raw)
-    kfree(raw);
+  if (raw) kfree(raw);
   raw = NULL;
 
-  for (f = 0; f < filter_classes_count; f++)
-    kfree(filter_classes[f]);
-  if (filter_classes)
-    kfree(filter_classes);
+  for (f = 0; f < filter_classes_count; f++) kfree(filter_classes[f]);
+  if (filter_classes) kfree(filter_classes);
 
   filter_classes = NULL;
 
-  for (f = 0; f < filter_types_count; f++)
-    kfree(filter_types[f]);
-  if (filter_types)
-    kfree(filter_types);
+  for (f = 0; f < filter_types_count; f++) kfree(filter_types[f]);
+  if (filter_types) kfree(filter_types);
   filter_types = NULL;
 
   filter_classes_count = 0;
   filter_types_count = 0;
 }
-
 
 void change_targert(const char *targert) {
 #if LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 22)
@@ -236,8 +230,7 @@ void change_targert(const char *targert) {
     netfilter_ops_out.hooknum = NF_INET_PRE_ROUTING;
   if (!strcmp(targert, "local_in"))
     netfilter_ops_out.hooknum = NF_INET_LOCAL_IN;
-  if (!strcmp(targert, "forward"))
-    netfilter_ops_out.hooknum = NF_INET_FORWARD;
+  if (!strcmp(targert, "forward")) netfilter_ops_out.hooknum = NF_INET_FORWARD;
   if (!strcmp(targert, "local_out"))
     netfilter_ops_out.hooknum = NF_INET_LOCAL_OUT;
   if (!strcmp(targert, "post_routing"))
@@ -247,26 +240,21 @@ void change_targert(const char *targert) {
 #else
   if (!strcmp(targert, "pre_routing"))
     netfilter_ops_out.hooknum = NF_IP_PRE_ROUTING;
-  if (!strcmp(targert, "local_in"))
-    netfilter_ops_out.hooknum = NF_IP_LOCAL_IN;
-  if (!strcmp(targert, "forward"))
-    netfilter_ops_out.hooknum = NF_IP_FORWARD;
+  if (!strcmp(targert, "local_in")) netfilter_ops_out.hooknum = NF_IP_LOCAL_IN;
+  if (!strcmp(targert, "forward")) netfilter_ops_out.hooknum = NF_IP_FORWARD;
   if (!strcmp(targert, "local_out"))
     netfilter_ops_out.hooknum = NF_IP_LOCAL_OUT;
   if (!strcmp(targert, "post_routing"))
     netfilter_ops_out.hooknum = NF_IP_POST_ROUTING;
-  if (!strcmp(targert, "numhooks"))
-    netfilter_ops_out.hooknum = NF_IP_NUMHOOKS;
+  if (!strcmp(targert, "numhooks")) netfilter_ops_out.hooknum = NF_IP_NUMHOOKS;
 #endif
 }
 
 void change_priority(const char *priority) {
-  if (!strcmp(priority, "first"))
-    netfilter_ops_out.priority = NF_IP_PRI_FIRST;
+  if (!strcmp(priority, "first")) netfilter_ops_out.priority = NF_IP_PRI_FIRST;
   if (!strcmp(priority, "conntrack_defrag"))
     netfilter_ops_out.priority = NF_IP_PRI_CONNTRACK_DEFRAG;
-  if (!strcmp(priority, "raw"))
-    netfilter_ops_out.priority = NF_IP_PRI_RAW;
+  if (!strcmp(priority, "raw")) netfilter_ops_out.priority = NF_IP_PRI_RAW;
   if (!strcmp(priority, "selinux_first"))
     netfilter_ops_out.priority = NF_IP_PRI_SELINUX_FIRST;
   if (!strcmp(priority, "conntrack"))
@@ -285,16 +273,18 @@ void change_priority(const char *priority) {
     netfilter_ops_out.priority = NF_IP_PRI_SELINUX_LAST;
   if (!strcmp(priority, "conntrack_confirm"))
     netfilter_ops_out.priority = NF_IP_PRI_CONNTRACK_CONFIRM;
-  if (!strcmp(priority, "last"))
-    netfilter_ops_out.priority = NF_IP_PRI_LAST;
+  if (!strcmp(priority, "last")) netfilter_ops_out.priority = NF_IP_PRI_LAST;
 }
 
 void init_run_sniffer(void);
 
 int sniffer_dev_open(struct inode *inode, struct file *filep);
+
 int sniffer_dev_release(struct inode *inode, struct file *filep);
+
 ssize_t sniffer_dev_read(struct file *filep, char *buff, size_t count,
                          loff_t *offp);
+
 ssize_t sniffer_dev_write(struct file *filep, const char *buff, size_t count,
                           loff_t *offp);
 
@@ -307,8 +297,11 @@ struct file_operations dev_fops = {
 
 int sniffer_dev_open(struct inode *inode, struct file *filep) { return 0; }
 int sniffer_dev_release(struct inode *inode, struct file *filep) { return 0; }
+
 ssize_t sniffer_dev_read(struct file *filep, char *buff, size_t count,
-                         loff_t *offp) { return 0; }
+                         loff_t *offp) {
+  return 0;
+}
 
 /*
  * Handles parameters passing: user echo ... >/dev/ads_sniffer
@@ -325,8 +318,7 @@ ssize_t sniffer_dev_write(struct file *filep, const char *buff, size_t count,
   log("dev_write");
 
   /* function to copy user space buffer to kernel space*/
-  if (count > 79)
-    count = 79;
+  if (count > 79) count = 79;
   if (copy_from_user(user_data, buff, count) != 0)
     log("Userspace -> kernel copy failed!\n");
 
@@ -365,7 +357,7 @@ ssize_t sniffer_dev_write(struct file *filep, const char *buff, size_t count,
     isLogging = 0;
   }
 
-  //some commands known to the userspace starter app
+  // some commands known to the userspace starter app
 
   if (user_data[0] == 'i' && user_data[1] == 'f') {
     memset(saveif, 0, sizeof(saveif));
@@ -454,7 +446,6 @@ ssize_t sniffer_dev_write(struct file *filep, const char *buff, size_t count,
   return count;
 }
 
-
 void init_run_sniffer(void) {
   log("init ads_sniffer\n");
 
@@ -471,17 +462,17 @@ void init_run_sniffer(void) {
 
   // fill in the hook structure for incoming packet hook
   nfho.hook = hook_func_in;
-  nfho.hooknum = NF_INET_LOCAL_IN; // NF_INET_PRE_ROUTING;
+  nfho.hooknum = NF_INET_LOCAL_IN;  // NF_INET_PRE_ROUTING;
   nfho.pf = PF_INET;
   nfho.priority = NF_IP_PRI_FIRST;
-  nf_register_net_hook(&init_net, &nfho); // Register the hook
+  nf_register_net_hook(&init_net, &nfho);  // Register the hook
 
   // fill in the hook structure for outgoing packet hook
   nfho_out.hook = hook_func_out;
-  nfho_out.hooknum = NF_INET_LOCAL_OUT; // NF_INET_POST_ROUTING;
+  nfho_out.hooknum = NF_INET_LOCAL_OUT;  // NF_INET_POST_ROUTING;
   nfho_out.pf = PF_INET;
   nfho_out.priority = NF_IP_PRI_FIRST;
-  nf_register_net_hook(&init_net, &nfho_out); // Register the hook
+  nf_register_net_hook(&init_net, &nfho_out);  // Register the hook
 
   log("init ads sniffer done");
 }
@@ -506,8 +497,7 @@ int add_a_rule(struct Rule *a_rule_desp) {
           if (each_rule->src_port == a_rule_desp->port_src)
             if (each_rule->dest_port == a_rule_desp->port_dest)
               if (each_rule->proto == a_rule_desp->proto)
-                if (each_rule->action == a_rule_desp->action)
-                  return 0;
+                if (each_rule->action == a_rule_desp->action) return 0;
   }
 
   a_rule = kmalloc(sizeof(*a_rule), GFP_KERNEL);
@@ -528,8 +518,9 @@ int add_a_rule(struct Rule *a_rule_desp) {
   a_rule->action = a_rule_desp->action;
   // a_rule->src_netmask = ip_str_to_hl(a_rule_desp->src_netmask);
   // a_rule->dest_netmask = ip_str_to_hl(a_rule_desp->dest_netmask);
-  printk(KERN_INFO "Firewall: add_a_rule: in_out=%u, src_ip=%u, src_port=%d, "
-                   "dest_ip=%u, dest_port=%d, proto=%u, action=%u\n",
+  printk(KERN_INFO
+         "Firewall: add_a_rule: in_out=%u, src_ip=%u, src_port=%d, "
+         "dest_ip=%u, dest_port=%d, proto=%u, action=%u\n",
          a_rule->in_out, a_rule->src_ip, a_rule->src_port, a_rule->dest_ip,
          a_rule->dest_port, a_rule->proto, a_rule->action);
 
@@ -539,17 +530,15 @@ int add_a_rule(struct Rule *a_rule_desp) {
   INIT_LIST_HEAD(&(a_rule->list));
   list_add_tail(&(a_rule->list), &(policy_list.list));
 
-  if (a_rule_desp->id_rule < 0)
-    dyn_rules_count++;
+  if (a_rule_desp->id_rule < 0) dyn_rules_count++;
   // up_write(&rw_sem);
   // spin_unlock(&lock);
 
   return 1;
 }
 
-
 void delete_a_rule(struct Rule *a_rule_desp) {
-  //int i = 0;
+  // int i = 0;
   struct list_head *p, *q;
   struct RuleListItem *a_rule;
 
@@ -559,8 +548,7 @@ void delete_a_rule(struct Rule *a_rule_desp) {
   list_for_each_safe(p, q, &policy_list.list) {
     a_rule = list_entry(p, struct RuleListItem, list);
     if (a_rule->id_rule == a_rule_desp->id_rule) {
-      if (a_rule->id_rule < 0)
-        dyn_rules_count--;
+      if (a_rule->id_rule < 0) dyn_rules_count--;
 
       list_del(p);
       kfree(a_rule);
@@ -606,7 +594,6 @@ void return_count_dyn_rules(void) {}
 /* Called when data arrives at the netlink socket, the network packet containing
  * the netlink message is passed in the parameters */
 void netlink_Read_Msg(struct sk_buff *skb_in) {
-
   // pointer to a netlink message
   struct nlmsghdr *nl_msg;
 
@@ -626,8 +613,7 @@ void netlink_Read_Msg(struct sk_buff *skb_in) {
 
   RECEVED_COMMAND = (struct Command *)nlmsg_data(nl_msg);
 
-  if (RECEVED_COMMAND == NULL)
-    res = false;
+  if (RECEVED_COMMAND == NULL) res = false;
 
   // store the ID of the process that sent this message
   pid = nl_msg->nlmsg_pid;
@@ -635,78 +621,83 @@ void netlink_Read_Msg(struct sk_buff *skb_in) {
   //=================================================================================
   if (res) {
     switch (RECEVED_COMMAND->action) {
-    case ADD_RULE_COMMAND: {
-      res = add_a_rule(RECEVED_COMMAND->rule);
-      log("rule added");
-    } break;
-    case DELETE_RULE_COMMAND: {
-      delete_a_rule(RECEVED_COMMAND->rule);
-    } break;
-    case UPDATE_RULE_COMMAND: {
-      update_a_rule(RECEVED_COMMAND->rule);
-    } break;
-    case START_COMMAND: {
-      run_pause = true;
-    } break;
-    case PAUSE_COMMAND: {
-      run_pause = false;
-    } break;
-    case GET_DYNAMIC_RULES_COMMAND: {
-      printk(KERN_ERR "Firewall: count of dynamic rules = %d\n",
-             dyn_rules_count);
-      // we create a network packet to place a Netlink message in it for a response
-      skb_out = nlmsg_new(MSG_SIZE_INT, 0);
-      if (!skb_out) {
-        printk(KERN_ERR "Firewall: Failed to allocate new skb\n");
-        res = 0;
-      }
-
-      // we create a netlink message with data of size MSG_SIZE in skb_out
-      nl_msg = nlmsg_put(skb_out, 0, 0, NLMSG_DONE, MSG_SIZE_INT, 0);
-      // write to the data area of the response netlink message
-      *((int *)nlmsg_data(nl_msg)) = dyn_rules_count;
-      // we send a network packet to the specified process (pid) via a netlink socket
-      nlmsg_unicast(netlink_sock, skb_out, pid);
-
-      list_for_each(p, &policy_list.list) {
-        each_rule = list_entry(p, struct RuleListItem, list);
-
-        if (each_rule->id_rule < 0) {
-          to_user_space = kmalloc(MSG_SIZE_DYN_RULE, GFP_KERNEL);
-          to_user_space->id_rule = each_rule->id_rule;
-          to_user_space->in_out = each_rule->in_out;
-          to_user_space->src_ip = each_rule->src_ip;
-          to_user_space->src_port = each_rule->src_port;
-          to_user_space->dest_ip = each_rule->dest_ip;
-          to_user_space->dest_port = each_rule->dest_port;
-          to_user_space->proto = each_rule->proto;
-          to_user_space->action = each_rule->action;
-
-          // we create a network packet to place a Netlink message in it for a response
-          skb_out = nlmsg_new(MSG_SIZE_DYN_RULE, 0);
-          if (!skb_out) {
-            printk(KERN_ERR "Firewall: Failed to allocate new skb\n");
-            // return;
-            res = 0;
-          }
-
-          // we create a netlink message with data of size MSG_SIZE in skb_out
-          nl_msg = nlmsg_put(skb_out, 0, 0, NLMSG_DONE, MSG_SIZE_DYN_RULE, 0);
-          // write to the data area of the response netlink message
-          *((struct DynamicRuleFromKernel *)nlmsg_data(nl_msg)) =
-              *to_user_space;
-          // we send a network packet to the specified process (pid) via a netlink socket
-          nlmsg_unicast(netlink_sock, skb_out, pid);
+      case ADD_RULE_COMMAND: {
+        res = add_a_rule(RECEVED_COMMAND->rule);
+        log("rule added");
+      } break;
+      case DELETE_RULE_COMMAND: {
+        delete_a_rule(RECEVED_COMMAND->rule);
+      } break;
+      case UPDATE_RULE_COMMAND: {
+        update_a_rule(RECEVED_COMMAND->rule);
+      } break;
+      case START_COMMAND: {
+        run_pause = true;
+      } break;
+      case PAUSE_COMMAND: {
+        run_pause = false;
+      } break;
+      case GET_DYNAMIC_RULES_COMMAND: {
+        printk(KERN_ERR "Firewall: count of dynamic rules = %d\n",
+               dyn_rules_count);
+        // we create a network packet to place a Netlink message in it for a
+        // response
+        skb_out = nlmsg_new(MSG_SIZE_INT, 0);
+        if (!skb_out) {
+          printk(KERN_ERR "Firewall: Failed to allocate new skb\n");
+          res = 0;
         }
-      }
-    } break;
-    default:
-      break;
+
+        // we create a netlink message with data of size MSG_SIZE in skb_out
+        nl_msg = nlmsg_put(skb_out, 0, 0, NLMSG_DONE, MSG_SIZE_INT, 0);
+        // write to the data area of the response netlink message
+        *((int *)nlmsg_data(nl_msg)) = dyn_rules_count;
+        // we send a network packet to the specified process (pid) via a netlink
+        // socket
+        nlmsg_unicast(netlink_sock, skb_out, pid);
+
+        list_for_each(p, &policy_list.list) {
+          each_rule = list_entry(p, struct RuleListItem, list);
+
+          if (each_rule->id_rule < 0) {
+            to_user_space = kmalloc(MSG_SIZE_DYN_RULE, GFP_KERNEL);
+            to_user_space->id_rule = each_rule->id_rule;
+            to_user_space->in_out = each_rule->in_out;
+            to_user_space->src_ip = each_rule->src_ip;
+            to_user_space->src_port = each_rule->src_port;
+            to_user_space->dest_ip = each_rule->dest_ip;
+            to_user_space->dest_port = each_rule->dest_port;
+            to_user_space->proto = each_rule->proto;
+            to_user_space->action = each_rule->action;
+
+            // we create a network packet to place a Netlink message in it for a
+            // response
+            skb_out = nlmsg_new(MSG_SIZE_DYN_RULE, 0);
+            if (!skb_out) {
+              printk(KERN_ERR "Firewall: Failed to allocate new skb\n");
+              // return;
+              res = 0;
+            }
+
+            // we create a netlink message with data of size MSG_SIZE in skb_out
+            nl_msg = nlmsg_put(skb_out, 0, 0, NLMSG_DONE, MSG_SIZE_DYN_RULE, 0);
+            // write to the data area of the response netlink message
+            *((struct DynamicRuleFromKernel *)nlmsg_data(nl_msg)) =
+                *to_user_space;
+            // we send a network packet to the specified process (pid) via a
+            // netlink socket
+            nlmsg_unicast(netlink_sock, skb_out, pid);
+          }
+        }
+      } break;
+      default:
+        break;
     }
   }
 
   if (RECEVED_COMMAND->action != GET_DYNAMIC_RULES_COMMAND) {
-    // we create a network packet to place a Netlink message in it for a response
+    // we create a network packet to place a Netlink message in it for a
+    // response
     skb_out = nlmsg_new(MSG_SIZE_BOOL, 0);
     if (!skb_out) {
       printk(KERN_ERR "Firewall: Failed to allocate new skb\n");
@@ -717,18 +708,17 @@ void netlink_Read_Msg(struct sk_buff *skb_in) {
     nl_msg = nlmsg_put(skb_out, 0, 0, NLMSG_DONE, MSG_SIZE_BOOL, 0);
     // write to the data area of the response netlink message
     *((bool *)nlmsg_data(nl_msg)) = res;
-    // we send a network packet to the specified process (pid) via a netlink socket
+    // we send a network packet to the specified process (pid) via a netlink
+    // socket
     nlmsg_unicast(netlink_sock, skb_out, pid);
   }
 }
 
-
 /* Initialization routine */
 
 int init_module() {
-
   struct netlink_kernel_cfg cfg = {
-     .input = netlink_Read_Msg,
+      .input = netlink_Read_Msg,
   };
 
   int dev_num = 232;
@@ -766,7 +756,6 @@ int init_module() {
 }
 
 void cleanup(void) { nf_unregister_net_hook(&init_net, &netfilter_ops_out); }
-
 
 /* main cleanup routine */
 void cleanup_module() {
@@ -806,8 +795,7 @@ int hex_to_int(char c) {
   int first = c / 16 - 3;
   int second = c % 16;
   int result = first * 10 + second;
-  if (result > 9)
-    result--;
+  if (result > 9) result--;
   return result;
 }
 
@@ -817,4 +805,4 @@ int hex_to_ascii(char c, char d) {
   return high + low;
 }
 
-#endif // KERNEL_NETFILTER
+#endif  // KERNEL_NETFILTER

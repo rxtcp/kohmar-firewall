@@ -2,16 +2,19 @@
 #define LOGGER_H_
 
 #include <stdio.h>
+
 #include <string>
 
 /*
  * Abstract class for logging capabilities
  */
 class Logger {
-public:
+ public:
   Logger();
-  virtual void log(std::string logMessage) = 0; // log the data - virtual
+
+  virtual void log(std::string logMessage) = 0;  // log the data - virtual
   virtual ~Logger();
+
   void setName(std::string name) { this->name = name; }
   std::string &getName() { return name; }
 
@@ -22,7 +25,7 @@ public:
     return buf;
   }
 
-protected:
+ protected:
   std::string name;
 };
 

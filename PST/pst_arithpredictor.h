@@ -11,17 +11,20 @@
 #include "pst_node.h"
 
 class PstArithPredictor {
-private:
+ private:
   PstNode *pst;
   Context *context;
 
-public:
+ public:
   PstArithPredictor(PstNode *node);
+
   virtual ~PstArithPredictor();
 
   int alphabetSize();
+
   void increment(int symbol);
+
   PstNode *predict(double *prediction);
 };
 
-#endif // PSTARITHPREDICTOR_H_
+#endif  // PSTARITHPREDICTOR_H_

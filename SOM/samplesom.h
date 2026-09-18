@@ -7,6 +7,8 @@
 #ifndef SAMPLESOM_H
 #define SAMPLESOM_H
 
+#include <stdio.h>
+
 #include <QDebug>
 #include <QFile>
 #include <QMessageBox>
@@ -14,20 +16,19 @@
 #include <QTextStream>
 #include <QXmlStreamReader>
 
-#include <stdio.h>
-
 #include "neuron.h"
 
 class SampleSom : public Neuron {
   Q_OBJECT
 
-public:
+ public:
   explicit SampleSom(int _dimension);
+
   static QList<SampleSom *> loadFromFile(QString file_name);
 
-signals:
+ signals:
 
-public slots:
+ public slots:
 };
 
-#endif // SAMPLESOM_H
+#endif  // SAMPLESOM_H

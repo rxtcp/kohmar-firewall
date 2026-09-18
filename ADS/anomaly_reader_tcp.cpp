@@ -13,7 +13,6 @@ AnomalyReaderTcp::AnomalyReaderTcp(
     bool *_gen_rules, UnixSemaphore *_sem_settings, int *_tcp_drop_ports,
     int *_id_rules_dyn)
     : QThread(parent) {
-
   anomalies_table = _anomalies_table;
   rules_table = _rules_table;
   receiver = _receiver;
@@ -49,7 +48,6 @@ void AnomalyReaderTcp::run() {
       sem_settings->wait();
 
       if (anomaly_node.anomaly >= *limit_tcp) {
-
         timeItem = new QTableWidgetItem();
         valItem = new QTableWidgetItem();
         ipSrcItem = new QTableWidgetItem();
@@ -140,7 +138,6 @@ void AnomalyReaderTcp::run() {
 
             col_rules++;
             (*id_rule)--;
-
           } else
             delete rule_new;
 
@@ -149,8 +146,8 @@ void AnomalyReaderTcp::run() {
       }
 
       sem_settings->post();
-
-    } else { // pause
+    } else {
+      // pause
       this->msleep(5);
     }
   }

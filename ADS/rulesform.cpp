@@ -5,6 +5,7 @@
  */
 
 #include "rulesform.h"
+
 #include "ui_rulesform.h"
 
 RulesForm::RulesForm(QWidget *parent, QList<Rule *> *_user_rules,
@@ -84,20 +85,20 @@ void RulesForm::fillUserGrid() {
       portDestItem->setText(QString::number(r->port_dest));
 
     switch (r->proto) {
-    case 0: {
-      protoItem->setText("Any");
-    } break;
-    case 1: {
-      protoItem->setText("TCP");
-    } break;
-    case 2: {
-      protoItem->setText("UDP");
-    } break;
-    case 3: {
-      protoItem->setText("ICMP");
-    } break;
-    default:
-      break;
+      case 0: {
+        protoItem->setText("Any");
+      } break;
+      case 1: {
+        protoItem->setText("TCP");
+      } break;
+      case 2: {
+        protoItem->setText("UDP");
+      } break;
+      case 3: {
+        protoItem->setText("ICMP");
+      } break;
+      default:
+        break;
     }
 
     if (r->action == 0)
@@ -170,20 +171,20 @@ void RulesForm::fillDynamicGrid() {
       portDestItem->setText(QString::number(r->port_dest));
 
     switch (r->proto) {
-    case 0: {
-      protoItem->setText("Any");
-    } break;
-    case 1: {
-      protoItem->setText("TCP");
-    } break;
-    case 2: {
-      protoItem->setText("UDP");
-    } break;
-    case 3: {
-      protoItem->setText("ICMP");
-    } break;
-    default:
-      break;
+      case 0: {
+        protoItem->setText("Any");
+      } break;
+      case 1: {
+        protoItem->setText("TCP");
+      } break;
+      case 2: {
+        protoItem->setText("UDP");
+      } break;
+      case 3: {
+        protoItem->setText("ICMP");
+      } break;
+      default:
+        break;
     }
 
     if (r->action == 0)
@@ -256,20 +257,20 @@ void RulesForm::addToGrid(Rule *r) {
     portDestItem->setText(QString::number(r->port_dest));
 
   switch (r->proto) {
-  case 0: {
-    protoItem->setText("Any");
-  } break;
-  case 1: {
-    protoItem->setText("TCP");
-  } break;
-  case 2: {
-    protoItem->setText("UDP");
-  } break;
-  case 3: {
-    protoItem->setText("ICMP");
-  } break;
-  default:
-    break;
+    case 0: {
+      protoItem->setText("Any");
+    } break;
+    case 1: {
+      protoItem->setText("TCP");
+    } break;
+    case 2: {
+      protoItem->setText("UDP");
+    } break;
+    case 3: {
+      protoItem->setText("ICMP");
+    } break;
+    default:
+      break;
   }
 
   if (r->action == 0)
@@ -332,7 +333,6 @@ void RulesForm::on_pushButton_2_clicked() {
   int cur_row = ui->tableWidget->currentRow();
 
   if (cur_row >= 0) {
-
     QString id_str = ui->tableWidget->item(cur_row, 0)->text();
 
     int id = id_str.toInt();
@@ -349,8 +349,7 @@ void RulesForm::on_pushButton_2_clicked() {
       }
     }
 
-    if (!rule_to_edit)
-      return;
+    if (!rule_to_edit) return;
 
     AddRuleForm *form = new AddRuleForm(0, NULL, rule_to_edit);
     form->setWindowFlags(((form->windowFlags() | Qt::CustomizeWindowHint) &
@@ -393,35 +392,34 @@ void RulesForm::on_pushButton_3_clicked() {
     int ret = msgBox.exec();
 
     switch (ret) {
-    case QMessageBox::Cancel:
-      return;
-      break;
-    case QMessageBox::Ok: {
+      case QMessageBox::Cancel:
+        return;
+        break;
+      case QMessageBox::Ok: {
+        QString id_str = ui->tableWidget->item(cur_row, 0)->text();
+        int id = id_str.toInt();
 
-      QString id_str = ui->tableWidget->item(cur_row, 0)->text();
-      int id = id_str.toInt();
+        qDebug() << "DELETE OK";
 
-      qDebug() << "DELETE OK";
+        Rule *rr, *r;
 
-      Rule *rr, *r;
-
-      foreach (rr, *user_rules) {
-        if (rr->id_rule == id) {
-          r = rr;
-          break;
+        foreach (rr, *user_rules) {
+          if (rr->id_rule == id) {
+            r = rr;
+            break;
+          }
         }
-      }
 
-      DbManager::removeFromDb(r->id_rule);
-      nlManager->deleteRuleFromKernel(r);
+        DbManager::removeFromDb(r->id_rule);
+        nlManager->deleteRuleFromKernel(r);
 
-      ui->tableWidget->removeRow(cur_row);
+        ui->tableWidget->removeRow(cur_row);
 
-      // user_rules->removeAt(remove_ind);
-      user_rules->removeOne(r);
-    } break;
-    default:
-      break;
+        // user_rules->removeAt(remove_ind);
+        user_rules->removeOne(r);
+      } break;
+      default:
+        break;
     }
   }
 }
@@ -461,20 +459,20 @@ void RulesForm::updateInGrid(int row, Rule *r) {
     ui->tableWidget->item(row, 5)->setText(QString::number(r->port_dest));
 
   switch (r->proto) {
-  case 0: {
-    ui->tableWidget->item(row, 6)->setText("Any");
-  } break;
-  case 1: {
-    ui->tableWidget->item(row, 6)->setText("TCP");
-  } break;
-  case 2: {
-    ui->tableWidget->item(row, 6)->setText("UDP");
-  } break;
-  case 3: {
-    ui->tableWidget->item(row, 6)->setText("ICMP");
-  } break;
-  default:
-    break;
+    case 0: {
+      ui->tableWidget->item(row, 6)->setText("Any");
+    } break;
+    case 1: {
+      ui->tableWidget->item(row, 6)->setText("TCP");
+    } break;
+    case 2: {
+      ui->tableWidget->item(row, 6)->setText("UDP");
+    } break;
+    case 3: {
+      ui->tableWidget->item(row, 6)->setText("ICMP");
+    } break;
+    default:
+      break;
   }
 
   if (r->action == 0)
@@ -518,39 +516,38 @@ void RulesForm::on_pushButton_6_clicked() {
     int ret = msgBox.exec();
 
     switch (ret) {
-    case QMessageBox::Cancel:
-      return;
-      break;
-    case QMessageBox::Ok: {
+      case QMessageBox::Cancel:
+        return;
+        break;
+      case QMessageBox::Ok: {
+        QString id_str = ui->tableWidget_2->item(cur_row, 0)->text();
+        int id = id_str.toInt();
+        id *= -1;
 
-      QString id_str = ui->tableWidget_2->item(cur_row, 0)->text();
-      int id = id_str.toInt();
-      id *= -1;
+        // msgBox.setText(id);
+        // msgBox.exec();
 
-      // msgBox.setText(id);
-      // msgBox.exec();
+        Rule *rr, *r;
 
-      Rule *rr, *r;
-
-      foreach (rr, *dynamic_rules) {
-        if (rr->id_rule == id) {
-          r = rr;
-          break;
+        foreach (rr, *dynamic_rules) {
+          if (rr->id_rule == id) {
+            r = rr;
+            break;
+          }
         }
-      }
 
-      if (r) {
-        nlManager->deleteRuleFromKernel(r);
+        if (r) {
+          nlManager->deleteRuleFromKernel(r);
 
-        ui->tableWidget_2->removeRow(cur_row);
+          ui->tableWidget_2->removeRow(cur_row);
 
-        sem_dyn_rules->wait();
-        dynamic_rules->removeOne(r);
-        sem_dyn_rules->post();
-      }
-    } break;
-    default:
-      break;
+          sem_dyn_rules->wait();
+          dynamic_rules->removeOne(r);
+          sem_dyn_rules->post();
+        }
+      } break;
+      default:
+        break;
     }
   }
 }

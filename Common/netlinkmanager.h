@@ -12,9 +12,8 @@
 #include <QList>
 #include <QMessageBox>
 #include <QString>
-#endif // ADS_DAEMON
+#endif  // ADS_DAEMON
 
-#include "structs.h"
 #include <fcntl.h>
 #include <linux/netlink.h>
 #include <netinet/in.h>
@@ -25,6 +24,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "structs.h"
+
 #define MSG_SIZE_SEND sizeof(struct Command)
 #define MSG_SIZE_READ sizeof(bool)
 #define MSG_SIZE_READ_DYN_COUNT sizeof(int)
@@ -34,21 +35,28 @@
 #define NETLINK_USER 31
 
 class NetLinkManager {
-public:
+ public:
   NetLinkManager(int group);
+
   ~NetLinkManager();
+
   void closeNetlinkSocket();
+
   bool sendCommand(struct Command com);
+
   void sendRuleToKernel(Rule *r);
+
   void deleteRuleFromKernel(Rule *r);
+
   void updateRuleInKernel(Rule *r);
 
 #ifndef ADS_DAEMON
   void getDynamicRulesFromKernel(QList<Rule *> *dyn_rules);
+
   QString getStrIp(unsigned int ip);
 #endif
 
-private:
+ private:
   /* Netlink socket for communication with the module */
   int netlink_sock;
 
@@ -72,4 +80,4 @@ private:
   struct DynamicRuleFromKernel *RECV_DYN_RULE;
 };
 
-#endif // NETLINKMANAGER_H
+#endif  // NETLINKMANAGER_H

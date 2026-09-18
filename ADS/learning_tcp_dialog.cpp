@@ -5,6 +5,7 @@
  */
 
 #include "learning_tcp_dialog.h"
+
 #include "ui_learning_tcp_dialog.h"
 
 LearningTcpDialog::LearningTcpDialog(QWidget *parent,
@@ -24,17 +25,13 @@ void LearningTcpDialog::on_pushButton_clicked() {
   ui->pushButton->setEnabled(false);
   ui->pushButton_2->setEnabled(true);
 
-  if (ui->radioButton->isChecked())
-    learned_protocol = LEARN_HTTP;
+  if (ui->radioButton->isChecked()) learned_protocol = LEARN_HTTP;
 
-  if (ui->radioButton_2->isChecked())
-    learned_protocol = LEARN_FTP;
+  if (ui->radioButton_2->isChecked()) learned_protocol = LEARN_FTP;
 
-  if (ui->radioButton_3->isChecked())
-    learned_protocol = LEARN_SSH;
+  if (ui->radioButton_3->isChecked()) learned_protocol = LEARN_SSH;
 
-  if (ui->radioButton_4->isChecked())
-    learned_protocol = LEARN_ALL;
+  if (ui->radioButton_4->isChecked()) learned_protocol = LEARN_ALL;
 
   if (isLearn == false) {
     isLearn = true;
@@ -77,7 +74,7 @@ void LearningTcpDialog::on_pushButton_2_clicked() {
       strcpy(file_name, "common.samples");
     }
 
-    FILE *file = fopen(file_name, file_mode); //"w"
+    FILE *file = fopen(file_name, file_mode);  //"w"
 
     if (!file) {
       qDebug() << "Error! File not opened!";
@@ -104,8 +101,9 @@ void LearningTcpDialog::on_pushButton_2_clicked() {
   ui->pushButton_2->setEnabled(false);
   ui->pushButton->setEnabled(true);
 
-  msgBox.setText("The training sample has been formed!\nFor the changes to "
-                 "take effect,\nyou need to restart the program!");
+  msgBox.setText(
+      "The training sample has been formed!\nFor the changes to "
+      "take effect,\nyou need to restart the program!");
   msgBox.exec();
   this->close();
 }
@@ -113,8 +111,7 @@ void LearningTcpDialog::on_pushButton_2_clicked() {
 void LearningTcpDialog::closeEvent(QCloseEvent *event) {
   (void)event;
 
-  if (this->isLearn)
-    return;
+  if (this->isLearn) return;
 }
 
 void LearningTcpDialog::on_pushButton_3_clicked() {
@@ -126,17 +123,17 @@ void LearningTcpDialog::on_pushButton_3_clicked() {
     int ret = msgBox.exec();
 
     switch (ret) {
-    case QMessageBox::Cancel:
-      return;
-      break;
-    case QMessageBox::Ok: {
-      isLearn = false;
-      packs_receiver->setIsLearnTcp(false, learned_protocol);
-      packs_receiver->clearLearningStrings();
-      this->close();
-    } break;
-    default:
-      return;
+      case QMessageBox::Cancel:
+        return;
+        break;
+      case QMessageBox::Ok: {
+        isLearn = false;
+        packs_receiver->setIsLearnTcp(false, learned_protocol);
+        packs_receiver->clearLearningStrings();
+        this->close();
+      } break;
+      default:
+        return;
     }
   } else
     this->close();

@@ -7,16 +7,17 @@
  */
 
 class LowLevelThread {
-public:
+ public:
   LowLevelThread();
+
   virtual void create(void *(*threadFunc)(void *),
-                      void *param) = 0; // create a thread with the specified
-                                        // function and params
-  virtual void join() = 0;              // join, wait
+                      void *param) = 0;  // create a thread with the specified
+  // function and params
+  virtual void join() = 0;  // join, wait
 
   virtual ~LowLevelThread();
 
-protected:
+ protected:
 };
 
 #endif /* LOWLEVELTHREAD_H_ */

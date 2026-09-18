@@ -11,7 +11,7 @@ DbManager::DbManager() {}
 void DbManager::addToDb(Rule *r) {
 #ifndef ADS_DAEMON
   QMessageBox msgBox;
-#endif // ADS_DAEMON
+#endif  // ADS_DAEMON
 
   QSqlDatabase dBase;
 
@@ -23,7 +23,7 @@ void DbManager::addToDb(Rule *r) {
 #ifndef ADS_DAEMON
       msgBox.setText("Error connecting to database!");
       msgBox.exec();
-#endif // ADS_DAEMON
+#endif  // ADS_DAEMON
       qDebug() << "Error connecting to database!";
       dBase.close();
       return;
@@ -31,14 +31,14 @@ void DbManager::addToDb(Rule *r) {
 
     // get data
     QSqlQuery query;
-    QString sql = "INSERT INTO rule(in_out, ip_src, ip_dest, port_src, "
-                  "port_dest, proto, action, src_name, dest_name) values('" +
-                  QString::number(r->in_out) + "', '" + r->ip_src + "', '" +
-                  r->ip_dest + "', '" + QString::number(r->port_src) + "', '" +
-                  QString::number(r->port_dest) + "', '" +
-                  QString::number(r->proto) + "', '" +
-                  QString::number(r->action) + "', '" + r->host_name_src +
-                  "', '" + r->host_name_dest + "')";
+    QString sql =
+        "INSERT INTO rule(in_out, ip_src, ip_dest, port_src, "
+        "port_dest, proto, action, src_name, dest_name) values('" +
+        QString::number(r->in_out) + "', '" + r->ip_src + "', '" + r->ip_dest +
+        "', '" + QString::number(r->port_src) + "', '" +
+        QString::number(r->port_dest) + "', '" + QString::number(r->proto) +
+        "', '" + QString::number(r->action) + "', '" + r->host_name_src +
+        "', '" + r->host_name_dest + "')";
 
     // query.prepare(sql);
     // query.bindValue(":field1", QString::number(r->in_out));
@@ -47,7 +47,7 @@ void DbManager::addToDb(Rule *r) {
 #ifndef ADS_DAEMON
       msgBox.setText("DB insert error!");
       msgBox.exec();
-#endif // ADS_DAEMON
+#endif  // ADS_DAEMON
       qDebug() << "DB insert error!";
       dBase.close();
       // return;
@@ -60,7 +60,7 @@ void DbManager::addToDb(Rule *r) {
 #ifndef ADS_DAEMON
     msgBox.setText("Error!");
     msgBox.exec();
-#endif // ADS_DAEMON
+#endif  // ADS_DAEMON
     qDebug() << "error1";
   }
 
@@ -74,7 +74,7 @@ void DbManager::removeFromDb(int id) {
 #ifndef ADS_DAEMON
   QMessageBox msgBox;
   // msgBox.exec();
-#endif // ADS_DAEMON
+#endif  // ADS_DAEMON
 
   QSqlDatabase dBase;
 
@@ -87,7 +87,7 @@ void DbManager::removeFromDb(int id) {
 #ifndef ADS_DAEMON
       msgBox.setText("Error connecting to database");
       msgBox.exec();
-#endif // ADS_DAEMON
+#endif  // ADS_DAEMON
       qDebug() << "Error connecting to database!";
       dBase.close();
       return;
@@ -101,7 +101,7 @@ void DbManager::removeFromDb(int id) {
 #ifndef ADS_DAEMON
       msgBox.setText("Deletion error from database!");
       msgBox.exec();
-#endif // ADS_DAEMON
+#endif  // ADS_DAEMON
       qDebug() << "Deletion error from database!";
       dBase.close();
       // return;
@@ -112,7 +112,7 @@ void DbManager::removeFromDb(int id) {
 #ifndef ADS_DAEMON
     msgBox.setText("Error!");
     msgBox.exec();
-#endif // ADS_DAEMON
+#endif  // ADS_DAEMON
     qDebug() << "error2";
   }
 
@@ -126,7 +126,7 @@ void DbManager::updateInDb(Rule *r) {
 #ifndef ADS_DAEMON
   QMessageBox msgBox;
   // msgBox.exec();
-#endif // ADS_DAEMON
+#endif  // ADS_DAEMON
 
   QSqlDatabase dBase;
 
@@ -139,7 +139,7 @@ void DbManager::updateInDb(Rule *r) {
 #ifndef ADS_DAEMON
       msgBox.setText("Error connecting to database!");
       msgBox.exec();
-#endif // ADS_DAEMON
+#endif  // ADS_DAEMON
       qDebug() << "Error connecting to database!";
       dBase.close();
       return;
@@ -160,7 +160,7 @@ void DbManager::updateInDb(Rule *r) {
 #ifndef ADS_DAEMON
       msgBox.setText("Database update error!");
       msgBox.exec();
-#endif // ADS_DAEMON
+#endif  // ADS_DAEMON
       qDebug() << "Database update error!";
       dBase.close();
       // return;
@@ -171,7 +171,7 @@ void DbManager::updateInDb(Rule *r) {
 #ifndef ADS_DAEMON
     msgBox.setText("Error!");
     msgBox.exec();
-#endif // ADS_DAEMON
+#endif  // ADS_DAEMON
     qDebug() << "error3";
   }
 
@@ -194,7 +194,7 @@ QList<Rule *> *DbManager::getRulesFromDb() {
     QMessageBox msgBox;
     msgBox.setText("Error connecting to database!");
     msgBox.exec();
-#endif // ADS_DAEMON
+#endif  // ADS_DAEMON
     qDebug() << "Error connecting to database!";
     qApp->quit();
   }
@@ -207,7 +207,7 @@ QList<Rule *> *DbManager::getRulesFromDb() {
     QMessageBox msgBox;
     msgBox.setText("Database read error!");
     msgBox.exec();
-#endif // ADS_DAEMON
+#endif  // ADS_DAEMON
     qDebug() << "Database read error!";
     qApp->quit();
   }

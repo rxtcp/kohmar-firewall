@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "../../libs/detectors/pst/pst_predictor.h"
-#include "pst_samples.h"
+#include "detectors/pst/pst_predictor.h"
+#include "detectors/pst/pst_samples.h"
 
 using namespace std;
 

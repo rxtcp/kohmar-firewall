@@ -14,10 +14,10 @@
 #include <iostream>
 #include <sstream>
 
-#include "../Common/utils/ConfigReader.h"
-#include "../Common/utils/Logger.h"
-#include "../Common/utils/PrintfLogger.h"
-#include "../Common/utils/Thread.h"
+#include "platform/config/ConfigReader.h"
+#include "platform/logging/Logger.h"
+#include "platform/logging/PrintfLogger.h"
+#include "platform/threading/Thread.h"
 
 using namespace std;
 

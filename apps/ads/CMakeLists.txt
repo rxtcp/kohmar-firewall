@@ -1,88 +1,103 @@
-cmake_minimum_required(VERSION 3.16)
-project(ADS VERSION 1.0 LANGUAGES C CXX)
+set(ADS_UI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ui)
 
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-
-# Set up AUTOMOC and some sensible defaults for runtime execution
-# When using Qt 6.3, you can replace the code block below with
-# qt_standard_project_setup()
-set(CMAKE_AUTOMOC ON)
-include(GNUInstallDirs)
-set(CMAKE_AUTOUIC ON)
-
-find_package(QT NAMES Qt5 Qt6 REQUIRED COMPONENTS Core)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Gui Network Sql)
-find_package(Qt${QT_VERSION_MAJOR} OPTIONAL_COMPONENTS Widgets)
-
-qt_add_executable(ADS WIN32 MACOSX_BUNDLE
-        ../../legacy/common/ConnectionTree.cpp ../../legacy/common/ConnectionTree.h
-        ../../libs/networking/adressresolver.cpp ../../libs/networking/adressresolver.h
-        ../../libs/storage/dbmanager.cpp ../../libs/storage/dbmanager.h
-        ../../libs/kernel_client/netlinkmanager.cpp ../../libs/kernel_client/netlinkmanager.h
-        ../../libs/engine/packsreceiver.cpp ../../libs/engine/packsreceiver.h
-        ../../libs/engine/structs.h
-        ../../libs/platform/config/ConfigReader.cpp
-        ../../libs/platform/service/DaemonService.cpp ../../libs/platform/service/DaemonService.h
-        ../../libs/platform/logging/Logger.cpp ../../libs/platform/logging/Logger.h
-        ../../libs/platform/sockets/LowLevelSocket.cpp ../../libs/platform/sockets/LowLevelSocket.h
-        ../../libs/platform/threading/LowLevelThread.cpp ../../libs/platform/threading/LowLevelThread.h
-        ../../libs/platform/logging/NullLogger.cpp ../../libs/platform/logging/NullLogger.h
-        ../../libs/platform/PlatformFactory.cpp ../../libs/platform/PlatformFactory.h
-        ../../libs/platform/threading/Pool.cpp ../../libs/platform/threading/Pool.h
-        ../../libs/platform/threading/PosixThread.cpp ../../libs/platform/threading/PosixThread.h
-        ../../libs/platform/logging/PrintfLogger.cpp ../../libs/platform/logging/PrintfLogger.h
-        ../../libs/platform/threading/Semaphore.cpp ../../libs/platform/threading/Semaphore.h
-        ../../libs/platform/service/Service.cpp ../../libs/platform/service/Service.h
-        ../../libs/platform/threading/Signal.cpp ../../libs/platform/threading/Signal.h
-        ../../libs/platform/threading/SocketSignal.cpp ../../libs/platform/threading/SocketSignal.h
-        ../../libs/platform/threading/StdThread.cpp ../../libs/platform/threading/StdThread.h
-        ../../libs/platform/logging/SyslogLogger.cpp ../../libs/platform/logging/SyslogLogger.h
-        ../../libs/platform/threading/Thread.cpp ../../libs/platform/threading/Thread.h
-        ../../libs/platform/sockets/UnixLowLevelSocket.cpp ../../libs/platform/sockets/UnixLowLevelSocket.h
-        ../../libs/platform/threading/UnixSemaphore.cpp ../../libs/platform/threading/UnixSemaphore.h
-        ../../libs/detectors/pst/pst_arithpredictor.cpp ../../libs/detectors/pst/pst_arithpredictor.h
-        ../../libs/detectors/pst/pst_builder.cpp ../../libs/detectors/pst/pst_builder.h
-        ../../libs/detectors/pst/pst_common.h
-        ../../libs/detectors/pst/pst_context.cpp ../../libs/detectors/pst/pst_context.h
-        ../../libs/detectors/pst/pst_node.cpp ../../libs/detectors/pst/pst_node.h
-        ../../libs/detectors/pst/pst_predictor.cpp ../../libs/detectors/pst/pst_predictor.h
-        ../../libs/detectors/pst/pst_samples.cpp ../../libs/detectors/pst/pst_samples.h
-        ../../libs/detectors/som/neuron.cpp ../../libs/detectors/som/neuron.h
-        ../../libs/detectors/som/samplesom.cpp ../../libs/detectors/som/samplesom.h
-        ../../libs/detectors/som/selforganizedmap.cpp ../../libs/detectors/som/selforganizedmap.h
-        ui/rules/addruleform.cpp ui/rules/addruleform.h ui/rules/addruleform.ui
-        ui/settings/ads_settings_dialog.cpp ui/settings/ads_settings_dialog.h ui/settings/ads_settings_dialog.ui
-        ui/anomalies/anomaly_frame.cpp ui/anomalies/anomaly_frame.h
-        ui/anomalies/anomaly_reader_flow.cpp ui/anomalies/anomaly_reader_flow.h
-        ui/anomalies/anomaly_reader_tcp.cpp ui/anomalies/anomaly_reader_tcp.h
-        ui/learning/learning_flow_dialog.cpp ui/learning/learning_flow_dialog.h ui/learning/learning_flow_dialog.ui
-        ui/learning/learning_tcp_dialog.cpp ui/learning/learning_tcp_dialog.h ui/learning/learning_tcp_dialog.ui
+add_executable(
+        ads
         main.cpp
-        ui/mainwindow.cpp ui/mainwindow.h ui/mainwindow.ui
-        ui/rules/rulesform.cpp ui/rules/rulesform.h ui/rules/rulesform.ui
-)
-target_link_libraries(ADS PRIVATE
-        Qt::Core
-        Qt::Gui
-        Qt::Network
-        Qt::Sql
+
+        ${ADS_UI_DIR}/mainwindow.cpp
+        ${ADS_UI_DIR}/mainwindow.h
+        ${ADS_UI_DIR}/mainwindow.ui
+
+        ${ADS_UI_DIR}/rules/rulesform.cpp
+        ${ADS_UI_DIR}/rules/rulesform.h
+        ${ADS_UI_DIR}/rules/rulesform.ui
+
+        ${ADS_UI_DIR}/rules/addruleform.cpp
+        ${ADS_UI_DIR}/rules/addruleform.h
+        ${ADS_UI_DIR}/rules/addruleform.ui
+
+        ${ADS_UI_DIR}/settings/ads_settings_dialog.cpp
+        ${ADS_UI_DIR}/settings/ads_settings_dialog.h
+        ${ADS_UI_DIR}/settings/ads_settings_dialog.ui
+
+        ${ADS_UI_DIR}/learning/learning_tcp_dialog.cpp
+        ${ADS_UI_DIR}/learning/learning_tcp_dialog.h
+        ${ADS_UI_DIR}/learning/learning_tcp_dialog.ui
+
+        ${ADS_UI_DIR}/learning/learning_flow_dialog.cpp
+        ${ADS_UI_DIR}/learning/learning_flow_dialog.h
+        ${ADS_UI_DIR}/learning/learning_flow_dialog.ui
+
+        ${ADS_UI_DIR}/anomalies/anomaly_frame.cpp
+        ${ADS_UI_DIR}/anomalies/anomaly_frame.h
+
+        ${ADS_UI_DIR}/anomalies/anomaly_reader_tcp.cpp
+        ${ADS_UI_DIR}/anomalies/anomaly_reader_tcp.h
+
+        ${ADS_UI_DIR}/anomalies/anomaly_reader_flow.cpp
+        ${ADS_UI_DIR}/anomalies/anomaly_reader_flow.h
+
+        ${PROJECT_SOURCE_DIR}/resources/resources.qrc
 )
 
-target_compile_options(ADS
-        -g
+target_include_directories(
+        ads
+        PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${ADS_UI_DIR}
+        ${ADS_UI_DIR}/rules
+        ${ADS_UI_DIR}/settings
+        ${ADS_UI_DIR}/learning
+        ${ADS_UI_DIR}/anomalies
+        ${PROJECT_SOURCE_DIR}/libs
 )
 
-if ((QT_VERSION_MAJOR GREATER 4))
-    target_link_libraries(ADS PRIVATE
-            Qt::Widgets
-    )
-endif ()
+target_compile_definitions(
+        ads
+        PRIVATE
+        ADS_QT
+)
 
-install(TARGETS ADS
-        BUNDLE DESTINATION ../../AAA/ADS
+target_link_libraries(
+        ads
+        PRIVATE
+        engine
+        kernel_client
+        storage
+        networking
+        platform
+        pst
+        som
+        Qt${QT_VERSION_MAJOR}::Core
+        Qt${QT_VERSION_MAJOR}::Gui
+        Qt${QT_VERSION_MAJOR}::Widgets
+        Qt${QT_VERSION_MAJOR}::Network
+        Qt${QT_VERSION_MAJOR}::Sql
+        Threads::Threads
+)
+
+set_property(
+        TARGET ads
+        PROPERTY AUTOUIC_SEARCH_PATHS
+        ${ADS_UI_DIR}
+        ${ADS_UI_DIR}/rules
+        ${ADS_UI_DIR}/settings
+        ${ADS_UI_DIR}/learning
+)
+
+install(
+        TARGETS ads
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-# Consider using qt_generate_deploy_app_script() for app deployment if
-# the project can use Qt 6.3. In that case rerun qmake2cmake with
-# --min-qt-version=6.3.
+install(
+        DIRECTORY ${PROJECT_SOURCE_DIR}/data/samples/ads/
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/kohmar-firewall/samples
+)
+
+install(
+        FILES
+        ${PROJECT_SOURCE_DIR}/config/ads.settings.example
+        ${PROJECT_SOURCE_DIR}/config/readerd.conf.example
+        DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/kohmar-firewall
+)

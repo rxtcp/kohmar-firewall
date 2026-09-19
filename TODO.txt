@@ -1,0 +1,30 @@
+1. Пока внутренние файлы используют короткие включения вроде #include "Logger.h", поэтому перечислены все подкаталоги.
+Позже лучше перейти на: #include "platform/logging/Logger.h" и оставить один корневой include-каталог.
+
+2. libs/detectors/som/CMakeLists.txt
+Widgets здесь пока необходим, потому что SampleSom::loadFromFile() создаёт QMessageBox.
+После удаления UI из алгоритмической библиотеки эту зависимость можно убрать.
+
+3. libs/networking/CMakeLists.txt
+Имя adressresolver содержит опечатку.
+На первом этапе лучше сохранить его, а переименование в address_resolver выполнить отдельным коммитом.
+
+4. libs/kernel_client/CMakeLists.txt
+После изменения включений netlinkmanager.h должен использовать: #include "engine/structs.h"
+Поскольку kernel_client использует structs.h, формально нужна зависимость от типов engine.
+Однако связывать весь engine с kernel_client неправильно и может создать цикл.
+Поэтому на следующем этапе общие структуры лучше вынести в отдельную header-only цель.
+Добавьте в libs/engine/CMakeLists.txt цель firewall_types, описанную ниже, и затем свяжите её:
+
+target_link_libraries(
+    kernel_client
+    PUBLIC
+        firewall_types
+        Qt${QT_VERSION_MAJOR}::Core
+        Qt${QT_VERSION_MAJOR}::Widgets
+        Threads::Threads
+)
+
+5. libs/storage/CMakeLists.txt
+Widgets пока требуется из-за QMessageBox внутри DbManager.
+После возврата ошибок через результат или исключение зависимость можно удалить.

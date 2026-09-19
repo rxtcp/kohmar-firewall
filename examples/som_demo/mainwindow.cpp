@@ -1,5 +1,7 @@
 #include "../../SOM/mainwindow.h"
 
+#include "detectors/som/samplesom.h"
+#include "detectors/som/selforganizedmap.h"
 #include "ui_mainwindow.h"
 
 MainWindow::MainWindow(QWidget *parent)
@@ -184,7 +186,7 @@ void MainWindow::on_pushButton_2_clicked() {
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(quitAction);
 
-    QIcon icon("icon.png");
+    QIcon icon(":/icons/firewall.png");
     trayIcon = new QSystemTrayIcon(this);
     trayIcon->setIcon(icon);
     trayIcon->setContextMenu(trayIconMenu);

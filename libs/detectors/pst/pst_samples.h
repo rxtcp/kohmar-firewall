@@ -1,9 +1,3 @@
-/*
- * Anomaly Detection System for network traffic
- * @license GNU GPL
- * @authors Chudov, Staroletov
- */
-
 #ifndef SAMPLES_H
 #define SAMPLES_H
 

@@ -1,9 +1,3 @@
-/*
- * Anomaly Detection System for network traffic
- * @license GNU GPL
- * @authors Chudov, Staroletov
- */
-
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 

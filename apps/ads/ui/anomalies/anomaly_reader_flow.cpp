@@ -1,9 +1,3 @@
-/*
- * Anomaly Detection System for network traffic
- * @license GNU GPL
- * @authors Chudov, Staroletov
- */
-
 #include "../../../../ADS/anomaly_reader_flow.h"
 
 AnomalyReaderFlow::AnomalyReaderFlow(

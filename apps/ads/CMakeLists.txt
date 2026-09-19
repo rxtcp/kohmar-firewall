@@ -20,7 +20,6 @@ qt_add_executable(ADS WIN32 MACOSX_BUNDLE
         ../../libs/storage/dbmanager.cpp ../../libs/storage/dbmanager.h
         ../../libs/kernel_client/netlinkmanager.cpp ../../libs/kernel_client/netlinkmanager.h
         ../../libs/engine/packsreceiver.cpp ../../libs/engine/packsreceiver.h
-        ../../legacy/common/rb_connection_tree.h
         ../../libs/engine/structs.h
         ../../libs/platform/config/ConfigReader.cpp
         ../../libs/platform/service/DaemonService.cpp ../../libs/platform/service/DaemonService.h

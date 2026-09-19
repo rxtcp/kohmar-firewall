@@ -1,9 +1,3 @@
-/*
- * Anomaly Detection System for network traffic
- * @license GNU GPL
- * @authors Chudov, Staroletov
- */
-
 #ifndef ADS_SETTINGS_DIALOG_H
 #define ADS_SETTINGS_DIALOG_H
 

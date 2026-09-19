@@ -1,5 +1,3 @@
-
-
 #ifndef SOCKETSIGNAL_H_
 #define SOCKETSIGNAL_H_
 

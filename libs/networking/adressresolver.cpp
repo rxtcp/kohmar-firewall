@@ -1,9 +1,3 @@
-/*
- * Anomaly Detection System for network traffic
- * @license GNU GPL
- * @authors Chudov, Staroletov
- */
-
 #include "../../Common/adressresolver.h"
 
 AdressResolver::AdressResolver() {}

@@ -1,9 +1,3 @@
-/*
- * Anomaly Detection System for network traffic
- * @license GNU GPL
- * @authors Staroletov, Chudov
- */
-
 // A Netfilter hook. Provides sniffer capabilities, drop packets and mime
 // filtering
 #ifndef NF_HOOK_H_

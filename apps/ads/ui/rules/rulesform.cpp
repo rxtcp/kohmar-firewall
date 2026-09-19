@@ -1,9 +1,3 @@
-/*
- * Anomaly Detection System for network traffic
- * @license GNU GPL
- * @authors Chudov, Staroletov
- */
-
 #include "../../../../ADS/rulesform.h"
 
 #include "ui_rulesform.h"

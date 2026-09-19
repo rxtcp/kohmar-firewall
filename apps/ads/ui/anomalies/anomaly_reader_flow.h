@@ -1,10 +1,5 @@
 #ifndef ANOMALY_READER_FLOW_H
 #define ANOMALY_READER_FLOW_H
-/*
- * Anomaly Detection System for network traffic
- * @license GNU GPL
- * @authors Chudov, Staroletov
- */
 
 #include <QDebug>
 #include <QListWidget>

@@ -1,9 +1,3 @@
-/*
- * Anomaly Detection System for network traffic
- * @license GNU GPL
- * @authors Chudov, Staroletov
- */
-
 #include "../../../../ADS/learning_flow_dialog.h"
 
 #include "ui_learning_flow_dialog.h"

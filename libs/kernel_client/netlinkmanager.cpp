@@ -1,9 +1,3 @@
-/*
- * Anomaly Detection System for network traffic
- * @license GNU GPL
- * @authors Chudov, Staroletov
- */
-
 #include "netlinkmanager.h"
 
 NetLinkManager::NetLinkManager(int group) {

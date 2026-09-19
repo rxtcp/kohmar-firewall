@@ -1,8 +1,4 @@
-/*
- * Anomaly Detection System for network traffic
- * @license GNU GPL
- * @authors Chudov, Staroletov
- */
+
 
 #include "../../../../ADS/anomaly_frame.h"
 

@@ -1,9 +1,3 @@
-/*
- * Anomaly Detection System for network traffic
- * @license GNU GPL
- * @authors Staroletov (used some GPL code)
- */
-
 #ifndef MMAP_UTILS_H_
 #define MMAP_UTILS_H_
 

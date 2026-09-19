@@ -62,32 +62,33 @@ void UnixLowLevelSocket::bindAndListen(std::string address, int port,
   }
   // create unix domain socket or tcp socket
   switch (protocol) {
-  case LowLevelSocket::AF_INET_: {
-    // inet=tcp socket
+    case LowLevelSocket::AF_INET_: {
+      // inet=tcp socket
 
-    struct sockaddr_in my_addr;
-    my_addr.sin_family = AF_INET;
-    my_addr.sin_port = htons(port);
+      struct sockaddr_in my_addr;
+      my_addr.sin_family = AF_INET;
+      my_addr.sin_port = htons(port);
 
-    my_addr.sin_addr.s_addr = inet_addr(address.c_str());
+      my_addr.sin_addr.s_addr = inet_addr(address.c_str());
 
-    bzero(&(my_addr.sin_zero), 8);
-    if (bind(sd, (struct sockaddr *)(&my_addr), sizeof(struct sockaddr)) == -1)
-      throw SocketException("bind");
-  } break;
-  case LowLevelSocket::AF_UNIX_: {
-    // unix socket
-    struct sockaddr_un saun;
-    saun.sun_family = AF_UNIX;
-    strcpy(saun.sun_path, address.c_str());
-    unlink(address.c_str());
-    int len = sizeof(saun.sun_family) + strlen(saun.sun_path);
-    if (bind(sd, (struct sockaddr *)(&saun), len) < 0)
-      throw SocketException("bind");
-  } break;
-  //....
-  default:
-    throw SocketException("bind_unknown_protocol");
+      bzero(&(my_addr.sin_zero), 8);
+      if (bind(sd, (struct sockaddr *)(&my_addr), sizeof(struct sockaddr)) ==
+          -1)
+        throw SocketException("bind");
+    } break;
+    case LowLevelSocket::AF_UNIX_: {
+      // unix socket
+      struct sockaddr_un saun;
+      saun.sun_family = AF_UNIX;
+      strcpy(saun.sun_path, address.c_str());
+      unlink(address.c_str());
+      int len = sizeof(saun.sun_family) + strlen(saun.sun_path);
+      if (bind(sd, (struct sockaddr *)(&saun), len) < 0)
+        throw SocketException("bind");
+    } break;
+    //....
+    default:
+      throw SocketException("bind_unknown_protocol");
   }
 
   // listen
@@ -130,44 +131,41 @@ void UnixLowLevelSocket::connect(std::string address, int port, int protocol) {
 
   // connect to unix or inet socket
   switch (protocol) {
-  case LowLevelSocket::AF_INET_: {
-    host = gethostbyname(address.c_str());
-    if (host == NULL)
-      throw SocketException("gethostbyname");
-    inaddr = (in_addr *)host->h_addr;
-    struct sockaddr_in addr;
-    addr.sin_addr = *inaddr;
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(port);
-    // try for tries
-    for (int i = 0; i < tries; i++) {
-      if (::connect(sd, (struct sockaddr *)((&addr)), sizeof(addr)) >= 0)
-        break;
-      sleep(1);
-      if (i == tries - 1)
-        throw SocketException("connect");
-      this->addr = inet_ntoa(addr.sin_addr);
-    }
-    break;
-  case LowLevelSocket::AF_UNIX_: {
-    struct sockaddr_un addr;
-    strcpy(addr.sun_path, address.c_str());
-    addr.sun_family = AF_UNIX;
-    for (int i = 0; i < tries; i++) {
-      if (::connect(sd, (struct sockaddr *)((&addr)), sizeof(addr)) >= 0)
-        break;
-      usleep(10);
-      if (i == tries - 1)
-        throw SocketException("connect");
-    }
+    case LowLevelSocket::AF_INET_: {
+      host = gethostbyname(address.c_str());
+      if (host == NULL) throw SocketException("gethostbyname");
+      inaddr = (in_addr *)host->h_addr;
+      struct sockaddr_in addr;
+      addr.sin_addr = *inaddr;
+      addr.sin_family = AF_INET;
+      addr.sin_port = htons(port);
+      // try for tries
+      for (int i = 0; i < tries; i++) {
+        if (::connect(sd, (struct sockaddr *)((&addr)), sizeof(addr)) >= 0)
+          break;
+        sleep(1);
+        if (i == tries - 1) throw SocketException("connect");
+        this->addr = inet_ntoa(addr.sin_addr);
+      }
+      break;
+      case LowLevelSocket::AF_UNIX_: {
+        struct sockaddr_un addr;
+        strcpy(addr.sun_path, address.c_str());
+        addr.sun_family = AF_UNIX;
+        for (int i = 0; i < tries; i++) {
+          if (::connect(sd, (struct sockaddr *)((&addr)), sizeof(addr)) >= 0)
+            break;
+          usleep(10);
+          if (i == tries - 1) throw SocketException("connect");
+        }
 
-    this->addr = address.c_str(); //
-  } break;
+        this->addr = address.c_str();  //
+      } break;
 
-    //....
-  default:
-    throw SocketException("bad_socket_protocol");
-  }
+        //....
+      default:
+        throw SocketException("bad_socket_protocol");
+    }
   }
 }
 
@@ -180,8 +178,8 @@ int UnixLowLevelSocket::receive(char *buf, int size) {
     // blocking
     r = recv(sd, buf, size, 0);
     if (r <= 0)
-      throw SocketException("recv"); // if blocking mode -1 throw exeption
-                                     // in unblocking -1 is no data means
+      throw SocketException("recv");  // if blocking mode -1 throw exeption
+                                      // in unblocking -1 is no data means
   } else {
     // unblocking  - we can do it safety
     sem->wait();
@@ -216,28 +214,28 @@ void UnixLowLevelSocket::bindAndListen(int address, int port, int protocol,
   }
 
   switch (protocol) {
-  case LowLevelSocket::AF_INET_: {
-    struct sockaddr_in my_addr;
-    my_addr.sin_family = AF_INET;
-    my_addr.sin_port = htons(port);
-    switch (address) {
-    case LowLevelSocket::INADDR_ANY_:
-      my_addr.sin_addr.s_addr = INADDR_ANY;
-      break;
+    case LowLevelSocket::AF_INET_: {
+      struct sockaddr_in my_addr;
+      my_addr.sin_family = AF_INET;
+      my_addr.sin_port = htons(port);
+      switch (address) {
+        case LowLevelSocket::INADDR_ANY_:
+          my_addr.sin_addr.s_addr = INADDR_ANY;
+          break;
+        default:
+          my_addr.sin_addr.s_addr = address;
+      }
+      bzero(&(my_addr.sin_zero), 8);
+      if (bind(sd, (struct sockaddr *)((&my_addr)), sizeof(struct sockaddr)) ==
+          -1)
+        throw SocketException("bind");
+    } break;
+    case LowLevelSocket::AF_UNIX_: {
+      throw SocketException("not implemented");
+    } break;
+    //....
     default:
-      my_addr.sin_addr.s_addr = address;
-    }
-    bzero(&(my_addr.sin_zero), 8);
-    if (bind(sd, (struct sockaddr *)((&my_addr)), sizeof(struct sockaddr)) ==
-        -1)
-      throw SocketException("bind");
-  } break;
-  case LowLevelSocket::AF_UNIX_: {
-    throw SocketException("not implemented");
-  } break;
-  //....
-  default:
-    throw SocketException("bind_unknown_protocol");
+      throw SocketException("bind_unknown_protocol");
   }
 
   if (listen(sd, queueSize) == -1) {
@@ -260,29 +258,28 @@ void UnixLowLevelSocket::initialize(int domain, int type, int protocol) {
 
   // set params
   switch (domain) {
-  case LowLevelSocket::AF_INET_:
-    sdomain = AF_INET;
-    break;
-  case LowLevelSocket::AF_UNIX_:
-    sdomain = AF_UNIX;
+    case LowLevelSocket::AF_INET_:
+      sdomain = AF_INET;
+      break;
+    case LowLevelSocket::AF_UNIX_:
+      sdomain = AF_UNIX;
 
-    break;
-  //...
-  default:
-    sdomain = AF_INET;
+      break;
+    //...
+    default:
+      sdomain = AF_INET;
   }
 
   switch (type) {
-  case LowLevelSocket::SOCK_STREAM_:
-    stype = SOCK_STREAM;
-    break;
-  default:
-    stype = SOCK_STREAM;
+    case LowLevelSocket::SOCK_STREAM_:
+      stype = SOCK_STREAM;
+      break;
+    default:
+      stype = SOCK_STREAM;
   }
 
   sd = socket(sdomain, stype, protocol);
-  if (sd <= 0)
-    throw SocketException("socket");
+  if (sd <= 0) throw SocketException("socket");
 
   const int on = 1;
   setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));

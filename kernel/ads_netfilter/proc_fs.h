@@ -1,9 +1,3 @@
-/*
- * Anomaly Detection System for network traffic
- * @license GNU GPL
- * @authors Staroletov, Chudov
- */
-
 #ifndef PROC_FS_H_
 #define PROC_FS_H_
 

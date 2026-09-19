@@ -1,9 +1,3 @@
-/*
- * Anomaly Detection System for network traffic
- * @license GNU GPL
- * @authors Chudov, Staroletov
- */
-
 #ifndef LEARNING_TCP_DIALOG_H
 #define LEARNING_TCP_DIALOG_H
 

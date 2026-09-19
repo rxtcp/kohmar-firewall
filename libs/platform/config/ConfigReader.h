@@ -1,5 +1,3 @@
-
-
 #ifndef CONFIGREADER_H_
 #define CONFIGREADER_H_
 

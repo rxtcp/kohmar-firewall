@@ -1,9 +1,3 @@
-/*
- * Anomaly Detection System for network traffic
- * @license GNU GPL
- * @authors Chudov, Staroletov
- */
-
 #include "../../../../ADS/ads_settings_dialog.h"
 
 #include "ui_ads_settings_dialog.h"

@@ -1,9 +1,3 @@
-/*
- * Anomaly Detection System for network traffic
- * @license GNU GPL
- * @authors Staroletov, Chudov
- */
-
 #ifndef KERNEL_NETFILTER
 #define KERNEL_NETFILTER
 

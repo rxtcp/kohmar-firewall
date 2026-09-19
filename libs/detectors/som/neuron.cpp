@@ -1,9 +1,3 @@
-/*
- * Anomaly Detection System for network traffic
- * @license GNU GPL
- * @authors Chudov, Staroletov
- */
-
 #include "neuron.h"
 
 Neuron::Neuron(int _dimension, QObject *parent) : QObject(parent) {

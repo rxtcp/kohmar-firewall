@@ -24,6 +24,6 @@ install(
 )
 
 install(
-        FILES ${PROJECT_SOURCE_DIR}/config/module.conf.example
+        FILES ../../config/module.conf.example
         DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/kohmar-firewall
 )

@@ -1,4 +1,4 @@
-#include "../../../../ADS/anomaly_reader_tcp.h"
+#include "anomaly_reader_tcp.h"
 
 AnomalyReaderTcp::AnomalyReaderTcp(
     QObject *parent, QTableWidget *_anomalies_table, QTableWidget *_rules_table,

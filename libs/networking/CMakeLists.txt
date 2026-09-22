@@ -3,14 +3,13 @@ add_library(networking STATIC)
 target_sources(
         networking
         PRIVATE
-        adressresolver.cpp
-        adressresolver.h
+        addressresolver.cpp
+        addressresolver.h
 )
 
 target_include_directories(
-        networking
+        target_name
         PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}
         ${PROJECT_SOURCE_DIR}/libs
 )
 

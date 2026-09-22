@@ -1,4 +1,4 @@
-#include "../../../PST/pst_arithpredictor.h"
+#include "pst_arithpredictor.h"
 
 PstArithPredictor::PstArithPredictor(PstNode *node) {
   pst = node;

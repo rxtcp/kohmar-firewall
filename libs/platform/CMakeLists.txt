@@ -51,12 +51,7 @@ target_sources(
 target_include_directories(
         platform
         PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/config
-        ${CMAKE_CURRENT_SOURCE_DIR}/logging
-        ${CMAKE_CURRENT_SOURCE_DIR}/sockets
-        ${CMAKE_CURRENT_SOURCE_DIR}/threading
-        ${CMAKE_CURRENT_SOURCE_DIR}/services
+        ${PROJECT_SOURCE_DIR}/libs
 )
 
 target_link_libraries(

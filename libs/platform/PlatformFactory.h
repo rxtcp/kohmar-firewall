@@ -3,10 +3,10 @@
 
 #include <string>
 
-#include "../../Common/utils/LowLevelThread.h"
-#include "service/Service.h"
-#include "sockets/LowLevelSocket.h"
-#include "threading/Semaphore.h"
+#include "platform/services/Service.h"
+#include "platform/sockets/LowLevelSocket.h"
+#include "platform/threading/LowLevelThread.h"
+#include "platform/threading/Semaphore.h"
 
 /*
  * Singleton class to provide plarform-dependent actions

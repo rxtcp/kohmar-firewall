@@ -1,4 +1,4 @@
-#include "../../../Common/utils/DaemonService.h"
+#include "DaemonService.h"
 
 #include <errno.h>
 #include <execinfo.h>
@@ -14,10 +14,10 @@
 #include <unistd.h>
 #include <wait.h>
 
-#include "../PlatformFactory.h"
-#include "Logger.h"
-#include "PrintfLogger.h"
-#include "SyslogLogger.h"
+#include "platform/PlatformFactory.h"
+#include "platform/logging/Logger.h"
+#include "platform/logging/PrintfLogger.h"
+#include "platform/logging/SyslogLogger.h"
 
 using namespace std;
 

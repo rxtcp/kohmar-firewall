@@ -1,12 +1,11 @@
-#include "../../../Common/utils/SocketSignal.h"
+#include "SocketSignal.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 
 #include <iostream>
 
-#include "../PlatformFactory.h"
-
+#include "platform/PlatformFactory.h"
 /* Constructor of SocketSignal. Creates new SocketSignal and sets
  * its name that will be used as part of the name of the socket and
  * the role (waiter or sender)

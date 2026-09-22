@@ -1,4 +1,4 @@
-#include "../../../Common/utils/Semaphore.h"
+#include "Semaphore.h"
 
 Semaphore::Semaphore() {
   // TODO Auto-generated constructor stub

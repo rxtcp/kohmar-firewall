@@ -1,4 +1,4 @@
-#include "../../SOM/mainwindow.h"
+#include "mainwindow.h"
 
 #include "detectors/som/samplesom.h"
 #include "detectors/som/selforganizedmap.h"

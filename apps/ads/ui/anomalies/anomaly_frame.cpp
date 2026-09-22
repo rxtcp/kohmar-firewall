@@ -1,6 +1,4 @@
-
-
-#include "../../../../ADS/anomaly_frame.h"
+#include "anomaly_frame.h"
 
 AnomalyTcpFrame::AnomalyTcpFrame(QObject *parent, int _anomaly_limit)
     : QFrame((QWidget *)parent) {

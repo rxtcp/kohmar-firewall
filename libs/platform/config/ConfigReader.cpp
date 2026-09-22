@@ -1,4 +1,4 @@
-#include "../../../Common/utils/ConfigReader.h"
+#include "ConfigReader.h"
 
 #include <stdlib.h>
 

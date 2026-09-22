@@ -3,8 +3,8 @@
 
 #include <signal.h>
 
-#include "../logging/Logger.h"
 #include "Service.h"
+#include "platform/logging/Logger.h"
 
 /*
  * successor of Service. Can install a new service as a daemon or stop it

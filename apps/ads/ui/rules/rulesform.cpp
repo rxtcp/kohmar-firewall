@@ -1,4 +1,4 @@
-#include "../../../../ADS/rulesform.h"
+#include "rulesform.h"
 
 #include "ui_rulesform.h"
 

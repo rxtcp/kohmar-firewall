@@ -1,7 +1,7 @@
 #ifndef PSTARITHPREDICTOR_H_
 #define PSTARITHPREDICTOR_H_
 
-#include "../../../PST/pst_context.h"
+#include "pst_context.h"
 #include "pst_node.h"
 
 class PstArithPredictor {

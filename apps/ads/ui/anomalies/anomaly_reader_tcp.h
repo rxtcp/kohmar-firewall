@@ -7,11 +7,11 @@
 #include <QThread>
 #include <QTime>
 
-#include "../Common/netlinkmanager.h"
-#include "../Common/packsreceiver.h"
-#include "../Common/structs.h"
-#include "../Common/utils/UnixSemaphore.h"
 #include "anomaly_frame.h"
+#include "engine/packsreceiver.h"
+#include "engine/structs.h"
+#include "kernel_client/netlinkmanager.h"
+#include "platform/threading/UnixSemaphore.h"
 
 class AnomalyReaderTcp : public QThread {
   Q_OBJECT

@@ -3,8 +3,8 @@
 
 #include <string>
 
-#include "../../../Common/utils/LowLevelSocket.h"
 #include "Signal.h"
+#include "platform/sockets/LowLevelSocket.h"
 
 /* Class that represents a realization of abstract class Signal by using unix
  * sockets  */

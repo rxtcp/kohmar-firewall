@@ -1,4 +1,4 @@
-#include "../../../Common/utils/UnixLowLevelSocket.h"
+#include "UnixLowLevelSocket.h"
 
 #include <arpa/inet.h>
 #include <errno.h>
@@ -17,8 +17,7 @@
 #include <ctime>
 #include <iostream>
 
-#include "../logging/Logger.h"
-
+#include "platform/logging/Logger.h"
 UnixLowLevelSocket::UnixLowLevelSocket() { reuse = false; }
 
 void UnixLowLevelSocket::setSendBufSize(int buf) {

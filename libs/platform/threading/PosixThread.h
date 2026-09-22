@@ -3,7 +3,7 @@
 
 #include <pthread.h>
 
-#include "../../../Common/utils/LowLevelThread.h"
+#include "LowLevelThread.h"
 
 /*
  * Posix thread realization of LovLevel Thread

@@ -3,7 +3,7 @@
 
 #include <QDialog>
 
-#include "../Common/structs.h"
+#include "engine/structs.h"
 
 namespace Ui {
 class AdsSettingsDialog;

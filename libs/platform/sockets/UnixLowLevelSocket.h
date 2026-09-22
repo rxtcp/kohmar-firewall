@@ -1,8 +1,8 @@
 #ifndef UNIXLOWLEVELSOCKET_H_
 #define UNIXLOWLEVELSOCKET_H_
 
-#include "../threading/UnixSemaphore.h"
 #include "LowLevelSocket.h"
+#include "platform/threading/UnixSemaphore.h"
 
 /*
  * Realization of abstract base class as unix socket

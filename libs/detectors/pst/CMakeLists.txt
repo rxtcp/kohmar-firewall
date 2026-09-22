@@ -19,10 +19,9 @@ target_sources(
 )
 
 target_include_directories(
-        pst
+        target_name
         PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        ${PROJECT_SOURCE_DIR}/libs/detectors
+        ${PROJECT_SOURCE_DIR}/libs
 )
 
 target_link_libraries(

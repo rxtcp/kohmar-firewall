@@ -16,10 +16,11 @@ using namespace std;
 #include <syslog.h>
 #include <unistd.h>
 
-#include "../../Common/utils/DaemonService.h"
-#include "../../Common/utils/PosixThread.h"
-#include "../../Common/utils/UnixLowLevelSocket.h"
-#include "../../Common/utils/UnixSemaphore.h"
+#include "PlatformFactory.h"
+#include "platform/services/DaemonService.h"
+#include "platform/sockets/UnixLowLevelSocket.h"
+#include "platform/threading/PosixThread.h"
+#include "platform/threading/UnixSemaphore.h"
 
 // windows includes - not implemented
 #elif defined(WIN32)

@@ -5,9 +5,9 @@
 #include <QMessageBox>
 #endif  // ADS_DAEMON
 
-#include "../../Common/adressresolver.h"
-#include "../engine/structs.h"
 #include "QtSql"
+#include "engine/structs.h"
+#include "networking/adressresolver.h"
 
 class DbManager {
  public:

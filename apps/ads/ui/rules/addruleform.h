@@ -8,8 +8,8 @@
 #include <QMessageBox>
 #include <QUrl>
 
-#include "../Common/adressresolver.h"
-#include "../Common/structs.h"
+#include "engine/structs.h"
+#include "networking/adressresolver.h"
 
 namespace Ui {
 class AddRuleForm;

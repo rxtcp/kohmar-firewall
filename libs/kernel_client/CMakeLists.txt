@@ -8,15 +8,15 @@ target_sources(
 )
 
 target_include_directories(
-        kernel_client
+        target_name
         PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}
         ${PROJECT_SOURCE_DIR}/libs
 )
 
 target_link_libraries(
         kernel_client
         PUBLIC
+        firewall_types
         Qt${QT_VERSION_MAJOR}::Core
         Qt${QT_VERSION_MAJOR}::Widgets
         Threads::Threads

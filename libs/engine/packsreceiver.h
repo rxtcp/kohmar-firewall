@@ -31,28 +31,24 @@
 #include <sstream>
 #include <vector>
 
-#include "../config.h"
-
-// my custom classes
-#include "../../Common/utils/ConfigReader.h"
-#include "../../Common/utils/DaemonService.h"
-#include "../../Common/utils/Logger.h"
-#include "../../Common/utils/LowLevelSocket.h"
-#include "../../Common/utils/NullLogger.h"
-#include "../../Common/utils/PlatformFactory.h"
-#include "../../Common/utils/PrintfLogger.h"
-#include "../../Common/utils/Service.h"
-#include "../../Common/utils/StdThread.h"
-#include "../../Common/utils/SyslogLogger.h"
-#include "../../Common/utils/Thread.h"
-#include "../../Common/utils/UnixLowLevelSocket.h"
-#include "../../Common/utils/UnixSemaphore.h"
-
-// #include "../Common/ConnectionTree.h"
-#include "../PST/pst_predictor.h"
-#include "../SOM/samplesom.h"
-#include "../SOM/selforganizedmap.h"
-#include "structs.h"
+#include "detectors/pst/pst_predictor.h"
+#include "detectors/som/samplesom.h"
+#include "detectors/som/selforganizedmap.h"
+#include "engine/config.h"
+#include "engine/structs.h"
+#include "platform/PlatformFactory.h"
+#include "platform/config/ConfigReader.h"
+#include "platform/logging/Logger.h"
+#include "platform/logging/NullLogger.h"
+#include "platform/logging/PrintfLogger.h"
+#include "platform/logging/SyslogLogger.h"
+#include "platform/services/DaemonService.h"
+#include "platform/services/Service.h"
+#include "platform/sockets/LowLevelSocket.h"
+#include "platform/sockets/UnixLowLevelSocket.h"
+#include "platform/threading/StdThread.h"
+#include "platform/threading/Thread.h"
+#include "platform/threading/UnixSemaphore.h"
 
 using namespace std;
 

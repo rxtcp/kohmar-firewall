@@ -5,11 +5,11 @@
 #include <QWidget>
 #include <QtSql>
 
-#include "../../../../ADS/addruleform.h"
-#include "../Common/dbmanager.h"
-#include "../Common/netlinkmanager.h"
-#include "../Common/structs.h"
-#include "../Common/utils/UnixSemaphore.h"
+#include "addruleform.h
+#include "engine/structs.h"
+#include "kernel_client/netlinkmanager.h"
+#include "platform/threading/UnixSemaphore.h"
+#include "storage/dbmanager.h"
 
 namespace Ui {
 class RulesForm;

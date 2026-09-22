@@ -1,4 +1,4 @@
-#include "../../../SOM/samplesom.h"
+#include "samplesom.h"
 
 #include <fstream>
 

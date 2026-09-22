@@ -26,7 +26,7 @@
 #include <linux/version.h>
 #include <linux/vmalloc.h>
 
-#include "../config.h"
+#include "config.h"
 // #include <asm/current.h>
 // #include <asm/segment.h>
 // #include <asm/uaccess.h>
@@ -103,11 +103,11 @@ static struct nf_hook_ops nfho;
 static struct nf_hook_ops nfho_out;
 
 //============Our includes ===========
-#include "../../netfilter/debug_utils.h"
-#include "../../netfilter/mmap_utils.h"
-#include "../../netfilter/nf_hook.h"
-#include "../../netfilter/proc_fs.h"
-#include "../Common/structs.h"
+#include "../../libs/engine/structs.h"
+#include "debug_utils.h"
+#include "mmap_utils.h"
+#include "nf_hook.h"
+#include "proc_fs.h"
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("linux-ai-firewall");

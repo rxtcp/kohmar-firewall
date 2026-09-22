@@ -3,8 +3,8 @@
 
 #include <pthread.h>
 
-#include "../../../Common/utils/LowLevelThread.h"
-#include "../PlatformFactory.h"
+#include "LowLevelThread.h"
+#include "platform/PlatformFactory.h"
 
 /*
  * Class for provide mylti-threading

@@ -1,4 +1,4 @@
-#include "../../../PST/pst_builder.h"
+#include "pst_builder.h"
 
 #include <QDebug>
 #include <string>

@@ -9,7 +9,7 @@
 #include <QScrollArea>
 #include <QVBoxLayout>
 
-#include "../Common/utils/UnixSemaphore.h"
+#include "platform/threading/UnixSemaphore.h"
 
 class AnomalyTcpFrame : public QFrame {
   Q_OBJECT

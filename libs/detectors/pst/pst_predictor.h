@@ -5,11 +5,11 @@
 
 #include <QString>
 
-#include "../../../PST/pst_arithpredictor.h"
-#include "../../../PST/pst_builder.h"
-#include "../../../PST/pst_node.h"
-#include "../../../PST/pst_samples.h"
+#include "pst_arithpredictor.h"
+#include "pst_builder.h"
 #include "pst_common.h"
+#include "pst_node.h"
+#include "pst_samples.h"
 
 class PstPredictor {
  protected:

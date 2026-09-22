@@ -6,8 +6,8 @@
 #include <QMessageBox>
 #include <QSystemTrayIcon>
 
-#include "../../libs/detectors/som/samplesom.h"
-#include "selforganizedmap.h"
+#include "detectors/som/samplesom.h"
+#include "detectors/som/selforganizedmap.h"
 
 namespace Ui {
 class MainWindow;

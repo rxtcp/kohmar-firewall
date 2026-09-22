@@ -1,4 +1,4 @@
-#include "../../../../ADS/learning_tcp_dialog.h"
+#include #include "learning_tcp_dialog.h"
 
 #include "ui_learning_tcp_dialog.h"
 

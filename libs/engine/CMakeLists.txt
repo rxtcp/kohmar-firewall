@@ -8,10 +8,9 @@ target_sources(
 )
 
 target_include_directories(
-        firewall_types
-        INTERFACE
+        target_name
+        PUBLIC
         ${PROJECT_SOURCE_DIR}/libs
-        ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 target_link_libraries(

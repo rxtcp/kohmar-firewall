@@ -1,0 +1,6 @@
+#ifndef ADS_NETFILTER_CONFIG_H
+#define ADS_NETFILTER_CONFIG_H
+
+#define DEBUG 1
+
+#endif

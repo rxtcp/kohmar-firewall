@@ -1,4 +1,4 @@
-#include "../../Common/adressresolver.h"
+#include "addressresolver.h"
 
 AdressResolver::AdressResolver() {}
 

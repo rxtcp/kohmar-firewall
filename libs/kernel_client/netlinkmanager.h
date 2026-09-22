@@ -18,7 +18,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "../engine/structs.h"
+#include "engine/structs.h"
 
 #define MSG_SIZE_SEND sizeof(struct Command)
 #define MSG_SIZE_READ sizeof(bool)

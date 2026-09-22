@@ -1,4 +1,4 @@
-#include "../../../../ADS/learning_flow_dialog.h"
+#include "learning_flow_dialog.h"
 
 #include "ui_learning_flow_dialog.h"
 

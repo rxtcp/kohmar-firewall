@@ -1,4 +1,4 @@
-#include "../../../SOM/selforganizedmap.h"
+#include "selforganizedmap.h"
 
 SelfOrganizedMap::SelfOrganizedMap(int n, int m, int _dimension, int _Iters,
                                    double _R, double _G, double _lambda,

@@ -4,8 +4,8 @@
 #include <QDialog>
 #include <QMessageBox>
 
-#include "../Common/packsreceiver.h"
-#include "../Common/structs.h"
+#include "engine/packsreceiver.h"
+#include "engine/structs.h"
 
 namespace Ui {
 class LearningTcpDialog;

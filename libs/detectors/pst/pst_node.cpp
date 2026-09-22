@@ -1,6 +1,7 @@
-#include "../../../PST/pst_node.h"
+#include "pst_node.h"
 
 #include <QDebug>
+
 using namespace std;
 
 static int node_id = 0;

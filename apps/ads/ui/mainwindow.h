@@ -8,18 +8,16 @@
 #include <QMainWindow>
 #include <QMessageBox>
 
-#include "../../../ADS/ads_settings_dialog.h"
-#include "../../../ADS/anomaly_frame.h"
-#include "../../../ADS/anomaly_reader_flow.h"
-#include "../../../ADS/anomaly_reader_tcp.h"
-#include "../../../ADS/learning_flow_dialog.h"
-#include "../../../ADS/learning_tcp_dialog.h"
-#include "../Common/netlinkmanager.h"
-#include "../Common/packsreceiver.h"
-#include "../Common/structs.h"
+#include "anomalies/anomaly_frame.h"
+#include "anomalies/anomaly_reader_flow.h"
+#include "anomalies/anomaly_reader_tcp.h"
+#include "engine/packsreceiver.h"
+#include "engine/structs.h"
+#include "kernel_client/netlinkmanager.h"
+#include "learning/learning_flow_dialog.h"
+#include "learning/learning_tcp_dialog.h"
 #include "rules/rulesform.h"
-// #include "../Common/ConnectionTree.h"
-// #include "../Common/adressresolver.h"
+#include "settings/ads_settings_dialog.h"
 
 namespace Ui {
 class MainWindow;

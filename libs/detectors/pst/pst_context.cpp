@@ -1,4 +1,4 @@
-#include "../../../PST/pst_context.h"
+#include "pst_context.h"
 
 Context::Context(int maxlength) {
   context = new int[maxlength];

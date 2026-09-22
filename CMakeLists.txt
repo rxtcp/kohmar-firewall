@@ -50,9 +50,9 @@ add_subdirectory(libs/platform)
 add_subdirectory(libs/detectors/pst)
 add_subdirectory(libs/detectors/som)
 add_subdirectory(libs/networking)
+add_subdirectory(libs/engine)
 add_subdirectory(libs/kernel_client)
 add_subdirectory(libs/storage)
-add_subdirectory(libs/engine)
 
 add_subdirectory(apps/drvctl)
 add_subdirectory(apps/ads)
@@ -64,7 +64,10 @@ endif ()
 
 if (BUILD_TESTING)
     enable_testing()
-    add_subdirectory(tests)
+
+    if (EXISTS "${PROJECT_SOURCE_DIR}/tests/CMakeLists.txt")
+        add_subdirectory(tests)
+    endif ()
 endif ()
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")

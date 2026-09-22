@@ -8,9 +8,8 @@ target_sources(
 )
 
 target_include_directories(
-        storage
+        target_name
         PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}
         ${PROJECT_SOURCE_DIR}/libs
 )
 

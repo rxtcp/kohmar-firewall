@@ -8,10 +8,10 @@
 #include <QDebug>
 #include <QMessageBox>
 
-#include "../../ADS/mainwindow.h"
-#include "../Common/netlinkmanager.h"
-#include "../Common/packsreceiver.h"
-#include "../PST/pst_predictor.h"
+#include "detectors/pst/pst_predictor.h"
+#include "engine/packsreceiver.h"
+#include "kernel_client/netlinkmanager.h"
+#include "ui/mainwindow.h"
 
 bool checkModLoaded();
 

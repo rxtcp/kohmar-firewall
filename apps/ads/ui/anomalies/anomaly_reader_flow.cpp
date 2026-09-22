@@ -1,4 +1,4 @@
-#include "../../../../ADS/anomaly_reader_flow.h"
+#include "anomaly_reader_flow.h"
 
 AnomalyReaderFlow::AnomalyReaderFlow(
     QObject *parent, QTableWidget *_som_table, QTableWidget *_anomalies_table,

@@ -83,6 +83,7 @@ set_property(
         ${ADS_UI_DIR}/rules
         ${ADS_UI_DIR}/settings
         ${ADS_UI_DIR}/learning
+        ${ADS_UI_DIR}/anomalies
 )
 
 install(

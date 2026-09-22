@@ -28,3 +28,7 @@ target_link_libraries(
 5. libs/storage/CMakeLists.txt
 Widgets пока требуется из-за QMessageBox внутри DbManager.
 После возврата ошибок через результат или исключение зависимость можно удалить.
+
+6. Файл: kernel/ads_netfilter/ads_netfilter.c
+ Строка: #include "../../libs/engine/structs.h"
+ На следующем этапе структуры обмена нужно вынести в C-совместимый protocol.h.

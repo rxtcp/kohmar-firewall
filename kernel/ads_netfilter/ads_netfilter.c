@@ -4,6 +4,7 @@
 #include <linux/cdev.h>
 #include <linux/errno.h>
 #include <linux/fs.h>
+#include <linux/init.h>
 #include <linux/ip.h>
 #include <linux/ipv6.h>
 #include <linux/jhash.h>
@@ -556,31 +557,34 @@ void delete_a_rule(struct Rule *a_rule_desp) {
 }
 
 void update_a_rule(struct Rule *a_rule_desp) {
-  struct list_head *p, *q;
+  struct list_head *p;
   struct RuleListItem *a_rule;
+  unsigned int src_ip;
+  unsigned int dest_ip;
 
-  // down_write(&rw_sem);
-  // spin_lock(&lock);
+  if (a_rule_desp == NULL) {
+    return;
+  }
 
-  list_for_each_safe(p, q, &policy_list.list) {
+  src_ip = ip_str_to_hl(a_rule_desp->ip_src);
+  dest_ip = ip_str_to_hl(a_rule_desp->ip_dest);
+
+  list_for_each(p, &policy_list.list) {
     a_rule = list_entry(p, struct RuleListItem, list);
+
     if (a_rule->id_rule == a_rule_desp->id_rule) {
       a_rule->in_out = a_rule_desp->in_out;
-      a_rule->src_ip = a_rule_desp->ip_src;
+      a_rule->src_ip = src_ip;
       a_rule->src_port = a_rule_desp->port_src;
-      a_rule->dest_ip = a_rule_desp->ip_dest;
+      a_rule->dest_ip = dest_ip;
       a_rule->dest_port = a_rule_desp->port_dest;
       a_rule->proto = a_rule_desp->proto;
       a_rule->action = a_rule_desp->action;
 
-      kfree(a_rule);
       log("rule updated");
       return;
     }
   }
-
-  // up_write(&rw_sem);
-  // spin_unlock(&lock);
 }
 
 void return_count_dyn_rules(void) {}
@@ -710,7 +714,7 @@ void netlink_Read_Msg(struct sk_buff *skb_in) {
 
 /* Initialization routine */
 
-int init_module() {
+static int __init ads_netfilter_init(void) {
   struct netlink_kernel_cfg cfg = {
       .input = netlink_Read_Msg,
   };
@@ -752,7 +756,7 @@ int init_module() {
 void cleanup(void) { nf_unregister_net_hook(&init_net, &netfilter_ops_out); }
 
 /* main cleanup routine */
-void cleanup_module() {
+static void __exit ads_netfilter_exit(void) {
   struct list_head *p, *q;
   struct RuleListItem *a_rule;
 
@@ -785,18 +789,26 @@ void cleanup_module() {
   printk(KERN_INFO "Firewall: kernel module UNLOADED.\n");
 }
 
-int hex_to_int(char c) {
+static int hex_to_int(char c) {
   int first = c / 16 - 3;
   int second = c % 16;
   int result = first * 10 + second;
-  if (result > 9) result--;
+
+  if (result > 9) {
+    result--;
+  }
+
   return result;
 }
 
-int hex_to_ascii(char c, char d) {
+static int hex_to_ascii(char c, char d) {
   int high = hex_to_int(c) * 16;
   int low = hex_to_int(d);
+
   return high + low;
 }
+
+module_init(ads_netfilter_init);
+module_exit(ads_netfilter_exit);
 
 #endif  // KERNEL_NETFILTER

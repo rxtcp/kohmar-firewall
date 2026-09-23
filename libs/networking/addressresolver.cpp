@@ -1,8 +1,8 @@
 #include "addressresolver.h"
 
-AdressResolver::AdressResolver() {}
+AddressResolver::AddressResolver() {}
 
-QList<QHostAddress> AdressResolver::resolve(QString hostName) {
+QList<QHostAddress> AddressResolver::resolve(QString hostName) {
   QHostInfo hInfo = QHostInfo::fromName(hostName);
   QList<QHostAddress> adrs = hInfo.addresses();
   return adrs;

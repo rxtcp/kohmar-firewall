@@ -1,4 +1,4 @@
-#include "../../Common/utils/PlatformFactory.h"
+#include "PlatformFactory.h"
 
 using namespace std;
 
@@ -16,7 +16,6 @@ using namespace std;
 #include <syslog.h>
 #include <unistd.h>
 
-#include "PlatformFactory.h"
 #include "platform/services/DaemonService.h"
 #include "platform/sockets/UnixLowLevelSocket.h"
 #include "platform/threading/PosixThread.h"

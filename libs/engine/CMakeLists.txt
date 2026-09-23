@@ -8,8 +8,8 @@ target_sources(
 )
 
 target_include_directories(
-        target_name
-        PUBLIC
+        firewall_types
+        INTERFACE
         ${PROJECT_SOURCE_DIR}/libs
 )
 

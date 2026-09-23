@@ -5,11 +5,7 @@
 Widgets здесь пока необходим, потому что SampleSom::loadFromFile() создаёт QMessageBox.
 После удаления UI из алгоритмической библиотеки эту зависимость можно убрать.
 
-3. libs/networking/CMakeLists.txt
-Имя adressresolver содержит опечатку.
-На первом этапе лучше сохранить его, а переименование в address_resolver выполнить отдельным коммитом.
-
-4. libs/kernel_client/CMakeLists.txt
+3. libs/kernel_client/CMakeLists.txt
 После изменения включений netlinkmanager.h должен использовать: #include "engine/structs.h"
 Поскольку kernel_client использует structs.h, формально нужна зависимость от типов engine.
 Однако связывать весь engine с kernel_client неправильно и может создать цикл.
@@ -25,10 +21,10 @@ target_link_libraries(
         Threads::Threads
 )
 
-5. libs/storage/CMakeLists.txt
+4. libs/storage/CMakeLists.txt
 Widgets пока требуется из-за QMessageBox внутри DbManager.
 После возврата ошибок через результат или исключение зависимость можно удалить.
 
-6. Файл: kernel/ads_netfilter/ads_netfilter.c
+5. Файл: kernel/ads_netfilter/ads_netfilter.c
  Строка: #include "../../libs/engine/structs.h"
  На следующем этапе структуры обмена нужно вынести в C-совместимый protocol.h.

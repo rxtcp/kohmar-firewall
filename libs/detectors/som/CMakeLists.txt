@@ -12,7 +12,7 @@ target_sources(
 )
 
 target_include_directories(
-        target_name
+        som
         PUBLIC
         ${PROJECT_SOURCE_DIR}/libs
 )

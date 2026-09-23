@@ -1,4 +1,4 @@
-#include "../../../../ADS/ads_settings_dialog.h"
+#include "ads_settings_dialog.h"
 
 #include "ui_ads_settings_dialog.h"
 

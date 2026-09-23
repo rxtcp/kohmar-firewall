@@ -5,7 +5,7 @@
 #include <QWidget>
 #include <QtSql>
 
-#include "addruleform.h
+#include "addruleform.h"
 #include "engine/structs.h"
 #include "kernel_client/netlinkmanager.h"
 #include "platform/threading/UnixSemaphore.h"

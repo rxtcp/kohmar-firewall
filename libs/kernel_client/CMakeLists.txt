@@ -8,7 +8,7 @@ target_sources(
 )
 
 target_include_directories(
-        target_name
+        kernel_client
         PUBLIC
         ${PROJECT_SOURCE_DIR}/libs
 )

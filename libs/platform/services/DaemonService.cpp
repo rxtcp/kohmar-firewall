@@ -11,8 +11,11 @@
 #include <sys/resource.h>
 #include <sys/stat.h>
 #include <syslog.h>
+#include <ucontext.h>
 #include <unistd.h>
 #include <wait.h>
+
+#include <cstdint>
 
 #include "platform/PlatformFactory.h"
 #include "platform/logging/Logger.h"
@@ -20,8 +23,6 @@
 #include "platform/logging/SyslogLogger.h"
 
 using namespace std;
-
-#include "../../../Common/utils/DaemonService.h"
 
 int (*DaemonService::startFunc)() = NULL;
 
@@ -55,15 +56,24 @@ void DaemonService::signal_handler(int sig, siginfo_t *si, void *ptr) {
     exit(CHILD_NEED_TERMINATE);
   }
 
-  // found error address
-#if __WORDSIZE == 64
-  ErrorAddr = (void *)((ucontext_t *)ptr)->uc_mcontext.regs[0];
-#else
-  ErrorAddr = (void *)((ucontext_t *)ptr)->uc_mcontext.gregs[REG_EIP];
+  ErrorAddr = nullptr;
+#if defined(__x86_64__)
+  ErrorAddr = reinterpret_cast<void *>(static_cast<uintptr_t>(
+      reinterpret_cast<ucontext_t *>(ptr)->uc_mcontext.gregs[REG_RIP]));
+#elif defined(__i386__)
+  ErrorAddr = reinterpret_cast<void *>(static_cast<uintptr_t>(
+      reinterpret_cast<ucontext_t *>(ptr)->uc_mcontext.gregs[REG_EIP]));
+#elif defined(__aarch64__)
+  ErrorAddr = reinterpret_cast<void *>(static_cast<uintptr_t>(
+      reinterpret_cast<ucontext_t *>(ptr)->uc_mcontext.pc));
 #endif
-  // backtrace
+
   TraceSize = backtrace(Trace, 16);
-  Trace[1] = ErrorAddr;
+
+  if (ErrorAddr != nullptr && TraceSize > 1) {
+    Trace[1] = ErrorAddr;
+  }
+
   // know more
   Messages = backtrace_symbols(Trace, TraceSize);
   if (Messages) {

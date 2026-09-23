@@ -121,7 +121,7 @@ void AddRuleForm::on_pushButtonOk_clicked() {
           msg.exec();
           return;
         } else {
-          src_adrs = AdressResolver::resolve(ip_src);
+          src_adrs = AddressResolver::resolve(ip_src);
 
           if (src_adrs.count()) {
             srcIsName = true;
@@ -153,7 +153,7 @@ void AddRuleForm::on_pushButtonOk_clicked() {
           msg.exec();
           return;
         } else {
-          dest_adrs = AdressResolver::resolve(ip_dest);
+          dest_adrs = AddressResolver::resolve(ip_dest);
 
           if (dest_adrs.count()) {
             destIsName = true;

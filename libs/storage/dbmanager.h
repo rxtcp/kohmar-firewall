@@ -7,7 +7,7 @@
 
 #include "QtSql"
 #include "engine/structs.h"
-#include "networking/adressresolver.h"
+#include "networking/addressresolver.h"
 
 class DbManager {
  public:

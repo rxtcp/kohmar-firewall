@@ -8,7 +8,7 @@ target_sources(
 )
 
 target_include_directories(
-        target_name
+        networking
         PUBLIC
         ${PROJECT_SOURCE_DIR}/libs
 )

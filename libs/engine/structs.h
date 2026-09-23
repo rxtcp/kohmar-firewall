@@ -143,7 +143,7 @@ struct Rule {
 
 #include <vector>
 
-#include "../../Common/utils/UnixSemaphore.h"
+#include "platform/threading/UnixSemaphore.h"
 
 struct AnomalyNodeTCP {
   unsigned int src_ip;

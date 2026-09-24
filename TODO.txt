@@ -1,30 +1,11 @@
-1. Пока внутренние файлы используют короткие включения вроде #include "Logger.h", поэтому перечислены все подкаталоги.
-Позже лучше перейти на: #include "platform/logging/Logger.h" и оставить один корневой include-каталог.
-
-2. libs/detectors/som/CMakeLists.txt
-Widgets здесь пока необходим, потому что SampleSom::loadFromFile() создаёт QMessageBox.
-После удаления UI из алгоритмической библиотеки эту зависимость можно убрать.
-
-3. libs/kernel_client/CMakeLists.txt
-После изменения включений netlinkmanager.h должен использовать: #include "engine/structs.h"
-Поскольку kernel_client использует structs.h, формально нужна зависимость от типов engine.
-Однако связывать весь engine с kernel_client неправильно и может создать цикл.
-Поэтому на следующем этапе общие структуры лучше вынести в отдельную header-only цель.
-Добавьте в libs/engine/CMakeLists.txt цель firewall_types, описанную ниже, и затем свяжите её:
-
-target_link_libraries(
-    kernel_client
-    PUBLIC
-        firewall_types
-        Qt${QT_VERSION_MAJOR}::Core
-        Qt${QT_VERSION_MAJOR}::Widgets
-        Threads::Threads
-)
-
-4. libs/storage/CMakeLists.txt
-Widgets пока требуется из-за QMessageBox внутри DbManager.
-После возврата ошибок через результат или исключение зависимость можно удалить.
-
-5. Файл: kernel/ads_netfilter/ads_netfilter.c
- Строка: #include "../../libs/engine/structs.h"
- На следующем этапе структуры обмена нужно вынести в C-совместимый protocol.h.
+3. Исправить жизненный цикл NetLinkManager
+4. Исправить завершение ADS и владение объектами
+5. Централизовать пути и убрать run/Common
+6. Убрать UI из библиотек
+7. Переработать DbManager
+8. Разделить structs.h
+9. Разделить PacksReceiver
+10. Привести детекторы к RAII и исправить вычисления SOM
+11. Усилить модуль ядра
+12. Добавить тесты до следующего большого переноса
+13. Завершить документацию и очистку

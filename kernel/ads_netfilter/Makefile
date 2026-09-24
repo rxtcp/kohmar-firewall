@@ -4,6 +4,8 @@
 
 obj-m := ads_netfilter.o
 
+ccflags-y += -I$(src)/../../libs/protocol/include
+
 #EXTRA_CFLAGS := -O2
 
 # KDIR is the location of the kernel source.  The current standard is

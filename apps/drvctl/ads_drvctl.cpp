@@ -34,7 +34,7 @@ string logging;
 string filtering;
 string filtering_multi;
 string prior;
-string targert;
+string target;
 string resender;
 int resender_poll_delay;
 int resender_mmap;
@@ -80,7 +80,7 @@ void start() {
     r = write(fd, buf, strlen(buf));
 
     logger->log("Configuring module target...");
-    sprintf(buf, "tt %s\n", targert.c_str());
+    sprintf(buf, "tt %s\n", target.c_str());
     r = write(fd, buf, strlen(buf));
 
     logger->log("Configuring if " + iface + "...");
@@ -178,7 +178,7 @@ void stop() {
   unlink("/dev/ads_sniff_mmap");
 
   logger->log("Unloading module via rmmod...");
-  sprintf(buf, "rmmod %s/ads_netfilter.ko", path.c_str());
+  sprintf(buf, "rmmod ads_netfilter");
   int res = system(buf);
   if (res != 0) {
     logger->log("Unable to unload module!");
@@ -204,7 +204,7 @@ int main(int argc, char **argv) {
   buf_size = reader.getGlobalProperty("sniffer_memory_map_size", 41943040);
   logging = reader.getGlobalProperty("logging", "on");
   prior = reader.getGlobalProperty("priority", "first");
-  targert = reader.getGlobalProperty("targert", "forward");
+  target = reader.getGlobalProperty("target", "forward");
 
   min_size = reader.getGlobalProperty("min_packet_size", 0);
 

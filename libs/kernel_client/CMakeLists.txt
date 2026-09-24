@@ -16,8 +16,10 @@ target_include_directories(
 target_link_libraries(
         kernel_client
         PUBLIC
+        firewall_protocol
         firewall_types
         Qt${QT_VERSION_MAJOR}::Core
+        Qt${QT_VERSION_MAJOR}::Network
         Qt${QT_VERSION_MAJOR}::Widgets
         Threads::Threads
 )

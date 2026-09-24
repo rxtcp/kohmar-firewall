@@ -1,13 +1,6 @@
 #ifndef STRUCTS_H
 #define STRUCTS_H
 
-#define DELETE_RULE_COMMAND 0
-#define ADD_RULE_COMMAND 1
-#define UPDATE_RULE_COMMAND 2
-#define GET_DYNAMIC_RULES_COMMAND 3
-#define PAUSE_COMMAND 4
-#define START_COMMAND 5
-
 #define TCP_DROP_ALL_PORTS 1
 #define TCP_DROP_SRC_PORT_ONLY 2
 #define TCP_DROP_DEST_PORT_ONLY 3
@@ -26,6 +19,10 @@
 #define _DROP 0
 #define _ACCEPT 1
 
+#include <QString>
+
+#include "platform/threading/UnixSemaphore.h"
+
 struct MyPacket {
   unsigned int in_out;
   unsigned int src_ip;
@@ -42,70 +39,17 @@ struct MyPacket {
   bool psh;
 };
 
-struct DynamicRuleFromKernel {
-  int id_rule;
-  unsigned int in_out;
-  unsigned int src_ip;  //
-  int src_port;         // 0~2^32
-  unsigned int dest_ip;
-  int dest_port;
-  unsigned int proto;   // 0: all, 1: tcp, 2: udp
-  unsigned int action;  // 0: for block, 1: for unblock
-};
-
-#ifdef KERNEL_NETFILTER
-
-#include <linux/list.h>
-
 struct Rule {
   int id_rule;
   unsigned int in_out;
-  char *ip_src;
-  char *ip_dest;
+  QString ip_src;
+  QString ip_dest;
   int port_src;
   int port_dest;
   unsigned int proto;
   unsigned int action;
-};
-
-struct Command {
-  int action;
-  struct Rule *rule;
-};
-
-/*structure for firewall policies*/
-struct RuleListItem {
-  int id_rule;
-  unsigned int in_out;
-  unsigned int src_ip;       //
-  unsigned int src_netmask;  //
-  int src_port;              // 0~2^32
-  unsigned int dest_ip;
-  unsigned int dest_netmask;
-  int dest_port;
-  unsigned int proto;   // 0: all, 1: tcp, 2: udp
-  unsigned int action;  // 0: for block, 1: for unblock
-  struct list_head list;
-};
-
-#endif  // KERNEL_NETFILTER
-
-#ifndef KERNEL_NETFILTER
-
-struct RuleToKernel {
-  int id_rule;
-  unsigned int in_out;
-  char *ip_src;
-  char *ip_dest;
-  int port_src;
-  int port_dest;
-  unsigned int proto;
-  unsigned int action;
-};
-
-struct Command {
-  int action;
-  struct RuleToKernel *rule;
+  QString host_name_dest;
+  QString host_name_src;
 };
 
 struct CommandToAds {
@@ -121,29 +65,6 @@ struct CommandToAds {
   unsigned int action;
   int id_rule;
 };
-
-// #ifdef ADS_QT
-
-#include <QString>
-
-struct Rule {
-  int id_rule;
-  unsigned int in_out;
-  QString ip_src;
-  QString ip_dest;
-  int port_src;
-  int port_dest;
-  unsigned int proto;
-  unsigned int action;
-  QString host_name_dest;
-  QString host_name_src;
-};
-
-// #endif
-
-#include <vector>
-
-#include "platform/threading/UnixSemaphore.h"
 
 struct AnomalyNodeTCP {
   unsigned int src_ip;
@@ -195,8 +116,4 @@ struct ConnectionTreeNode {
   int id;
 };
 
-// #endif // ADS_QT
-
-#endif  // KERNEL_NETFILTER
-
-#endif  // STRUCTS_H
+#endif

@@ -1,3 +1,5 @@
+#include <linux/in.h>
+
 // A Netfilter hook. Provides sniffer capabilities, drop packets and mime
 // filtering
 #ifndef NF_HOOK_H_
@@ -271,8 +273,8 @@ connection));
 //=================IN_OUT HOOKS======================
 
 // the hook function itself: regsitered for filtering outgoing packets
-unsigned int hook_func_out(void *priv, struct sk_buff *skb,
-                           const struct nf_hook_state *state) {
+static unsigned int hook_func_out(void *priv, struct sk_buff *skb,
+                                  const struct nf_hook_state *state) {
   struct iphdr *ip_header = (struct iphdr *)skb_network_header(skb);
   struct udphdr *udp_header;
   struct tcphdr *tcp_header;
@@ -331,15 +333,15 @@ unsigned int hook_func_out(void *priv, struct sk_buff *skb,
   act = 1;
 
   // get src and dest port number
-  if (ip_header->protocol == _UDP) {
+  if (ip_header->protocol == IPPROTO_UDP) {
     udp_header = (struct udphdr *)skb_transport_header(skb);
     src_port = (unsigned int)ntohs(udp_header->source);
     dest_port = (unsigned int)ntohs(udp_header->dest);
-  } else if (ip_header->protocol == _TCP) {
+  } else if (ip_header->protocol == IPPROTO_TCP) {
     tcp_header = (struct tcphdr *)skb_transport_header(skb);
     src_port = (unsigned int)ntohs(tcp_header->source);
     dest_port = (unsigned int)ntohs(tcp_header->dest);
-  } else if (ip_header->protocol == _ICMP) {
+  } else if (ip_header->protocol == IPPROTO_ICMP) {
   }
 
   // go through the firewall list and check if there is a match
@@ -354,11 +356,12 @@ unsigned int hook_func_out(void *priv, struct sk_buff *skb,
       continue;
     } else {
       // check the protocol
-      if ((a_rule->proto == 1) && (ip_header->protocol != _TCP)) {
+      if ((a_rule->proto == 1) && (ip_header->protocol != IPPROTO_TCP)) {
         continue;
-      } else if ((a_rule->proto == 2) && (ip_header->protocol != _UDP)) {
+      } else if ((a_rule->proto == 2) && (ip_header->protocol != IPPROTO_UDP)) {
         continue;
-      } else if ((a_rule->proto == 3) && (ip_header->protocol != _ICMP)) {
+      } else if ((a_rule->proto == 3) &&
+                 (ip_header->protocol != IPPROTO_ICMP)) {
         continue;
       }
 
@@ -429,8 +432,8 @@ unsigned int hook_func_out(void *priv, struct sk_buff *skb,
 
 // the hook function itself: registered for filtering incoming packets
 
-unsigned int hook_func_in(void *priv, struct sk_buff *skb,
-                          const struct nf_hook_state *state) {
+static unsigned int hook_func_in(void *priv, struct sk_buff *skb,
+                                 const struct nf_hook_state *state) {
   /* get src address, src netmask, src port, dest ip, dest netmask, dest port,
    * protocol*/
 
@@ -515,9 +518,9 @@ unsigned int hook_func_in(void *priv, struct sk_buff *skb,
       continue;
     } else {
       // check the protocol
-      if ((a_rule->proto == 1) && (ip_header->protocol != 6)) {
+      if ((a_rule->proto == 1) && (ip_header->protocol != IPPROTO_TCP)) {
         continue;
-      } else if ((a_rule->proto == 2) && (ip_header->protocol != 17)) {
+      } else if ((a_rule->proto == 2) && (ip_header->protocol != IPPROTO_UDP)) {
         continue;
       }
       // check the ip address

@@ -2,76 +2,50 @@
 #define NETLINKMANAGER_H
 
 #ifndef ADS_DAEMON
-#include <QDebug>
 #include <QList>
-#include <QMessageBox>
 #include <QString>
-#endif  // ADS_DAEMON
+#endif
 
-#include <fcntl.h>
 #include <linux/netlink.h>
-#include <netinet/in.h>
-#include <pthread.h>
-#include <stdlib.h>
 #include <sys/socket.h>
-#include <sys/syscall.h>
-#include <sys/types.h>
-#include <unistd.h>
 
 #include "engine/structs.h"
-
-#define MSG_SIZE_SEND sizeof(struct Command)
-#define MSG_SIZE_READ sizeof(bool)
-#define MSG_SIZE_READ_DYN_COUNT sizeof(int)
-#define MSG_SIZE_READ_DYN_RULE sizeof(struct DynamicRuleFromKernel)
-
-/* Own family for netlink socket */
-#define NETLINK_USER 31
+#include "firewall/protocol.h"
 
 class NetLinkManager {
  public:
-  NetLinkManager(int group);
-
+  explicit NetLinkManager(int netlinkProtocol);
   ~NetLinkManager();
 
+  NetLinkManager(const NetLinkManager &) = delete;
+  NetLinkManager &operator=(const NetLinkManager &) = delete;
+
+  bool isOpen() const;
   void closeNetlinkSocket();
 
-  bool sendCommand(struct Command com);
+  bool sendCommand(enum fw_command_type command);
 
-  void sendRuleToKernel(Rule *r);
-
-  void deleteRuleFromKernel(Rule *r);
-
-  void updateRuleInKernel(Rule *r);
+  bool sendRuleToKernel(const Rule *rule);
+  bool deleteRuleFromKernel(const Rule *rule);
+  bool updateRuleInKernel(const Rule *rule);
 
 #ifndef ADS_DAEMON
-  void getDynamicRulesFromKernel(QList<Rule *> *dyn_rules);
-
-  QString getStrIp(unsigned int ip);
+  bool getDynamicRulesFromKernel(QList<Rule *> *dynamicRules);
+  static QString getStrIp(fw_u32 ip);
 #endif
 
  private:
-  /* Netlink socket for communication with the module */
-  int netlink_sock;
+  bool sendRuleCommand(enum fw_command_type command, const Rule &rule);
 
-  /* Address to bind the socket to receive data addressed to us */
-  struct sockaddr_nl nl_src_addr;
+  bool sendRequest(const struct fw_command_message &request);
+  bool receiveResponse(struct fw_response_message *response);
 
-  /* Address of the module to indicate to whom the data is intended */
-  struct sockaddr_nl nl_dest_addr;
+  static bool encodeRule(const Rule &source,
+                         struct fw_rule_message *destination);
 
-  /* Two messages for sending and receiving netlink messages */
-  struct msghdr MSG_Read, MSG_Send, MSG_Read_count, MSG_Read_rule;
-  struct iovec iov_read, iov_send, iov_read_count, iov_read_rule;
-
-  /* Two Netlink messages to send and receive */
-  struct nlmsghdr *nlmsg_read, *nlmsg_send, *nlmsg_read_count, *nlmsg_read_rule;
-
-  struct Command *SEND_MSG;
-
-  bool *RECV_FLAG;
-  int *RECV_COUNT;
-  struct DynamicRuleFromKernel *RECV_DYN_RULE;
+  int netlinkSocket_ = -1;
+  struct sockaddr_nl sourceAddress_{};
+  struct sockaddr_nl destinationAddress_{};
 };
 
-#endif  // NETLINKMANAGER_H
+#endif

@@ -46,6 +46,7 @@ find_package(
 
 find_package(Threads REQUIRED)
 
+add_subdirectory(libs/protocol)
 add_subdirectory(libs/platform)
 add_subdirectory(libs/detectors/pst)
 add_subdirectory(libs/detectors/som)

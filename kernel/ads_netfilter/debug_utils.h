@@ -1,7 +1,7 @@
 #ifndef DEBUG_UTILS_H_
 #define DEBUG_UTILS_H_
 
-char *protocol_from_number(int n) {
+static char *protocol_from_number(int n) {
   switch (n) {
     case 0:
       return "tcp_dummy";
@@ -60,7 +60,7 @@ char *protocol_from_number(int n) {
   return "unknown";
 }
 
-void print_packet(struct sk_buff *skb) {
+static void print_packet(struct sk_buff *skb) {
   int dadd, sadd, bit1, bit2, bit3, bit4;
 
   struct iphdr *ip_header = (struct iphdr *)skb_network_header(skb);

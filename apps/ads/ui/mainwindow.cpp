@@ -1,5 +1,7 @@
 #include "mainwindow.h"
 
+#include <QBrush>
+
 #include "ui_mainwindow.h"
 //
 
@@ -53,7 +55,7 @@ MainWindow::MainWindow(QWidget *parent, NetLinkManager *mng,
   for (int i = 0; i < N; i++) {
     for (int j = 0; j < M; j++) {
       color.setRgbF(1.0, 0, 0, som->getNeuron(i, j)->getAnomaly() / 100);
-      som_table->item(i, j)->setBackgroundColor(color);
+      som_table->item(i, j)->setBackground(QBrush(color));
     }
   }
 
@@ -61,7 +63,7 @@ MainWindow::MainWindow(QWidget *parent, NetLinkManager *mng,
   sem_dynamic_rules = new UnixSemaphore();
   sem_settings_tcp = new UnixSemaphore();
 
-  nlManager = NULL;  // mng; /todo check!
+  nlManager = mng;
   packs_receiver = _packs_receiver;
   run_pause = true;
 
@@ -138,14 +140,13 @@ MainWindow::MainWindow(QWidget *parent, NetLinkManager *mng,
 MainWindow::~MainWindow() {
   delete ui;
 
-  struct Rule *r = new Rule;
-  foreach (r, *ads_rules) {
-    nlManager->deleteRuleFromKernel(r);
-  }
+  if (nlManager != nullptr) {
+    for (Rule *rule : *ads_rules) {
+      nlManager->deleteRuleFromKernel(rule);
+    }
 
-  nlManager->closeNetlinkSocket();
-  tcp_anomaly_reader->terminate();
-  packs_receiver->terminate();
+    nlManager->closeNetlinkSocket();
+  }
 }
 
 void MainWindow::showRulesForm() {
@@ -229,22 +230,21 @@ void MainWindow::showSettings() {
 }
 
 void MainWindow::run_pause_firewall() {
-  struct Command com;
-
-  if (run_pause == false) {
-    run_pause = true;
-    ui->run_stop_action->setText("Pause");
-
-    com.action = START_COMMAND;
-  } else {
-    run_pause = false;
-    ui->run_stop_action->setText("Continue");
-
-    com.action = PAUSE_COMMAND;
+  if (nlManager == nullptr) {
+    return;
   }
 
-  com.rule = NULL;
-  nlManager->sendCommand(com);
+  if (run_pause) {
+    if (nlManager->sendCommand(FW_COMMAND_PAUSE)) {
+      run_pause = false;
+      ui->run_stop_action->setText("Continue");
+    }
+  } else {
+    if (nlManager->sendCommand(FW_COMMAND_START)) {
+      run_pause = true;
+      ui->run_stop_action->setText("Pause");
+    }
+  }
 }
 
 void MainWindow::showAbout() {

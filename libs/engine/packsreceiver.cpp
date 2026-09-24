@@ -1026,77 +1026,80 @@ void PacksReceiver::loadSettings() {
 
   os.clear();
 
-  if (!file) {
-    os << "ads.settings not loaded!!!" << endl;
-  } else {
-    os << "loading settings for ADS..." << endl;
-
-    // fscanf(file, "my_ip=%s\n", ip);
-    // my_ip = ip_str_to_hl(ip);
-
-    r = fscanf(file, "tcp_anomaly_depth=%d\n", &depth);
-    if (depth >= 2 && depth <= 6)
-      states_count = depth;
-    else
-      os << "bad tcp_anomaly_depth param!" << endl;
-
-    r = fscanf(file, "tcp_anomaly_limit=%d\n", &tcplimit);
-    if (tcplimit >= 10 && tcplimit <= 100)
-      tcp_anomaly_limit = tcplimit;
-    else
-      os << "bad tcp_anomaly_limit param!" << endl;
-
-    r = fscanf(file, "tcp_generate_rules=%s\n", str);
-
-    if (!strcmp(str, "true"))
-      tcp_generate_rules = true;
-    else if (!strcmp(str, "false"))
-      tcp_generate_rules = false;
-    else
-      os << "bad tcp_generate_rules param!" << endl;
-
-    r = fscanf(file, "tcp_drop_ports=%d\n", &tcpdrop);
-    if (tcpdrop == 1 || tcpdrop == 2 || tcpdrop == 3)
-      tcp_drop_ports = tcpdrop;
-    else
-      os << "bad tcp_drop_ports param!" << endl;
-
-    r = fscanf(file, "flow_packs_max_count=%d\n", &flow_count);
-    if (flow_count >= 20 || flow_count <= 200)
-      flow_packs_max_count = flow_count;
-    else
-      os << "bad flow_packs_max_count param!" << endl;
-
-    r = fscanf(file, "flow_min_count_packs_in_conn=%d\n", &flow_min_count);
-    if (flow_min_count >= 0 || flow_min_count <= 20)
-      flow_min_count_packs_in_conn = flow_min_count;
-    else
-      os << "bad flow_min_count_packs_in_conn param!" << endl;
-
-    r = fscanf(file, "flow_anomaly_limit=%d\n", &flow_limit);
-    if (flow_limit >= 0 || flow_limit <= 100)
-      flow_anomaly_limit = flow_limit;
-    else
-      os << "bad flow_anomaly_limit param!" << endl;
-
-    r = fscanf(file, "flow_generate_rules=%s\n", str);
-
-    if (!strcmp(str, "true"))
-      flow_generate_rules = true;
-    else if (!strcmp(str, "false"))
-      flow_generate_rules = false;
-    else
-      os << "bad flow_generate_rules param!" << endl;
-
-    ///----------------------------------------------------------
-    os << "tcp_anomaly_depth=" << states_count << endl;
-    os << "tcp_anomaly_limit=" << tcp_anomaly_limit << endl;
-    os << "tcp_generate_rules=" << tcp_generate_rules << endl;
-    if (r) os << "ads.settings loaded" << endl;
+  if (file == nullptr) {
+    qWarning() << "ads.settings not found; default settings will be used";
+    return;
   }
+
+  os << "loading settings for ADS..." << endl;
+
+  // fscanf(file, "my_ip=%s\n", ip);
+  // my_ip = ip_str_to_hl(ip);
+
+  r = fscanf(file, "tcp_anomaly_depth=%d\n", &depth);
+  if (r == 1 && depth >= 2 && depth <= 6) {
+    states_count = depth;
+  } else {
+    os << "bad tcp_anomaly_depth param!" << endl;
+  }
+
+  r = fscanf(file, "tcp_anomaly_limit=%d\n", &tcplimit);
+  if (tcplimit >= 10 && tcplimit <= 100)
+    tcp_anomaly_limit = tcplimit;
+  else
+    os << "bad tcp_anomaly_limit param!" << endl;
+
+  r = fscanf(file, "tcp_generate_rules=%19s\n", str);
+
+  if (!strcmp(str, "true"))
+    tcp_generate_rules = true;
+  else if (!strcmp(str, "false"))
+    tcp_generate_rules = false;
+  else
+    os << "bad tcp_generate_rules param!" << endl;
+
+  r = fscanf(file, "tcp_drop_ports=%d\n", &tcpdrop);
+  if (tcpdrop == 1 || tcpdrop == 2 || tcpdrop == 3)
+    tcp_drop_ports = tcpdrop;
+  else
+    os << "bad tcp_drop_ports param!" << endl;
+
+  r = fscanf(file, "flow_packs_max_count=%d\n", &flow_count);
+  if (flow_count >= 20 && flow_count <= 200)
+    flow_packs_max_count = flow_count;
+  else
+    os << "bad flow_packs_max_count param!" << endl;
+
+  r = fscanf(file, "flow_min_count_packs_in_conn=%d\n", &flow_min_count);
+  if (flow_min_count >= 0 && flow_min_count <= 20)
+    flow_min_count_packs_in_conn = flow_min_count;
+  else
+    os << "bad flow_min_count_packs_in_conn param!" << endl;
+
+  r = fscanf(file, "flow_anomaly_limit=%d\n", &flow_limit);
+  if (flow_limit >= 0 && flow_limit <= 100)
+    flow_anomaly_limit = flow_limit;
+  else
+    os << "bad flow_anomaly_limit param!" << endl;
+
+  r = fscanf(file, "flow_generate_rules=%19s\n", str);
+
+  if (!strcmp(str, "true"))
+    flow_generate_rules = true;
+  else if (!strcmp(str, "false"))
+    flow_generate_rules = false;
+  else
+    os << "bad flow_generate_rules param!" << endl;
+
+  ///----------------------------------------------------------
+  os << "tcp_anomaly_depth=" << states_count << endl;
+  os << "tcp_anomaly_limit=" << tcp_anomaly_limit << endl;
+  os << "tcp_generate_rules=" << tcp_generate_rules << endl;
+  if (r) os << "ads.settings loaded" << endl;
 
   // os << endl;
   // logger->log(os.str());
+
   fclose(file);
 }
 

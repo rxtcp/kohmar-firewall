@@ -27,7 +27,7 @@ ssize_t procfile_read(char *buffer, char **buffer_location, off_t offset,
   return len;
 }
 
-void init_procfs(void) {
+static void init_procfs(void) {
   /*
  * * Create our /proc file
 

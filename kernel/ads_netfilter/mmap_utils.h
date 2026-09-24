@@ -199,9 +199,10 @@ inline static void *mmap_get_next_pointer(struct pkt_mmap *p_mmap) {
 }
 
 /* init mmap */
-int init_mmap_all(int buf_size, char *chardevname, struct pkt_mmap *p_mmap,
-                  const struct vm_operations_struct *packet_mmap_ops,
-                  const struct file_operations *mmap_fops) {
+static int init_mmap_all(int buf_size, char *chardevname,
+                         struct pkt_mmap *p_mmap,
+                         const struct vm_operations_struct *packet_mmap_ops,
+                         const struct file_operations *mmap_fops) {
   int block_count;
   int ret;
 
@@ -266,7 +267,7 @@ out_unalloc_region:
   return ret;
 }
 
-void mmap_clear_all(struct pkt_mmap *p_mmap) {
+static void mmap_clear_all(struct pkt_mmap *p_mmap) {
   cdev_del(&p_mmap->mmap_cdev);
   unregister_chrdev_region(p_mmap->mmap_dev, 1);
   printk("mmap free...\n");

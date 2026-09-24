@@ -1,360 +1,316 @@
 #include "netlinkmanager.h"
 
-NetLinkManager::NetLinkManager(int group) {
-#ifndef ADS_DAEMON
-  QMessageBox msgBox;
-#endif  // ADS_DAEMON
+#include <unistd.h>
 
-  int res;
+#include <QDebug>
+#include <QHostAddress>
+#include <QMessageBox>
+#include <cerrno>
+#include <cstring>
 
-  /* We create a Netlink socket, specify our own family (NETLINK_USER) */
-  if ((netlink_sock = socket(PF_NETLINK, SOCK_RAW, group)) < 0) {
-    // perror("Netlink Socket");
+NetLinkManager::NetLinkManager(int netlinkProtocol) {
+  netlinkSocket_ = socket(PF_NETLINK, SOCK_RAW, netlinkProtocol);
+
+  if (netlinkSocket_ < 0) {
+    qWarning() << "Netlink socket creation failed:" << strerror(errno);
 #ifndef ADS_DAEMON
-    msgBox.setText("NetLink socket creation error");
-    msgBox.exec();
-#endif  // ADS_DAEMON
-    qDebug() << "NetLink socket creation error";
+    QMessageBox::critical(nullptr, "Netlink", "Netlink socket creation error");
+#endif
     return;
   }
 
-  /* Specify our process ID in the address and associate the address with the
-   * socket
-   */
-  memset(&nl_src_addr, 0, sizeof(nl_src_addr));
-  nl_src_addr.nl_family = AF_NETLINK;
-  nl_src_addr.nl_pid =
-      getpid();  // pthread_self() << 16 | getpid();//pthread_self();//(pid_t)
-  // syscall (SYS_gettid);
-  nl_src_addr.nl_groups = 0;
+  sourceAddress_ = {};
+  sourceAddress_.nl_family = AF_NETLINK;
+  sourceAddress_.nl_pid = static_cast<unsigned int>(getpid());
+  sourceAddress_.nl_groups = 0;
 
-  res =
-      bind(netlink_sock, (struct sockaddr *)&nl_src_addr, sizeof(nl_src_addr));
-  if (res < 0) {
+  if (bind(netlinkSocket_, reinterpret_cast<struct sockaddr *>(&sourceAddress_),
+           sizeof(sourceAddress_)) < 0) {
+    qWarning() << "Netlink socket bind failed:" << strerror(errno);
 #ifndef ADS_DAEMON
-    msgBox.setText("NetLink socket bind error");
-    msgBox.exec();
-#endif  // ADS_DAEMON
-
-    qDebug() << "NetLink socket bind error";
+    QMessageBox::critical(nullptr, "Netlink", "Netlink socket bind error");
+#endif
+    closeNetlinkSocket();
     return;
   }
 
-  /* Fill in the address for sending messages to the kernel module */
-  nl_dest_addr.nl_family = AF_NETLINK;
-  nl_dest_addr.nl_pid = 0;
-  nl_dest_addr.nl_groups = 0;
-
-  /* We allocate memory for the netlink header of the message and the
-   * transmitted data */
-  nlmsg_send = (struct nlmsghdr *)malloc(NLMSG_SPACE(MSG_SIZE_SEND));
-
-  if (nlmsg_send == NULL) {
-#ifndef ADS_DAEMON
-    msgBox.setText("Memory allocation error for NetLink socket");
-    msgBox.exec();
-#endif  // ADS_DAEMON
-    qDebug() << "Memory allocation error for NetLink socket";
-    return;
-  }
-
-  /* Specify the size of the message, and who sends it */
-  nlmsg_send->nlmsg_len = NLMSG_SPACE(MSG_SIZE_SEND);
-  nlmsg_send->nlmsg_pid = getpid();
-  nlmsg_send->nlmsg_flags = 0;
-
-  /* Filling iovec for the msghdr structure */
-  iov_send.iov_base = (void *)nlmsg_send;
-  iov_send.iov_len = nlmsg_send->nlmsg_len;
-
-  /* We form a message: indicate to whom to send and what to send */
-  MSG_Send.msg_name = (void *)&nl_dest_addr;
-  MSG_Send.msg_namelen = sizeof(nl_dest_addr);
-  MSG_Send.msg_iov = &iov_send;
-  MSG_Send.msg_iovlen = 1;
-
-  /* Allocate memory for receiving netlink messages */
-  nlmsg_read = (struct nlmsghdr *)malloc(NLMSG_SPACE(MSG_SIZE_READ));
-
-  if (nlmsg_read == NULL) {
-#ifndef ADS_DAEMON
-    msgBox.setText("Memory allocation error for NetLink socket");
-    msgBox.exec();
-#endif  // ADS_DAEMON
-    qDebug() << "Memory allocation error for NetLink socket";
-    return;
-  }
-
-  /* We form a message for receiving: specify the size and where to save the
-   * data */
-  nlmsg_read->nlmsg_len = NLMSG_SPACE(MSG_SIZE_READ);
-  iov_read.iov_base = (void *)nlmsg_read;
-  iov_read.iov_len = nlmsg_read->nlmsg_len;
-  MSG_Read.msg_iov = &iov_read;
-  MSG_Read.msg_iovlen = 1;
-
-  /* We define pointers for convenient work with received and sent data */
-  SEND_MSG = (struct Command *)NLMSG_DATA(nlmsg_send);
-  RECV_FLAG = (bool *)NLMSG_DATA(nlmsg_read);
+  destinationAddress_ = {};
+  destinationAddress_.nl_family = AF_NETLINK;
+  destinationAddress_.nl_pid = 0;
+  destinationAddress_.nl_groups = 0;
 }
+
+NetLinkManager::~NetLinkManager() { closeNetlinkSocket(); }
+
+bool NetLinkManager::isOpen() const { return netlinkSocket_ >= 0; }
 
 void NetLinkManager::closeNetlinkSocket() {
-  close(netlink_sock);
-  // free((void *)nlmsg_send);
-  // free((void *)nlmsg_read);
-  // free((void *)SEND_MSG);
-}
-
-bool NetLinkManager::sendCommand(struct Command com) {
-  memcpy(SEND_MSG, &com, sizeof(com));
-  /* Send a message to the module */
-  sendmsg(netlink_sock, &MSG_Send, 0);
-
-  // QMessageBox msgBox;
-  // msgBox.setText("Command Sended To Kernel");
-  // msgBox.exec();
-  qDebug() << "Sent to Kernel";
-
-  recvmsg(netlink_sock, &MSG_Read, 0);
-
-  // msgBox.setText("Received From Kernel");
-  // msgBox.exec();
-  // printf("\nRecived: %d\n", *RECV_FLAG);*/
-  qDebug() << "Answer received from Kernel";
-  return *RECV_FLAG;
-}
-
-void NetLinkManager::sendRuleToKernel(Rule *r) {
-#ifndef ADS_DAEMON
-  QMessageBox msgBox;
-#endif  // ADS_DAEMON
-
-  qDebug() << "[Netlink - qstring] ip_src=" + r->ip_src +
-                  " ip_dest=" + r->ip_dest;
-  char __ip_src[16];
-  char __ip_dest[16];
-  strcpy(__ip_src, r->ip_src.toStdString().c_str());
-  strcpy(__ip_dest, r->ip_dest.toStdString().c_str());
-
-  struct RuleToKernel rule_to_kernel;
-  struct Command command;
-
-  // rule_to_kernel = new RuleToKernel;
-
-  rule_to_kernel.id_rule = r->id_rule;
-  rule_to_kernel.in_out = r->in_out;
-
-  if (r->ip_src == "-")
-    rule_to_kernel.ip_src = NULL;
-  else {
-    // qDebug() << "[NetlinkManager] ip_src...";
-    rule_to_kernel.ip_src = __ip_src;
-  }
-
-  rule_to_kernel.port_src = r->port_src;
-
-  if (r->ip_dest == "-")
-    rule_to_kernel.ip_dest = NULL;
-  else {
-    // qDebug() << "[NetlinkManager] ip_dest...";
-    rule_to_kernel.ip_dest = __ip_dest;  // r->ip_dest.toUtf8().data();
-  }
-
-  rule_to_kernel.port_dest = r->port_dest;
-  rule_to_kernel.proto = r->proto;
-  rule_to_kernel.action = r->action;
-
-  qDebug() << "[Netlink - char] ip_src=" +
-                  QString::fromUtf8(rule_to_kernel.ip_src) +
-                  " ip_dest=" + QString::fromUtf8(rule_to_kernel.ip_dest);
-
-  // command = new Command;
-  command.action = ADD_RULE_COMMAND;
-  command.rule = &rule_to_kernel;
-
-  if (!sendCommand(command)) {
-#ifndef ADS_DAEMON
-    // msgBox.setText("Error! Rule was not added!");
-    // msgBox.exec();
-#endif  // ADS_DAEMON
-
-    qDebug() << "Error! Rule was not added!";
+  if (netlinkSocket_ >= 0) {
+    close(netlinkSocket_);
+    netlinkSocket_ = -1;
   }
 }
 
-void NetLinkManager::deleteRuleFromKernel(Rule *r) {
-#ifndef ADS_DAEMON
-  QMessageBox msgBox;
-#endif  // ADS_DAEMON
-
-  struct RuleToKernel rule_to_kernel;
-  struct Command command;
-
-  rule_to_kernel.id_rule = r->id_rule;
-  rule_to_kernel.in_out = r->in_out;
-
-  if (r->ip_src == "-")
-    rule_to_kernel.ip_src = NULL;
-  else
-    rule_to_kernel.ip_src = r->ip_src.toUtf8().data();
-
-  rule_to_kernel.port_src = r->port_src;
-
-  if (r->ip_dest == "-")
-    rule_to_kernel.ip_dest = NULL;
-  else
-    rule_to_kernel.ip_dest = r->ip_dest.toUtf8().data();
-
-  rule_to_kernel.port_dest = r->port_dest;
-  rule_to_kernel.proto = r->proto;
-  rule_to_kernel.action = r->action;
-
-  // command = new Command;
-  command.action = DELETE_RULE_COMMAND;
-  command.rule = &rule_to_kernel;
-
-  if (!sendCommand(command)) {
-#ifndef ADS_DAEMON
-    msgBox.setText("Error! Rule was not deleted!");
-    msgBox.exec();
-#endif  // ADS_DAEMON
-
-    qDebug() << "Error! Rule was not deleted!";
+bool NetLinkManager::sendRequest(const struct fw_command_message &request) {
+  if (!isOpen()) {
+    return false;
   }
+
+  alignas(
+      struct nlmsghdr) unsigned char buffer[NLMSG_SPACE(sizeof(request))] = {};
+
+  auto *header = reinterpret_cast<struct nlmsghdr *>(buffer);
+
+  header->nlmsg_len = NLMSG_LENGTH(sizeof(request));
+  header->nlmsg_pid = static_cast<unsigned int>(getpid());
+  header->nlmsg_flags = 0;
+
+  memcpy(NLMSG_DATA(header), &request, sizeof(request));
+
+  struct iovec vector{};
+  vector.iov_base = header;
+  vector.iov_len = header->nlmsg_len;
+
+  struct msghdr message{};
+  message.msg_name = &destinationAddress_;
+  message.msg_namelen = sizeof(destinationAddress_);
+  message.msg_iov = &vector;
+  message.msg_iovlen = 1;
+
+  const ssize_t sent = sendmsg(netlinkSocket_, &message, 0);
+
+  if (sent < 0) {
+    qWarning() << "Netlink send failed:" << strerror(errno);
+    return false;
+  }
+
+  return static_cast<std::size_t>(sent) == header->nlmsg_len;
 }
 
-void NetLinkManager::updateRuleInKernel(Rule *r) {
-#ifndef ADS_DAEMON
-  QMessageBox msgBox;
-#endif  // ADS_DAEMON
-
-  struct RuleToKernel rule_to_kernel;
-  struct Command command;
-
-  rule_to_kernel.id_rule = r->id_rule;
-  rule_to_kernel.in_out = r->in_out;
-
-  if (r->ip_src == "-")
-    rule_to_kernel.ip_src = NULL;
-  else
-    rule_to_kernel.ip_src = r->ip_src.toUtf8().data();
-
-  rule_to_kernel.port_src = r->port_src;
-
-  if (r->ip_dest == "-")
-    rule_to_kernel.ip_dest = NULL;
-  else
-    rule_to_kernel.ip_dest = r->ip_dest.toUtf8().data();
-
-  rule_to_kernel.port_dest = r->port_dest;
-  rule_to_kernel.proto = r->proto;
-  rule_to_kernel.action = r->action;
-
-  // command = new Command;
-  command.action = UPDATE_RULE_COMMAND;
-  command.rule = &rule_to_kernel;
-
-  if (!sendCommand(command)) {
-#ifndef ADS_DAEMON
-    msgBox.setText("Error! Rule was not changed!");
-    msgBox.exec();
-#endif  // ADS_DAEMON
-
-    qDebug() << "Error! Rule was not changed!";
+bool NetLinkManager::receiveResponse(struct fw_response_message *response) {
+  if (!isOpen() || response == nullptr) {
+    return false;
   }
+
+  alignas(struct nlmsghdr) unsigned char
+      buffer[NLMSG_SPACE(sizeof(*response))] = {};
+
+  auto *header = reinterpret_cast<struct nlmsghdr *>(buffer);
+
+  struct iovec vector{};
+  vector.iov_base = header;
+  vector.iov_len = sizeof(buffer);
+
+  struct sockaddr_nl sender{};
+
+  struct msghdr message{};
+  message.msg_name = &sender;
+  message.msg_namelen = sizeof(sender);
+  message.msg_iov = &vector;
+  message.msg_iovlen = 1;
+
+  const ssize_t received = recvmsg(netlinkSocket_, &message, 0);
+
+  if (received < 0) {
+    qWarning() << "Netlink receive failed:" << strerror(errno);
+    return false;
+  }
+
+  if (sender.nl_pid != 0) {
+    qWarning() << "Unexpected Netlink sender:" << sender.nl_pid;
+    return false;
+  }
+
+  if (received < static_cast<ssize_t>(NLMSG_LENGTH(sizeof(*response))) ||
+      !NLMSG_OK(header, received) ||
+      NLMSG_PAYLOAD(header, 0) < sizeof(*response)) {
+    qWarning() << "Invalid Netlink response size";
+    return false;
+  }
+
+  memcpy(response, NLMSG_DATA(header), sizeof(*response));
+
+  if (response->version != FW_PROTOCOL_VERSION) {
+    qWarning() << "Unsupported protocol version:" << response->version;
+    return false;
+  }
+
+  return true;
 }
 
-NetLinkManager::~NetLinkManager() {
-  this->closeNetlinkSocket();
+bool NetLinkManager::sendCommand(enum fw_command_type command) {
+  struct fw_command_message request{};
+  request.version = FW_PROTOCOL_VERSION;
+  request.command = static_cast<fw_u16>(command);
+  request.payload_size = 0;
 
-  delete nlmsg_send;
-  nlmsg_send = NULL;
-  delete nlmsg_read;
-  nlmsg_read = NULL;
-  delete SEND_MSG;
-  SEND_MSG = NULL;
+  if (!sendRequest(request)) {
+    return false;
+  }
+
+  struct fw_response_message response{};
+
+  if (!receiveResponse(&response)) {
+    return false;
+  }
+
+  return response.command == request.command && response.status == FW_STATUS_OK;
+}
+
+bool NetLinkManager::encodeRule(const Rule &source,
+                                struct fw_rule_message *destination) {
+  if (destination == nullptr) {
+    return false;
+  }
+
+  *destination = {};
+
+  destination->id = source.id_rule;
+  destination->direction = source.in_out;
+
+  if (source.ip_src != "-") {
+    const QHostAddress address(source.ip_src);
+    bool conversionOk = false;
+
+    if (address.protocol() != QAbstractSocket::IPv4Protocol) {
+      return false;
+    }
+
+    destination->source_ipv4 = address.toIPv4Address(&conversionOk);
+
+    if (!conversionOk) {
+      return false;
+    }
+  }
+
+  if (source.ip_dest != "-") {
+    const QHostAddress address(source.ip_dest);
+    bool conversionOk = false;
+
+    if (address.protocol() != QAbstractSocket::IPv4Protocol) {
+      return false;
+    }
+
+    destination->destination_ipv4 = address.toIPv4Address(&conversionOk);
+
+    if (!conversionOk) {
+      return false;
+    }
+  }
+
+  const bool sourcePortValid =
+      source.port_src == -1 ||
+      (source.port_src >= 0 && source.port_src <= 65535);
+
+  const bool destinationPortValid =
+      source.port_dest == -1 ||
+      (source.port_dest >= 0 && source.port_dest <= 65535);
+
+  if (!sourcePortValid || !destinationPortValid || source.proto > 255 ||
+      source.action > 255) {
+    return false;
+  }
+
+  destination->source_port = static_cast<fw_s32>(source.port_src);
+  destination->destination_port = static_cast<fw_s32>(source.port_dest);
+  destination->protocol = static_cast<fw_u8>(source.proto);
+  destination->action = static_cast<fw_u8>(source.action);
+
+  return true;
+}
+
+bool NetLinkManager::sendRuleCommand(enum fw_command_type command,
+                                     const Rule &rule) {
+  struct fw_command_message request{};
+  request.version = FW_PROTOCOL_VERSION;
+  request.command = static_cast<fw_u16>(command);
+  request.payload_size = sizeof(request.rule);
+
+  if (!encodeRule(rule, &request.rule)) {
+    qWarning() << "Cannot encode firewall rule";
+    return false;
+  }
+
+  if (!sendRequest(request)) {
+    return false;
+  }
+
+  struct fw_response_message response{};
+
+  if (!receiveResponse(&response)) {
+    return false;
+  }
+
+  return response.command == request.command && response.status == FW_STATUS_OK;
+}
+
+bool NetLinkManager::sendRuleToKernel(const Rule *rule) {
+  return rule != nullptr && sendRuleCommand(FW_COMMAND_ADD_RULE, *rule);
+}
+
+bool NetLinkManager::deleteRuleFromKernel(const Rule *rule) {
+  return rule != nullptr && sendRuleCommand(FW_COMMAND_DELETE_RULE, *rule);
+}
+
+bool NetLinkManager::updateRuleInKernel(const Rule *rule) {
+  return rule != nullptr && sendRuleCommand(FW_COMMAND_UPDATE_RULE, *rule);
 }
 
 #ifndef ADS_DAEMON
-void NetLinkManager::getDynamicRulesFromKernel(QList<Rule *> *dyn_rules) {
-  struct Command com;
-  struct Rule *rule;
-  com.action = GET_DYNAMIC_RULES_COMMAND;
-
-  /* Allocate memory for receiving netlink messages */
-  nlmsg_read_count =
-      (struct nlmsghdr *)malloc(NLMSG_SPACE(MSG_SIZE_READ_DYN_COUNT));
-  if (nlmsg_read_count == NULL) {
-    qDebug() << "Memory allocation error for NetLink socket";
-    exit(0);
+bool NetLinkManager::getDynamicRulesFromKernel(QList<Rule *> *dynamicRules) {
+  if (dynamicRules == nullptr) {
+    return false;
   }
 
-  /* Allocate memory for receiving netlink messages */
-  nlmsg_read_rule =
-      (struct nlmsghdr *)malloc(NLMSG_SPACE(MSG_SIZE_READ_DYN_RULE));
-  if (nlmsg_read_rule == NULL) {
-    qDebug() << "Memory allocation error for NetLink socket";
-    exit(0);
+  struct fw_command_message request{};
+  request.version = FW_PROTOCOL_VERSION;
+  request.command = FW_COMMAND_GET_DYNAMIC_RULES;
+  request.payload_size = 0;
+
+  if (!sendRequest(request)) {
+    return false;
   }
 
-  /* We form a message for receiving: specify the size and where to save the
-   * data */
-  nlmsg_read_count->nlmsg_len = NLMSG_SPACE(MSG_SIZE_READ_DYN_COUNT);
-  iov_read_count.iov_base = (void *)nlmsg_read_count;
-  iov_read_count.iov_len = nlmsg_read_count->nlmsg_len;
-  MSG_Read_count.msg_iov = &iov_read_count;
-  MSG_Read_count.msg_iovlen = 1;
-  RECV_COUNT = (int *)NLMSG_DATA(nlmsg_read_count);
+  struct fw_response_message response{};
 
-  /* We form a message for receiving: specify the size and where to save the
-   * data */
-  nlmsg_read_rule->nlmsg_len = NLMSG_SPACE(MSG_SIZE_READ_DYN_RULE);
-  iov_read_rule.iov_base = (void *)nlmsg_read_rule;
-  iov_read_rule.iov_len = nlmsg_read_rule->nlmsg_len;
-  MSG_Read_rule.msg_iov = &iov_read_rule;
-  MSG_Read_rule.msg_iovlen = 1;
-  RECV_DYN_RULE = (struct DynamicRuleFromKernel *)NLMSG_DATA(nlmsg_read_rule);
+  if (!receiveResponse(&response) ||
+      response.command != FW_COMMAND_GET_DYNAMIC_RULES ||
+      response.status != FW_STATUS_OK) {
+    return false;
+  }
 
-  memcpy(SEND_MSG, &com, sizeof(com));
-  /* Send the message to the module */
-  sendmsg(netlink_sock, &MSG_Send, 0);
+  const fw_u32 ruleCount = response.item_count;
 
-  recvmsg(netlink_sock, &MSG_Read_count, 0);
-  qDebug() << "dyn_count=" << QString::number(*RECV_COUNT);
+  for (fw_u32 index = 0; index < ruleCount; ++index) {
+    if (!receiveResponse(&response) ||
+        response.command != FW_COMMAND_GET_DYNAMIC_RULES ||
+        response.status != FW_STATUS_OK || response.item_count != ruleCount ||
+        response.sequence != index) {
+      return false;
+    }
 
-  for (int i = 0; i < *RECV_COUNT; i++) {
-    recvmsg(netlink_sock, &MSG_Read_rule, 0);
-    qDebug() << "dyn_id_rule=" << QString::number(RECV_DYN_RULE->id_rule);
+    const struct fw_rule_message &source = response.rule;
 
-    rule = new Rule;
-    rule->action = RECV_DYN_RULE->action;
-    rule->host_name_dest = "-";
+    auto *rule = new Rule;
+    rule->id_rule = source.id;
+    rule->in_out = source.direction;
+    rule->ip_src = source.source_ipv4 == 0 ? "-" : getStrIp(source.source_ipv4);
+    rule->ip_dest =
+        source.destination_ipv4 == 0 ? "-" : getStrIp(source.destination_ipv4);
+    rule->port_src = source.source_port;
+    rule->port_dest = source.destination_port;
+    rule->proto = source.protocol;
+    rule->action = source.action;
     rule->host_name_src = "-";
-    rule->id_rule = RECV_DYN_RULE->id_rule;
-    rule->in_out = RECV_DYN_RULE->in_out;
-    rule->port_dest = RECV_DYN_RULE->dest_port;
-    rule->port_src = RECV_DYN_RULE->src_port;
-    rule->proto = RECV_DYN_RULE->proto;
-    rule->ip_dest = getStrIp(RECV_DYN_RULE->dest_ip);
-    rule->ip_src = getStrIp(RECV_DYN_RULE->src_ip);
+    rule->host_name_dest = "-";
 
-    dyn_rules->append(rule);
+    dynamicRules->append(rule);
   }
+
+  return true;
 }
 
-QString NetLinkManager::getStrIp(unsigned int ip) {
-  int bit1, bit2, bit3, bit4;
-
-  bit1 = 255 & ip;
-  bit2 = (0xff00 & ip) >> 8;
-  bit3 = (0xff0000 & ip) >> 16;
-  bit4 = (0xff000000 & ip) >> 24;
-
-  QString res;
-
-  res = QString::number(bit4) + "." + QString::number(bit3) + "." +
-        QString::number(bit2) + "." + QString::number(bit1);
-
-  return res;
+QString NetLinkManager::getStrIp(fw_u32 ip) {
+  return QHostAddress(ip).toString();
 }
 #endif

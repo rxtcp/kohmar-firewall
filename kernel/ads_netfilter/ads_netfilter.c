@@ -219,29 +219,26 @@ void free_memory(void) {
   filter_types_count = 0;
 }
 
-void change_targert(const char *targert) {
+void change_target(const char *target) {
 #if LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 22)
-  if (!strcmp(targert, "pre_routing"))
+  if (!strcmp(target, "pre_routing"))
     netfilter_ops_out.hooknum = NF_INET_PRE_ROUTING;
-  if (!strcmp(targert, "local_in"))
-    netfilter_ops_out.hooknum = NF_INET_LOCAL_IN;
-  if (!strcmp(targert, "forward")) netfilter_ops_out.hooknum = NF_INET_FORWARD;
-  if (!strcmp(targert, "local_out"))
+  if (!strcmp(target, "local_in")) netfilter_ops_out.hooknum = NF_INET_LOCAL_IN;
+  if (!strcmp(target, "forward")) netfilter_ops_out.hooknum = NF_INET_FORWARD;
+  if (!strcmp(target, "local_out"))
     netfilter_ops_out.hooknum = NF_INET_LOCAL_OUT;
-  if (!strcmp(targert, "post_routing"))
+  if (!strcmp(target, "post_routing"))
     netfilter_ops_out.hooknum = NF_INET_POST_ROUTING;
-  if (!strcmp(targert, "numhooks"))
-    netfilter_ops_out.hooknum = NF_INET_NUMHOOKS;
+  if (!strcmp(target, "numhooks")) netfilter_ops_out.hooknum = NF_INET_NUMHOOKS;
 #else
-  if (!strcmp(targert, "pre_routing"))
+  if (!strcmp(target, "pre_routing"))
     netfilter_ops_out.hooknum = NF_IP_PRE_ROUTING;
-  if (!strcmp(targert, "local_in")) netfilter_ops_out.hooknum = NF_IP_LOCAL_IN;
-  if (!strcmp(targert, "forward")) netfilter_ops_out.hooknum = NF_IP_FORWARD;
-  if (!strcmp(targert, "local_out"))
-    netfilter_ops_out.hooknum = NF_IP_LOCAL_OUT;
-  if (!strcmp(targert, "post_routing"))
+  if (!strcmp(target, "local_in")) netfilter_ops_out.hooknum = NF_IP_LOCAL_IN;
+  if (!strcmp(target, "forward")) netfilter_ops_out.hooknum = NF_IP_FORWARD;
+  if (!strcmp(target, "local_out")) netfilter_ops_out.hooknum = NF_IP_LOCAL_OUT;
+  if (!strcmp(target, "post_routing"))
     netfilter_ops_out.hooknum = NF_IP_POST_ROUTING;
-  if (!strcmp(targert, "numhooks")) netfilter_ops_out.hooknum = NF_IP_NUMHOOKS;
+  if (!strcmp(target, "numhooks")) netfilter_ops_out.hooknum = NF_IP_NUMHOOKS;
 #endif
 }
 
@@ -390,9 +387,9 @@ ssize_t sniffer_dev_write(struct file *filep, const char *buff, size_t count,
 
   if (user_data[0] == 't' && user_data[1] == 't') {
     strcpy(buffer, user_data + 3);
-    log("change targert to");
+    log("change target to");
     log(buffer);
-    change_targert(buffer);
+    change_target(buffer);
   }
 
   if (user_data[0] == 'm' && user_data[1] == 's') {

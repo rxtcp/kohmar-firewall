@@ -536,12 +536,6 @@ static fw_s32 add_a_rule(const struct fw_rule_message *description) {
 
   spin_lock_bh(&policy_lock);
 
-  if (rules_count >= max_filter_rules) {
-    spin_unlock_bh(&policy_lock);
-    kfree(new_rule);
-    return FW_STATUS_RULE_LIMIT_REACHED;
-  }
-
   list_for_each(position, &policy_list.list) {
     existing_rule = list_entry(position, struct RuleListItem, list);
 
@@ -556,6 +550,12 @@ static fw_s32 add_a_rule(const struct fw_rule_message *description) {
       kfree(new_rule);
       return FW_STATUS_RULE_ALREADY_EXISTS;
     }
+  }
+
+  if (rules_count >= max_filter_rules) {
+    spin_unlock_bh(&policy_lock);
+    kfree(new_rule);
+    return FW_STATUS_RULE_LIMIT_REACHED;
   }
 
   list_add_tail(&new_rule->list, &policy_list.list);
@@ -913,8 +913,6 @@ static void __exit ads_netfilter_exit(void) {
   }
 
   unregister_chrdev(232, "ads_sniffer");
-
-  printk(KERN_INFO, "Firewall: free policy list\n");
 
   if (netlink_sock != NULL) {
     netlink_kernel_release(netlink_sock);

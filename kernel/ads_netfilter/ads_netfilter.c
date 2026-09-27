@@ -95,6 +95,7 @@ static bool run_pause = true;
 static struct RuleListItem policy_list;
 static DEFINE_SPINLOCK(policy_lock);
 static int dyn_rules_count = 0;
+static int rules_count = 0;
 
 // the structure used to register the function
 static struct nf_hook_ops nfho;
@@ -503,18 +504,18 @@ static bool is_rule_message_valid(const struct fw_rule_message *rule) {
   return true;
 }
 
-static int add_a_rule(const struct fw_rule_message *description) {
+static fw_s32 add_a_rule(const struct fw_rule_message *description) {
   struct RuleListItem *new_rule;
   struct RuleListItem *existing_rule;
   struct list_head *position;
 
   if (description == NULL) {
-    return 0;
+    return FW_STATUS_INVALID_RULE;
   }
 
   new_rule = kzalloc(sizeof(*new_rule), GFP_KERNEL);
   if (new_rule == NULL) {
-    return 0;
+    return FW_STATUS_INTERNAL_ERROR;
   }
 
   new_rule->id_rule = description->id;
@@ -535,6 +536,12 @@ static int add_a_rule(const struct fw_rule_message *description) {
 
   spin_lock_bh(&policy_lock);
 
+  if (rules_count >= max_filter_rules) {
+    spin_unlock_bh(&policy_lock);
+    kfree(new_rule);
+    return FW_STATUS_RULE_LIMIT_REACHED;
+  }
+
   list_for_each(position, &policy_list.list) {
     existing_rule = list_entry(position, struct RuleListItem, list);
 
@@ -547,18 +554,19 @@ static int add_a_rule(const struct fw_rule_message *description) {
         existing_rule->action == description->action) {
       spin_unlock_bh(&policy_lock);
       kfree(new_rule);
-      return 0;
+      return FW_STATUS_RULE_ALREADY_EXISTS;
     }
   }
 
   list_add_tail(&new_rule->list, &policy_list.list);
+  rules_count++;
 
   if (new_rule->id_rule < 0) {
     dyn_rules_count++;
   }
 
   spin_unlock_bh(&policy_lock);
-  return 1;
+  return FW_STATUS_OK;
 }
 
 static int delete_a_rule(const struct fw_rule_message *description) {
@@ -581,6 +589,11 @@ static int delete_a_rule(const struct fw_rule_message *description) {
       }
 
       list_del(position);
+
+      if (rules_count > 0) {
+        rules_count--;
+      }
+
       spin_unlock_bh(&policy_lock);
 
       kfree(rule);
@@ -688,7 +701,7 @@ static void netlink_Read_Msg(struct sk_buff *skb_in) {
   header = nlmsg_hdr(skb_in);
 
   if (header == NULL || !nlmsg_ok(header, skb_in->len) ||
-      nlmsg_len(header) < sizeof(command)) {
+      nlmsg_len(header) != sizeof(command)) {
     return;
   }
 
@@ -727,11 +740,17 @@ static void netlink_Read_Msg(struct sk_buff *skb_in) {
       return;
   }
 
+  if ((command.command == FW_COMMAND_ADD_RULE ||
+       command.command == FW_COMMAND_DELETE_RULE ||
+       command.command == FW_COMMAND_UPDATE_RULE) &&
+      !is_rule_message_valid(&command.rule)) {
+    send_response(port_id, command.command, FW_STATUS_INVALID_RULE, 0, 0, NULL);
+    return;
+  }
+
   switch (command.command) {
     case FW_COMMAND_ADD_RULE:
-      if (!add_a_rule(&command.rule)) {
-        status = FW_STATUS_RULE_ALREADY_EXISTS;
-      }
+      status = add_a_rule(&command.rule);
       break;
 
     case FW_COMMAND_DELETE_RULE:
@@ -895,16 +914,20 @@ static void __exit ads_netfilter_exit(void) {
 
   unregister_chrdev(232, "ads_sniffer");
 
+  printk(KERN_INFO, "Firewall: free policy list\n");
+
+  if (netlink_sock != NULL) {
+    netlink_kernel_release(netlink_sock);
+    netlink_sock = NULL;
+  }
+
   printk(KERN_INFO "Firewall: free policy list\n");
 
   list_for_each_safe(p, q, &policy_list.list) {
-    printk(KERN_INFO "Firewall: free one\n");
     a_rule = list_entry(p, struct RuleListItem, list);
     list_del(p);
     kfree(a_rule);
   }
-
-  netlink_kernel_release(netlink_sock);
 
   printk(KERN_INFO "Firewall: kernel module UNLOADED.\n");
 }

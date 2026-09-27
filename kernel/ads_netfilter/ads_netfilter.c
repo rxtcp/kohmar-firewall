@@ -685,7 +685,7 @@ static int send_response(fw_u32 port_id, fw_u32 netlink_sequence,
  * the netlink message is passed in the parameters */
 static void netlink_Read_Msg(struct sk_buff *skb_in) {
   struct nlmsghdr *header;
-  struct fw_command_message command;
+  struct fw_command_message command = {0};
   fw_u32 port_id;
   fw_u32 netlink_sequence;
   fw_s32 status = FW_STATUS_OK;
@@ -696,10 +696,6 @@ static void netlink_Read_Msg(struct sk_buff *skb_in) {
 
   port_id = NETLINK_CB(skb_in).portid;
 
-  /*
-   * Если отсутствует даже полный Netlink-заголовок, нельзя безопасно получить
-   * sequence и сформировать коррелированный ответ.
-   */
   if (skb_in->len < NLMSG_HDRLEN) {
     return;
   }
@@ -719,8 +715,8 @@ static void netlink_Read_Msg(struct sk_buff *skb_in) {
   }
 
   if (!nlmsg_ok(header, skb_in->len) || nlmsg_len(header) != sizeof(command)) {
-    send_response(port_id, netlink_sequence, command.command,
-                  FW_STATUS_INVALID_MESSAGE, 0, 0, NULL);
+    send_response(port_id, netlink_sequence, 0, FW_STATUS_INVALID_MESSAGE, 0, 0,
+                  NULL);
     return;
   }
 
@@ -837,20 +833,20 @@ static void netlink_Read_Msg(struct sk_buff *skb_in) {
         snapshot[count].protocol = item->proto;
         snapshot[count].action = item->action;
 
-        count++;
+        ++count;
       }
 
       spin_unlock_bh(&policy_lock);
 
-      send_response(port_id, netlink_sequence, command.command,
-                    FW_STATUS_OK, count, 0, NULL) < 0) {
+      if (send_response(port_id, netlink_sequence, command.command,
+                        FW_STATUS_OK, count, 0, NULL) < 0) {
         kfree(snapshot);
         return;
       }
 
       for (index = 0; index < count; ++index) {
-        send_response(port_id, netlink_sequence, command.command,
-              FW_STATUS_OK, count, index, &snapshot[index]) < 0) {
+        if (send_response(port_id, netlink_sequence, command.command,
+                          FW_STATUS_OK, count, index, &snapshot[index]) < 0) {
           kfree(snapshot);
           return;
         }
@@ -864,7 +860,10 @@ static void netlink_Read_Msg(struct sk_buff *skb_in) {
       return;
   }
 
-  send_response(port_id, netlink_sequence, status, 0, 0, NULL);
+  if (send_response(port_id, netlink_sequence, command.command, status, 0, 0,
+                    NULL) < 0) {
+    pr_warn("Firewall: failed to send Netlink response\n");
+  }
 }
 
 /* Initialization routine */

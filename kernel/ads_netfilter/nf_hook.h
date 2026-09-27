@@ -344,8 +344,14 @@ static unsigned int hook_func_out(void *priv, struct sk_buff *skb,
   } else if (ip_header->protocol == IPPROTO_ICMP) {
   }
 
+  if (!READ_ONCE(run_pause)) {
+    return NF_ACCEPT;
+  }
+
   // go through the firewall list and check if there is a match
   // in case there are multiple matches, take the first one
+
+  spin_lock_bh(&policy_lock);
 
   list_for_each(p_l, &policy_list.list) {
     i++;
@@ -406,6 +412,8 @@ static unsigned int hook_func_out(void *priv, struct sk_buff *skb,
       }
     }
   }
+
+  spin_unlock_bh(&policy_lock);
 
   // no matching is found, accept the packet\n");
 
@@ -506,8 +514,14 @@ static unsigned int hook_func_in(void *priv, struct sk_buff *skb,
     dest_port = (unsigned int)ntohs(tcp_header->dest);
   }
 
+  if (!READ_ONCE(run_pause)) {
+    return NF_ACCEPT;
+  }
+
   // go through the firewall list and check if there is a match
   // in case there are multiple matches, take the first one
+
+  spin_lock_bh(&policy_lock);
 
   list_for_each(p_l, &policy_list.list) {
     i++;
@@ -561,6 +575,8 @@ static unsigned int hook_func_in(void *priv, struct sk_buff *skb,
       }
     }
   }
+
+  spin_unlock_bh(&policy_lock);
 
   // no matching is found, accept the packet
 

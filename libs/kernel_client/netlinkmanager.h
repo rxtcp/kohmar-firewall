@@ -4,6 +4,7 @@
 #ifndef ADS_DAEMON
 #include <QList>
 #include <QString>
+#include <mutex>
 #endif
 
 #include <linux/netlink.h>
@@ -43,9 +44,10 @@ class NetLinkManager {
   static bool encodeRule(const Rule &source,
                          struct fw_rule_message *destination);
 
+  std::mutex transactionMutex_;
+
   int netlinkSocket_ = -1;
   struct sockaddr_nl sourceAddress_{};
   struct sockaddr_nl destinationAddress_{};
-};
 
 #endif

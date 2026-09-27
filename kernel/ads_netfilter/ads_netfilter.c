@@ -2,6 +2,7 @@
 #define KERNEL_NETFILTER
 
 #include <firewall/protocol.h>
+#include <linux/capability.h>
 #include <linux/cdev.h>
 #include <linux/errno.h>
 #include <linux/fs.h>
@@ -92,6 +93,7 @@ struct sock *netlink_sock;
 static bool run_pause = true;
 
 static struct RuleListItem policy_list;
+static DEFINE_SPINLOCK(policy_lock);
 static int dyn_rules_count = 0;
 
 // the structure used to register the function
@@ -467,6 +469,40 @@ void init_run_sniffer(void) {
  * FOR RULES
  */
 
+static bool is_rule_message_valid(const struct fw_rule_message *rule) {
+  if (rule == NULL) {
+    return false;
+  }
+
+  if (rule->direction != FW_DIRECTION_IN &&
+      rule->direction != FW_DIRECTION_OUT) {
+    return false;
+  }
+
+  if (rule->source_port < -1 || rule->source_port > 65535 ||
+      rule->destination_port < -1 || rule->destination_port > 65535) {
+    return false;
+  }
+
+  if (rule->protocol != FW_RULE_PROTOCOL_ANY &&
+      rule->protocol != FW_RULE_PROTOCOL_TCP &&
+      rule->protocol != FW_RULE_PROTOCOL_UDP &&
+      rule->protocol != FW_RULE_PROTOCOL_ICMP) {
+    return false;
+  }
+
+  if (rule->action != FW_RULE_ACTION_DROP &&
+      rule->action != FW_RULE_ACTION_ACCEPT) {
+    return false;
+  }
+
+  if (rule->reserved[0] != 0 || rule->reserved[1] != 0) {
+    return false;
+  }
+
+  return true;
+}
+
 static int add_a_rule(const struct fw_rule_message *description) {
   struct RuleListItem *new_rule;
   struct RuleListItem *existing_rule;
@@ -491,29 +527,37 @@ static int add_a_rule(const struct fw_rule_message *description) {
   }
 
   new_rule = kmalloc(sizeof(*new_rule), GFP_KERNEL);
-
   if (new_rule == NULL) {
     return 0;
   }
 
-  new_rule->id_rule = description->id;
-  new_rule->in_out = description->direction;
-  new_rule->src_ip = description->source_ipv4;
-  new_rule->src_netmask = 0;
-  new_rule->src_port = description->source_port;
-  new_rule->dest_ip = description->destination_ipv4;
-  new_rule->dest_netmask = 0;
-  new_rule->dest_port = description->destination_port;
-  new_rule->proto = description->protocol;
-  new_rule->action = description->action;
+  /* Заполнение new_rule выполняется до блокировки. */
 
-  INIT_LIST_HEAD(&new_rule->list);
+  spin_lock_bh(&policy_lock);
+
+  list_for_each(position, &policy_list.list) {
+    existing_rule = list_entry(position, struct RuleListItem, list);
+
+    if (existing_rule->in_out == description->direction &&
+        existing_rule->src_ip == description->source_ipv4 &&
+        existing_rule->dest_ip == description->destination_ipv4 &&
+        existing_rule->src_port == description->source_port &&
+        existing_rule->dest_port == description->destination_port &&
+        existing_rule->proto == description->protocol &&
+        existing_rule->action == description->action) {
+      spin_unlock_bh(&policy_lock);
+      kfree(new_rule);
+      return 0;
+    }
+  }
+
   list_add_tail(&new_rule->list, &policy_list.list);
 
   if (description->id < 0) {
     dyn_rules_count++;
   }
 
+  spin_unlock_bh(&policy_lock);
   return 1;
 }
 
@@ -526,6 +570,8 @@ static int delete_a_rule(const struct fw_rule_message *description) {
     return 0;
   }
 
+  spin_lock_bh(&policy_lock);
+
   list_for_each_safe(position, next, &policy_list.list) {
     rule = list_entry(position, struct RuleListItem, list);
 
@@ -535,11 +581,14 @@ static int delete_a_rule(const struct fw_rule_message *description) {
       }
 
       list_del(position);
+      spin_unlock_bh(&policy_lock);
+
       kfree(rule);
       return 1;
     }
   }
 
+  spin_unlock_bh(&policy_lock);
   return 0;
 }
 
@@ -550,6 +599,8 @@ static int update_a_rule(const struct fw_rule_message *description) {
   if (description == NULL) {
     return 0;
   }
+
+  spin_lock_bh(&policy_lock);
 
   list_for_each(position, &policy_list.list) {
     rule = list_entry(position, struct RuleListItem, list);
@@ -565,6 +616,8 @@ static int update_a_rule(const struct fw_rule_message *description) {
       return 1;
     }
   }
+
+  spin_unlock_bh(&policy_lock);
 
   return 0;
 }
@@ -612,7 +665,13 @@ static int send_response(fw_u32 port_id, fw_u16 command, fw_s32 status,
 static void netlink_Read_Msg(struct sk_buff *skb_in) {
   struct nlmsghdr *header;
   struct fw_command_message command;
-  fw_u32 port_id;
+  fw_u32 port_id = NETLINK_CB(skb_in).portid;
+
+  if (!netlink_capable(skb_in, CAP_NET_ADMIN)) {
+    send_response(port_id, 0, FW_STATUS_PERMISSION_DENIED, 0, 0, NULL);
+    return;
+  }
+
   fw_s32 status = FW_STATUS_OK;
 
   if (skb_in == NULL) {
@@ -645,6 +704,14 @@ static void netlink_Read_Msg(struct sk_buff *skb_in) {
                       NULL);
         return;
       }
+      if ((command.command == FW_COMMAND_ADD_RULE ||
+           command.command == FW_COMMAND_DELETE_RULE ||
+           command.command == FW_COMMAND_UPDATE_RULE) &&
+          !is_rule_message_valid(&command.rule)) {
+        send_response(port_id, command.command, FW_STATUS_INVALID_RULE, 0, 0,
+                      NULL);
+        return;
+      }
       break;
 
     case FW_COMMAND_GET_DYNAMIC_RULES:
@@ -652,6 +719,14 @@ static void netlink_Read_Msg(struct sk_buff *skb_in) {
     case FW_COMMAND_START:
       if (command.payload_size != 0) {
         send_response(port_id, command.command, FW_STATUS_INVALID_MESSAGE, 0, 0,
+                      NULL);
+        return;
+      }
+      if ((command.command == FW_COMMAND_ADD_RULE ||
+           command.command == FW_COMMAND_DELETE_RULE ||
+           command.command == FW_COMMAND_UPDATE_RULE) &&
+          !is_rule_message_valid(&command.rule)) {
+        send_response(port_id, command.command, FW_STATUS_INVALID_RULE, 0, 0,
                       NULL);
         return;
       }
@@ -683,11 +758,11 @@ static void netlink_Read_Msg(struct sk_buff *skb_in) {
       break;
 
     case FW_COMMAND_START:
-      run_pause = true;
+      WRITE_ONCE(run_pause, true);
       break;
 
     case FW_COMMAND_PAUSE:
-      run_pause = false;
+      WRITE_ONCE(run_pause, false);
       break;
 
     case FW_COMMAND_GET_DYNAMIC_RULES: {
@@ -769,8 +844,12 @@ static int __init ads_netfilter_init(void) {
 
   netlink_sock = netlink_kernel_create(&init_net, NETLINK_USERSOCK, &cfg);
 
-  if (netlink_sock == NULL)
+  if (netlink_sock == NULL) {
     printk(KERN_ERR "Firewall: Error creating netlink socket.\n");
+    unregister_chrdev(232, "ads_sniffer");
+    remove_proc();
+    return -ENOMEM;
+  }
 
   log("INIT done");
 

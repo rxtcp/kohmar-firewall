@@ -5,6 +5,7 @@
 #include <QDebug>
 #include <QHostAddress>
 #include <QMessageBox>
+#include <QtAlgorithms>
 #include <cerrno>
 #include <cstring>
 
@@ -30,6 +31,17 @@ NetLinkManager::NetLinkManager(int netlinkProtocol) {
 #ifndef ADS_DAEMON
     QMessageBox::critical(nullptr, "Netlink", "Netlink socket bind error");
 #endif
+    closeNetlinkSocket();
+    return;
+  }
+
+  struct timeval timeout{};
+  timeout.tv_sec = 2;
+  timeout.tv_usec = 0;
+
+  if (setsockopt(netlinkSocket_, SOL_SOCKET, SO_RCVTIMEO, &timeout,
+                 sizeof(timeout)) < 0) {
+    qWarning() << "Cannot set Netlink receive timeout:" << strerror(errno);
     closeNetlinkSocket();
     return;
   }
@@ -111,6 +123,22 @@ bool NetLinkManager::receiveResponse(struct fw_response_message *response) {
 
   const ssize_t received = recvmsg(netlinkSocket_, &message, 0);
 
+  if ((message.msg_flags & MSG_TRUNC) != 0) {
+    qWarning() << "Truncated Netlink response";
+    return false;
+  }
+
+  if (message.msg_namelen < sizeof(sockaddr_nl) ||
+      sender.nl_family != AF_NETLINK || sender.nl_pid != 0) {
+    qWarning() << "Unexpected Netlink sender";
+    return false;
+  }
+
+  if (header->nlmsg_type != NLMSG_DONE) {
+    qWarning() << "Unexpected Netlink message type:" << header->nlmsg_type;
+    return false;
+  }
+
   if (received < 0) {
     qWarning() << "Netlink receive failed:" << strerror(errno);
     return false;
@@ -139,6 +167,8 @@ bool NetLinkManager::receiveResponse(struct fw_response_message *response) {
 }
 
 bool NetLinkManager::sendCommand(enum fw_command_type command) {
+  std::lock_guard<std::mutex> lock(transactionMutex_);
+
   struct fw_command_message request{};
   request.version = FW_PROTOCOL_VERSION;
   request.command = static_cast<fw_u16>(command);
@@ -206,8 +236,19 @@ bool NetLinkManager::encodeRule(const Rule &source,
       source.port_dest == -1 ||
       (source.port_dest >= 0 && source.port_dest <= 65535);
 
-  if (!sourcePortValid || !destinationPortValid || source.proto > 255 ||
-      source.action > 255) {
+  const bool directionValid =
+      source.in_out == FW_DIRECTION_IN || source.in_out == FW_DIRECTION_OUT;
+
+  const bool protocolValid = source.proto == FW_RULE_PROTOCOL_ANY ||
+                             source.proto == FW_RULE_PROTOCOL_TCP ||
+                             source.proto == FW_RULE_PROTOCOL_UDP ||
+                             source.proto == FW_RULE_PROTOCOL_ICMP;
+
+  const bool actionValid = source.action == FW_RULE_ACTION_DROP ||
+                           source.action == FW_RULE_ACTION_ACCEPT;
+
+  if (!sourcePortValid || !destinationPortValid || !directionValid ||
+      !protocolValid || !actionValid) {
     return false;
   }
 
@@ -221,6 +262,7 @@ bool NetLinkManager::encodeRule(const Rule &source,
 
 bool NetLinkManager::sendRuleCommand(enum fw_command_type command,
                                      const Rule &rule) {
+  std::lock_guard<std::mutex> lock(transactionMutex_);
   struct fw_command_message request{};
   request.version = FW_PROTOCOL_VERSION;
   request.command = static_cast<fw_u16>(command);
@@ -258,6 +300,7 @@ bool NetLinkManager::updateRuleInKernel(const Rule *rule) {
 
 #ifndef ADS_DAEMON
 bool NetLinkManager::getDynamicRulesFromKernel(QList<Rule *> *dynamicRules) {
+  std::lock_guard<std::mutex> lock(transactionMutex_);
   if (dynamicRules == nullptr) {
     return false;
   }
@@ -280,12 +323,14 @@ bool NetLinkManager::getDynamicRulesFromKernel(QList<Rule *> *dynamicRules) {
   }
 
   const fw_u32 ruleCount = response.item_count;
+  QList<Rule *> receivedRules;
 
   for (fw_u32 index = 0; index < ruleCount; ++index) {
     if (!receiveResponse(&response) ||
         response.command != FW_COMMAND_GET_DYNAMIC_RULES ||
         response.status != FW_STATUS_OK || response.item_count != ruleCount ||
         response.sequence != index) {
+      qDeleteAll(receivedRules);
       return false;
     }
 
@@ -304,9 +349,10 @@ bool NetLinkManager::getDynamicRulesFromKernel(QList<Rule *> *dynamicRules) {
     rule->host_name_src = "-";
     rule->host_name_dest = "-";
 
-    dynamicRules->append(rule);
+    receivedRules.append(rule);
   }
 
+  dynamicRules->append(receivedRules);
   return true;
 }
 

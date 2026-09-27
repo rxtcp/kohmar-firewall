@@ -62,9 +62,19 @@ loaded! Loading..."); msgBox.show();
 
   nl_mngr = new NetLinkManager(NETLINK_USERSOCK);
 
+  if (!nl_mngr->isOpen()) {
+    QMessageBox::critical(
+        nullptr, "Firewall",
+        "Cannot open Netlink connection to the kernel module.");
+
+    delete nl_mngr;
+    return 1;
+  }
+
   qDebug() << "start ui";
 
-  MainWindow *w = new MainWindow(0, nl_mngr, packs_receiver);
+  MainWindow *w = new MainWindow(nullptr, nl_mngr, packs_receiver);
+  
   w->setWindowFlags(((w->windowFlags() | Qt::CustomizeWindowHint) &
                      ~Qt::WindowMaximizeButtonHint));
   // w->setFixedSize(w->size());

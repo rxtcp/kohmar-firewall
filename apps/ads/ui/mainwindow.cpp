@@ -93,7 +93,7 @@ MainWindow::MainWindow(QWidget *parent, NetLinkManager *mng,
   flow_anomaly_frame->move(5, 22);
 
   // RULES
-  user_rules = new QList<Rule *>();
+  user_rules = nullptr;
   ads_rules = new QList<Rule *>();
 
   connect(ui->menu_2->actions()[0], SIGNAL(triggered()), this,
@@ -110,13 +110,15 @@ MainWindow::MainWindow(QWidget *parent, NetLinkManager *mng,
 
   qDebug() << "main: nl maenagr";
 
-  if (nlManager != NULL) {
+  if (nlManager != nullptr) {
     if (!nlManager->getDynamicRulesFromKernel(ads_rules)) {
       qWarning() << "Cannot read dynamic rules from kernel";
     }
-    nlManager->getDynamicRulesFromKernel(ads_rules);
+
     user_rules = DbManager::getRulesFromDb();
     loadRulesToKernel();
+  } else {
+    user_rules = new QList<Rule *>();
   }
 
   id_rule_dynamic = -1;

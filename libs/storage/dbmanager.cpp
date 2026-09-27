@@ -4,186 +4,177 @@
 
 DbManager::DbManager() {}
 
-void DbManager::addToDb(Rule *r) {
-#ifndef ADS_DAEMON
-  QMessageBox msgBox;
-#endif  // ADS_DAEMON
-
-  QSqlDatabase dBase;
-
-  try {
-    const QString connectionName =
-        QStringLiteral("firewall-%1")
-            .arg(reinterpret_cast<quintptr>(QThread::currentThreadId()));
-
-    dBase = QSqlDatabase::contains(connectionName)
-                ? QSqlDatabase::database(connectionName)
-                : QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"),
-                                            connectionName);
-
-    dBase.setDatabaseName(
-        QStringLiteral("data/seeds/common/db_firewall.sqlite"));
-
-    if (!dBase.open()) {
-#ifndef ADS_DAEMON
-      msgBox.setText("Error connecting to database!");
-      msgBox.exec();
-#endif  // ADS_DAEMON
-      qDebug() << "Error connecting to database!";
-      dBase.close();
-      return;
-    }
-
-    // get data
-    QSqlQuery query;
-    QString sql =
-        "INSERT INTO rule(in_out, ip_src, ip_dest, port_src, "
-        "port_dest, proto, action, src_name, dest_name) values('" +
-        QString::number(r->in_out) + "', '" + r->ip_src + "', '" + r->ip_dest +
-        "', '" + QString::number(r->port_src) + "', '" +
-        QString::number(r->port_dest) + "', '" + QString::number(r->proto) +
-        "', '" + QString::number(r->action) + "', '" + r->host_name_src +
-        "', '" + r->host_name_dest + "')";
-
-    // query.prepare(sql);
-    // query.bindValue(":field1", QString::number(r->in_out));
-
-    if (!query.exec(sql)) {
-#ifndef ADS_DAEMON
-      msgBox.setText("DB insert error!");
-      msgBox.exec();
-#endif  // ADS_DAEMON
-      qDebug() << "DB insert error!";
-      dBase.close();
-      // return;
-    }
-
-    r->id_rule = query.lastInsertId().toUInt();
-
-    dBase.close();
-  } catch (...) {
-#ifndef ADS_DAEMON
-    msgBox.setText("Error!");
-    msgBox.exec();
-#endif  // ADS_DAEMON
-    qDebug() << "error1";
+bool DbManager::addToDb(Rule *rule) {
+  if (rule == nullptr) {
+    qWarning() << "Cannot insert a null rule";
+    return false;
   }
 
-  try {
-    dBase.close();
-  } catch (...) {
+  const QString connectionName =
+      QStringLiteral("firewall-%1")
+          .arg(reinterpret_cast<quintptr>(QThread::currentThreadId()));
+
+  QSqlDatabase database = QSqlDatabase::contains(connectionName)
+                              ? QSqlDatabase::database(connectionName)
+                              : QSqlDatabase::addDatabase(
+                                    QStringLiteral("QSQLITE"), connectionName);
+
+  database.setDatabaseName(
+      QStringLiteral("data/seeds/common/db_firewall.sqlite"));
+
+  if (!database.open()) {
+    qWarning() << "Cannot open firewall database:"
+               << database.lastError().text();
+    return false;
   }
+
+  QSqlQuery query(database);
+  query.prepare(QStringLiteral(
+      "INSERT INTO rule("
+      "in_out, ip_src, ip_dest, port_src, port_dest, proto, action, "
+      "src_name, dest_name"
+      ") VALUES("
+      ":in_out, :ip_src, :ip_dest, :port_src, :port_dest, :proto, "
+      ":action, :src_name, :dest_name"
+      ")"));
+
+  query.bindValue(QStringLiteral(":in_out"), rule->in_out);
+  query.bindValue(QStringLiteral(":ip_src"), rule->ip_src);
+  query.bindValue(QStringLiteral(":ip_dest"), rule->ip_dest);
+  query.bindValue(QStringLiteral(":port_src"), rule->port_src);
+  query.bindValue(QStringLiteral(":port_dest"), rule->port_dest);
+  query.bindValue(QStringLiteral(":proto"), rule->proto);
+  query.bindValue(QStringLiteral(":action"), rule->action);
+  query.bindValue(QStringLiteral(":src_name"), rule->host_name_src);
+  query.bindValue(QStringLiteral(":dest_name"), rule->host_name_dest);
+
+  if (!query.exec()) {
+    qWarning() << "Cannot insert firewall rule:" << query.lastError().text();
+    database.close();
+    return false;
+  }
+
+  bool idOk = false;
+  const int id = query.lastInsertId().toInt(&idOk);
+
+  if (!idOk || id <= 0) {
+    qWarning() << "Database returned an invalid firewall rule ID";
+    database.close();
+    return false;
+  }
+
+  rule->id_rule = id;
+  database.close();
+  return true;
 }
 
-void DbManager::removeFromDb(int id) {
-#ifndef ADS_DAEMON
-  QMessageBox msgBox;
-  // msgBox.exec();
-#endif  // ADS_DAEMON
-
-  QSqlDatabase dBase;
-
-  try {
-    qDebug() << "Remove from DB: id=" + QString::number(id);
-    dBase = QSqlDatabase::addDatabase("QSQLITE");
-    dBase.setDatabaseName("data/seeds/common/db_firewall.sqlite");
-
-    if (!dBase.open()) {
-#ifndef ADS_DAEMON
-      msgBox.setText("Error connecting to database");
-      msgBox.exec();
-#endif  // ADS_DAEMON
-      qDebug() << "Error connecting to database!";
-      dBase.close();
-      return;
-    }
-
-    // get data
-    QSqlQuery query;
-    QString sql = "DELETE FROM rule WHERE id_rule=" + QString::number(id);
-
-    if (!query.exec(sql)) {
-#ifndef ADS_DAEMON
-      msgBox.setText("Deletion error from database!");
-      msgBox.exec();
-#endif  // ADS_DAEMON
-      qDebug() << "Deletion error from database!";
-      dBase.close();
-      // return;
-    }
-
-    dBase.close();
-  } catch (...) {
-#ifndef ADS_DAEMON
-    msgBox.setText("Error!");
-    msgBox.exec();
-#endif  // ADS_DAEMON
-    qDebug() << "error2";
+bool DbManager::removeFromDb(int id) {
+  if (id <= 0) {
+    qWarning() << "Invalid firewall rule ID:" << id;
+    return false;
   }
 
-  try {
-    dBase.close();
-  } catch (...) {
+  const QString connectionName =
+      QStringLiteral("firewall-%1")
+          .arg(reinterpret_cast<quintptr>(QThread::currentThreadId()));
+
+  QSqlDatabase database = QSqlDatabase::contains(connectionName)
+                              ? QSqlDatabase::database(connectionName)
+                              : QSqlDatabase::addDatabase(
+                                    QStringLiteral("QSQLITE"), connectionName);
+
+  database.setDatabaseName(
+      QStringLiteral("data/seeds/common/db_firewall.sqlite"));
+
+  if (!database.open()) {
+    qWarning() << "Cannot open firewall database:"
+               << database.lastError().text();
+    return false;
   }
+
+  QSqlQuery query(database);
+  query.prepare(QStringLiteral("DELETE FROM rule WHERE id_rule = :id_rule"));
+  query.bindValue(QStringLiteral(":id_rule"), id);
+
+  if (!query.exec()) {
+    qWarning() << "Cannot delete firewall rule:" << query.lastError().text();
+    database.close();
+    return false;
+  }
+
+  if (query.numRowsAffected() != 1) {
+    qWarning() << "Firewall rule was not found in database:" << id;
+    database.close();
+    return false;
+  }
+
+  database.close();
+  return true;
 }
 
-void DbManager::updateInDb(Rule *r) {
-#ifndef ADS_DAEMON
-  QMessageBox msgBox;
-  // msgBox.exec();
-#endif  // ADS_DAEMON
-
-  QSqlDatabase dBase;
-
-  try {
-    qDebug() << "Update in DB: id=" + QString::number(r->id_rule);
-    dBase = QSqlDatabase::addDatabase("QSQLITE");
-    dBase.setDatabaseName("data/seeds/common/db_firewall.sqlite");
-
-    if (!dBase.open()) {
-#ifndef ADS_DAEMON
-      msgBox.setText("Error connecting to database!");
-      msgBox.exec();
-#endif  // ADS_DAEMON
-      qDebug() << "Error connecting to database!";
-      dBase.close();
-      return;
-    }
-
-    // get data
-    QSqlQuery query;
-    QString sql = "UPDATE rule SET in_out='" + QString::number(r->in_out) +
-                  "', ip_src='" + r->ip_src + "', ip_dest='" + r->ip_dest +
-                  "', port_src='" + QString::number(r->port_src) +
-                  "', port_dest='" + QString::number(r->port_dest) +
-                  "', proto='" + QString::number(r->proto) + "', action='" +
-                  QString::number(r->action) + "', src_name='" +
-                  r->host_name_src + "', dest_name='" + r->host_name_dest +
-                  "' WHERE id_rule='" + QString::number(r->id_rule) + "'";
-
-    if (!query.exec(sql)) {
-#ifndef ADS_DAEMON
-      msgBox.setText("Database update error!");
-      msgBox.exec();
-#endif  // ADS_DAEMON
-      qDebug() << "Database update error!";
-      dBase.close();
-      // return;
-    }
-
-    dBase.close();
-  } catch (...) {
-#ifndef ADS_DAEMON
-    msgBox.setText("Error!");
-    msgBox.exec();
-#endif  // ADS_DAEMON
-    qDebug() << "error3";
+bool DbManager::updateInDb(const Rule *rule) {
+  if (rule == nullptr || rule->id_rule <= 0) {
+    qWarning() << "Cannot update an invalid firewall rule";
+    return false;
   }
 
-  try {
-    dBase.close();
-  } catch (...) {
+  const QString connectionName =
+      QStringLiteral("firewall-%1")
+          .arg(reinterpret_cast<quintptr>(QThread::currentThreadId()));
+
+  QSqlDatabase database = QSqlDatabase::contains(connectionName)
+                              ? QSqlDatabase::database(connectionName)
+                              : QSqlDatabase::addDatabase(
+                                    QStringLiteral("QSQLITE"), connectionName);
+
+  database.setDatabaseName(
+      QStringLiteral("data/seeds/common/db_firewall.sqlite"));
+
+  if (!database.open()) {
+    qWarning() << "Cannot open firewall database:"
+               << database.lastError().text();
+    return false;
   }
+
+  QSqlQuery query(database);
+  query.prepare(
+      QStringLiteral("UPDATE rule SET "
+                     "in_out = :in_out, "
+                     "ip_src = :ip_src, "
+                     "ip_dest = :ip_dest, "
+                     "port_src = :port_src, "
+                     "port_dest = :port_dest, "
+                     "proto = :proto, "
+                     "action = :action, "
+                     "src_name = :src_name, "
+                     "dest_name = :dest_name "
+                     "WHERE id_rule = :id_rule"));
+
+  query.bindValue(QStringLiteral(":in_out"), rule->in_out);
+  query.bindValue(QStringLiteral(":ip_src"), rule->ip_src);
+  query.bindValue(QStringLiteral(":ip_dest"), rule->ip_dest);
+  query.bindValue(QStringLiteral(":port_src"), rule->port_src);
+  query.bindValue(QStringLiteral(":port_dest"), rule->port_dest);
+  query.bindValue(QStringLiteral(":proto"), rule->proto);
+  query.bindValue(QStringLiteral(":action"), rule->action);
+  query.bindValue(QStringLiteral(":src_name"), rule->host_name_src);
+  query.bindValue(QStringLiteral(":dest_name"), rule->host_name_dest);
+  query.bindValue(QStringLiteral(":id_rule"), rule->id_rule);
+
+  if (!query.exec()) {
+    qWarning() << "Cannot update firewall rule:" << query.lastError().text();
+    database.close();
+    return false;
+  }
+
+  if (query.numRowsAffected() != 1) {
+    qWarning() << "Firewall rule was not found in database:" << rule->id_rule;
+    database.close();
+    return false;
+  }
+
+  database.close();
+  return true;
 }
 
 QList<Rule *> *DbManager::getRulesFromDb() {

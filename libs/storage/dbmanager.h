@@ -13,11 +13,11 @@ class DbManager {
  public:
   DbManager();
 
-  static void addToDb(Rule *r);
+  static bool addToDb(Rule *rule);
 
-  static void updateInDb(Rule *r);
+  static bool updateInDb(const Rule *rule);
 
-  static void removeFromDb(int id);
+  static bool removeFromDb(int id);
 
   static QList<Rule *> *getRulesFromDb();
 };

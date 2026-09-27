@@ -52,7 +52,7 @@ class RulesForm : public QWidget {
 
   void updateInGrid(int row, Rule *r);
 
-  bool isExist(Rule *r);
+  bool isExist(const Rule *rule);
 };
 
 #endif  // RULESFORM_H

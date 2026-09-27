@@ -40,16 +40,16 @@ struct MyPacket {
 };
 
 struct Rule {
-  int id_rule;
-  unsigned int in_out;
-  QString ip_src;
-  QString ip_dest;
-  int port_src;
-  int port_dest;
-  unsigned int proto;
-  unsigned int action;
-  QString host_name_dest;
-  QString host_name_src;
+  int id_rule = 0;
+  unsigned int in_out = 0;
+  QString ip_src = "-";
+  QString ip_dest = "-";
+  int port_src = -1;
+  int port_dest = -1;
+  unsigned int proto = 0;
+  unsigned int action = 0;
+  QString host_name_dest = "-";
+  QString host_name_src = "-";
 };
 
 struct CommandToAds {

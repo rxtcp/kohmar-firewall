@@ -111,6 +111,9 @@ MainWindow::MainWindow(QWidget *parent, NetLinkManager *mng,
   qDebug() << "main: nl maenagr";
 
   if (nlManager != NULL) {
+    if (!nlManager->getDynamicRulesFromKernel(ads_rules)) {
+      qWarning() << "Cannot read dynamic rules from kernel";
+    }
     nlManager->getDynamicRulesFromKernel(ads_rules);
     user_rules = DbManager::getRulesFromDb();
     loadRulesToKernel();
@@ -161,9 +164,14 @@ void MainWindow::showRulesForm() {
 void MainWindow::on_MainWindow_destroyed() {}
 
 void MainWindow::loadRulesToKernel() {
-  Rule *r = new Rule;
-  foreach (r, *user_rules) {
-    nlManager->sendRuleToKernel(r);
+  for (Rule *rule : *user_rules) {
+    if (rule == nullptr) {
+      continue;
+    }
+
+    if (!nlManager->sendRuleToKernel(rule)) {
+      qWarning() << "Cannot load rule into kernel:" << rule->id_rule;
+    }
   }
 }
 

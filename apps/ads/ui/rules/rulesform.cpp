@@ -306,9 +306,16 @@ void RulesForm::on_pushButton_clicked() {
 
     foreach (rule_new, *list) {
       if (!isExist(rule_new)) {
+        if (!nlManager->sendRuleToKernel(rule_new)) {
+          QMessageBox::critical(
+              this, tr("Firewall"),
+              tr("The rule could not be added to the kernel."));
+          delete rule_new;
+          continue;
+        }
+
         DbManager::addToDb(rule_new);
         addToGrid(rule_new);
-        nlManager->sendRuleToKernel(rule_new);
         user_rules->append(rule_new);
       } else {
         qDebug() << "rule already exist!";
@@ -354,27 +361,44 @@ void RulesForm::on_pushButton_2_clicked() {
 
     if (form->okay_flag) {
       if (!isExist(rule_to_edit)) {
-        DbManager::updateInDb(rule_to_edit);
-        updateInGrid(cur_row, rule_to_edit);
-        if (!nlManager->updateRuleInKernel(rule_to_edit)) {
+        Rule editedRule = *rule_to_edit;
+
+        AddRuleForm form(this, nullptr, &editedRule);
+        form.setModal(true);
+
+        if (form.exec() != QDialog::Accepted || !form.okay_flag) {
+          return;
+        }
+
+        if (isExist(&editedRule)) {
+          QMessageBox::warning(this, tr("Firewall"),
+                               tr("The rule already exists."));
+          return;
+        }
+
+        if (!nlManager->updateRuleInKernel(&editedRule)) {
           QMessageBox::critical(
               this, tr("Firewall"),
               tr("The rule could not be updated in the kernel."));
           return;
         }
 
+        *rule_to_edit = std::move(editedRule);
         DbManager::updateInDb(rule_to_edit);
         updateInGrid(cur_row, rule_to_edit);
       } else {
-        qDebug() << "rule already exist!";
-        QMessageBox msgBox;
-        msgBox.setText("The rule already exists!");
-        msgBox.exec();
-
-        form->exec();
-
-        //*rule_to_edit = copy;
+        QMessageBox::warning(this, tr("Firewall"),
+                             tr("The rule already exists."));
       }
+    } else {
+      qDebug() << "rule already exist!";
+      QMessageBox msgBox;
+      msgBox.setText("The rule already exists!");
+      msgBox.exec();
+
+      form->exec();
+
+      //*rule_to_edit = copy;
     }
   }
 }
@@ -401,22 +425,23 @@ void RulesForm::on_pushButton_3_clicked() {
 
         qDebug() << "DELETE OK";
 
-        Rule *rr, *r;
+        Rule *r = nullptr;
 
-        foreach (rr, *user_rules) {
-          if (rr->id_rule == id) {
-            r = rr;
+        for (Rule *candidate : *user_rules) {
+          if (candidate != nullptr && candidate->id_rule == id) {
+            r = candidate;
             break;
           }
         }
 
-        DbManager::removeFromDb(r->id_rule);
-        nlManager->deleteRuleFromKernel(r);
-
+        if (r == nullptr) {
+          QMessageBox::warning(this, tr("Firewall"),
+                               tr("The selected rule no longer exists."));
+          return;
+        }
         ui->tableWidget->removeRow(cur_row);
-
-        // user_rules->removeAt(remove_ind);
         user_rules->removeOne(r);
+        delete r;
       } break;
       default:
         break;
@@ -527,7 +552,8 @@ void RulesForm::on_pushButton_6_clicked() {
         // msgBox.setText(id);
         // msgBox.exec();
 
-        Rule *rr, *r;
+        Rule *rr;
+        Rule *r = nullptr;
 
         foreach (rr, *dynamic_rules) {
           if (rr->id_rule == id) {

@@ -128,8 +128,14 @@ else typeItem->setText("Смешанный");
           rule_new->id_rule = *(id_rule);
 
           if (!isRuleExist(rule_new)) {
-            rules->append(rule_new);
-            nlManager->sendRuleToKernel(rule_new);
+            if (nlManager->sendRuleToKernel(rule_new)) {
+              rules->append(rule_new);
+              --(*id_rule);
+
+              // Добавление строки в таблицу.
+            } else {
+              delete rule_new;
+            }
 
             timeItem = new QTableWidgetItem();
             numItem = new QTableWidgetItem();
@@ -154,7 +160,7 @@ else typeItem->setText("Смешанный");
             rules_table->setItem(col_rules, 5, portDestItem);
 
             col_rules++;
-            *(id_rule--);  // todo: check
+            --(*id_rule);
           } else
             delete rule_new;
 

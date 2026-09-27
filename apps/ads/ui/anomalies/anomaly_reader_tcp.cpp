@@ -105,8 +105,14 @@ void AnomalyReaderTcp::run() {
           rule_new->id_rule = *(id_rule);
 
           if (!isRuleExist(rule_new)) {
-            rules->append(rule_new);
-            nlManager->sendRuleToKernel(rule_new);
+            if (nlManager->sendRuleToKernel(rule_new)) {
+              rules->append(rule_new);
+              --(*id_rule);
+
+              // Добавление строки в таблицу.
+            } else {
+              delete rule_new;
+            }
 
             timeItem = new QTableWidgetItem();
             numItem = new QTableWidgetItem();

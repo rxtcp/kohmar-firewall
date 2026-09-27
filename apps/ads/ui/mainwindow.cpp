@@ -123,6 +123,13 @@ MainWindow::MainWindow(QWidget *parent, NetLinkManager *mng,
 
   id_rule_dynamic = -1;
 
+  for (const Rule *rule : *ads_rules) {
+    if (rule != nullptr && rule->id_rule < 0 &&
+        rule->id_rule <= id_rule_dynamic) {
+      id_rule_dynamic = rule->id_rule - 1;
+    }
+  }
+
   qDebug() << "main: start readers";
 
   // READERS

@@ -471,7 +471,7 @@ void init_run_sniffer(void) {
  */
 
 static bool is_rule_message_valid(const struct fw_rule_message *rule) {
-  if (rule == NULL) {
+  if (rule == NULL || rule->id == 0) {
     return false;
   }
 
@@ -539,13 +539,14 @@ static fw_s32 add_a_rule(const struct fw_rule_message *description) {
   list_for_each(position, &policy_list.list) {
     existing_rule = list_entry(position, struct RuleListItem, list);
 
-    if (existing_rule->in_out == description->direction &&
-        existing_rule->src_ip == description->source_ipv4 &&
-        existing_rule->dest_ip == description->destination_ipv4 &&
-        existing_rule->src_port == description->source_port &&
-        existing_rule->dest_port == description->destination_port &&
-        existing_rule->proto == description->protocol &&
-        existing_rule->action == description->action) {
+    if (existing_rule->id_rule == description->id ||
+        (existing_rule->in_out == description->direction &&
+         existing_rule->src_ip == description->source_ipv4 &&
+         existing_rule->dest_ip == description->destination_ipv4 &&
+         existing_rule->src_port == description->source_port &&
+         existing_rule->dest_port == description->destination_port &&
+         existing_rule->proto == description->protocol &&
+         existing_rule->action == description->action)) {
       spin_unlock_bh(&policy_lock);
       kfree(new_rule);
       return FW_STATUS_RULE_ALREADY_EXISTS;
@@ -605,12 +606,13 @@ static int delete_a_rule(const struct fw_rule_message *description) {
   return 0;
 }
 
-static int update_a_rule(const struct fw_rule_message *description) {
+static fw_s32 update_a_rule(const struct fw_rule_message *description) {
   struct list_head *position;
   struct RuleListItem *rule;
+  struct RuleListItem *target = NULL;
 
   if (description == NULL) {
-    return 0;
+    return FW_STATUS_INVALID_RULE;
   }
 
   spin_lock_bh(&policy_lock);
@@ -619,26 +621,42 @@ static int update_a_rule(const struct fw_rule_message *description) {
     rule = list_entry(position, struct RuleListItem, list);
 
     if (rule->id_rule == description->id) {
-      rule->in_out = description->direction;
+      target = rule;
+      continue;
+    }
 
-      rule->src_ip = description->source_ipv4;
-      rule->src_netmask = 0;
-      rule->src_port = description->source_port;
-
-      rule->dest_ip = description->destination_ipv4;
-      rule->dest_netmask = 0;
-      rule->dest_port = description->destination_port;
-
-      rule->proto = description->protocol;
-      rule->action = description->action;
-
+    if (rule->in_out == description->direction &&
+        rule->src_ip == description->source_ipv4 &&
+        rule->dest_ip == description->destination_ipv4 &&
+        rule->src_port == description->source_port &&
+        rule->dest_port == description->destination_port &&
+        rule->proto == description->protocol &&
+        rule->action == description->action) {
       spin_unlock_bh(&policy_lock);
-      return 1;
+      return FW_STATUS_RULE_ALREADY_EXISTS;
     }
   }
 
+  if (target == NULL) {
+    spin_unlock_bh(&policy_lock);
+    return FW_STATUS_RULE_NOT_FOUND;
+  }
+
+  target->in_out = description->direction;
+
+  target->src_ip = description->source_ipv4;
+  target->src_netmask = 0;
+  target->src_port = description->source_port;
+
+  target->dest_ip = description->destination_ipv4;
+  target->dest_netmask = 0;
+  target->dest_port = description->destination_port;
+
+  target->proto = description->protocol;
+  target->action = description->action;
+
   spin_unlock_bh(&policy_lock);
-  return 0;
+  return FW_STATUS_OK;
 }
 
 void return_count_dyn_rules(void) {}
@@ -776,9 +794,7 @@ static void netlink_Read_Msg(struct sk_buff *skb_in) {
       break;
 
     case FW_COMMAND_UPDATE_RULE:
-      if (!update_a_rule(&command.rule)) {
-        status = FW_STATUS_RULE_NOT_FOUND;
-      }
+      status = update_a_rule(&command.rule);
       break;
 
     case FW_COMMAND_START:

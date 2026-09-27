@@ -39,10 +39,10 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 cmake --build build --parallel
 ```
 
-Specify the goal:
+Built executables:
 
 ```
-build/apps/ads/ADS
+build/apps/ads/ads
 build/apps/drvctl/ads_drvctl
 ```
 

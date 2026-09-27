@@ -39,13 +39,19 @@ class NetLinkManager {
  private:
   bool sendRuleCommand(enum fw_command_type command, const Rule &rule);
 
-  bool sendRequest(const struct fw_command_message &request);
-  bool receiveResponse(struct fw_response_message *response);
+  bool sendRequest(const struct fw_command_message &request,
+                   fw_u32 netlinkSequence);
+
+  bool receiveResponse(struct fw_response_message *response,
+                       fw_u32 expectedNetlinkSequence);
+
+  fw_u32 nextNetlinkSequence();
 
   static bool encodeRule(const Rule &source,
                          struct fw_rule_message *destination);
 
   std::mutex transactionMutex_;
+  fw_u32 nextNetlinkSequence_ = 1;
 
   int netlinkSocket_ = -1;
   struct sockaddr_nl sourceAddress_{};

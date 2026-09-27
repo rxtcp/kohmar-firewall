@@ -274,7 +274,7 @@ void MainWindow::on_pushButtonFalseAlarmFlow_clicked() {
         ui->tableWidgetFlowDetAnom->item(cur_row, 2)->text().toInt();
     SampleSom *smp = flow_anomaly_reader->getSample(numAnomaly);
     // packs_receiver->retrainSom(flow_anomaly_reader->getSample(numAnomaly));
-    FILE *file = fopen("flow.samples", "a");
+    FILE *file = fopen("data/samples/ads/flow.samples", "a");
 
     if (!file) {
       QMessageBox msgBox;

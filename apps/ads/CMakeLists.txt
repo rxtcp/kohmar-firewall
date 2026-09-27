@@ -98,6 +98,13 @@ install(
 
 install(
         FILES
+        ${PROJECT_SOURCE_DIR}/data/seeds/ads/db_firewall.sqlite
+        ${PROJECT_SOURCE_DIR}/data/seeds/common/db_firewall.sqlite
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/kohmar-firewall/seeds
+)
+
+install(
+        FILES
         ${PROJECT_SOURCE_DIR}/config/ads.settings.example
         ${PROJECT_SOURCE_DIR}/config/readerd.conf.example
         DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/kohmar-firewall

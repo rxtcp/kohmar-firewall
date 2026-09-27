@@ -1,5 +1,7 @@
 #include "learning_tcp_dialog.h"
 
+#include <QFile>
+
 #include "ui_learning_tcp_dialog.h"
 
 LearningTcpDialog::LearningTcpDialog(QWidget *parent,
@@ -56,19 +58,24 @@ void LearningTcpDialog::on_pushButton_2_clicked() {
   file_mode[1] = '\0';
 
   if (max_len) {
-    char file_name[15];
+    QString fileName;
 
     if (learned_protocol == LEARN_HTTP) {
-      strcpy(file_name, "http.samples");
+      fileName = QStringLiteral("data/samples/ads/http.samples");
     } else if (learned_protocol == LEARN_FTP) {
-      strcpy(file_name, "ftp.samples");
+      fileName = QStringLiteral("data/samples/ads/ftp.samples");
     } else if (learned_protocol == LEARN_SSH) {
-      strcpy(file_name, "ssh.samples");
+      fileName = QStringLiteral("data/samples/ads/ssh.samples");
     } else if (learned_protocol == LEARN_ALL) {
-      strcpy(file_name, "common.samples");
+      fileName = QStringLiteral("data/samples/ads/common.samples");
+    } else {
+      msgBox.setText("Unsupported learning protocol");
+      msgBox.exec();
+      return;
     }
 
-    FILE *file = fopen(file_name, file_mode);  //"w"
+    const QByteArray nativeFileName = QFile::encodeName(fileName);
+    FILE *file = fopen(nativeFileName.constData(), file_mode);
 
     if (!file) {
       qDebug() << "Error! File not opened!";

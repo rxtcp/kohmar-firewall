@@ -643,15 +643,16 @@ static int update_a_rule(const struct fw_rule_message *description) {
 
 void return_count_dyn_rules(void) {}
 
-static int send_response(fw_u32 port_id, fw_u16 command, fw_s32 status,
-                         fw_u32 item_count, fw_u32 sequence,
+static int send_response(fw_u32 port_id, fw_u32 netlink_sequence,
+                         fw_u16 command, fw_s32 status, fw_u32 item_count,
+                         fw_u32 item_sequence,
                          const struct fw_rule_message *rule) {
   struct fw_response_message response = {
       .version = FW_PROTOCOL_VERSION,
       .command = command,
       .status = status,
       .item_count = item_count,
-      .sequence = sequence,
+      .sequence = item_sequence,
   };
 
   struct sk_buff *socket_buffer;
@@ -667,7 +668,8 @@ static int send_response(fw_u32 port_id, fw_u16 command, fw_s32 status,
     return -ENOMEM;
   }
 
-  header = nlmsg_put(socket_buffer, 0, 0, NLMSG_DONE, sizeof(response), 0);
+  header = nlmsg_put(socket_buffer, 0, netlink_sequence, NLMSG_DONE,
+                     sizeof(response), 0);
 
   if (header == NULL) {
     kfree_skb(socket_buffer);
@@ -685,6 +687,7 @@ static void netlink_Read_Msg(struct sk_buff *skb_in) {
   struct nlmsghdr *header;
   struct fw_command_message command;
   fw_u32 port_id;
+  fw_u32 netlink_sequence;
   fw_s32 status = FW_STATUS_OK;
 
   if (skb_in == NULL) {
@@ -693,23 +696,39 @@ static void netlink_Read_Msg(struct sk_buff *skb_in) {
 
   port_id = NETLINK_CB(skb_in).portid;
 
-  if (!netlink_capable(skb_in, CAP_NET_ADMIN)) {
-    send_response(port_id, 0, FW_STATUS_PERMISSION_DENIED, 0, 0, NULL);
+  /*
+   * Если отсутствует даже полный Netlink-заголовок, нельзя безопасно получить
+   * sequence и сформировать коррелированный ответ.
+   */
+  if (skb_in->len < NLMSG_HDRLEN) {
     return;
   }
 
   header = nlmsg_hdr(skb_in);
 
-  if (header == NULL || !nlmsg_ok(header, skb_in->len) ||
-      nlmsg_len(header) != sizeof(command)) {
+  if (header == NULL) {
+    return;
+  }
+
+  netlink_sequence = header->nlmsg_seq;
+
+  if (!netlink_capable(skb_in, CAP_NET_ADMIN)) {
+    send_response(port_id, netlink_sequence, 0, FW_STATUS_PERMISSION_DENIED, 0,
+                  0, NULL);
+    return;
+  }
+
+  if (!nlmsg_ok(header, skb_in->len) || nlmsg_len(header) != sizeof(command)) {
+    send_response(port_id, netlink_sequence, command.command,
+                  FW_STATUS_INVALID_MESSAGE, 0, 0, NULL);
     return;
   }
 
   memcpy(&command, nlmsg_data(header), sizeof(command));
 
   if (command.version != FW_PROTOCOL_VERSION) {
-    send_response(port_id, command.command, FW_STATUS_UNSUPPORTED_VERSION, 0, 0,
-                  NULL);
+    send_response(port_id, netlink_sequence, command.command,
+                  FW_STATUS_UNSUPPORTED_VERSION, 0, 0, NULL);
     return;
   }
 
@@ -718,8 +737,8 @@ static void netlink_Read_Msg(struct sk_buff *skb_in) {
     case FW_COMMAND_DELETE_RULE:
     case FW_COMMAND_UPDATE_RULE:
       if (command.payload_size != sizeof(command.rule)) {
-        send_response(port_id, command.command, FW_STATUS_INVALID_MESSAGE, 0, 0,
-                      NULL);
+        send_response(port_id, netlink_sequence, command.command,
+                      FW_STATUS_INVALID_MESSAGE, 0, 0, NULL);
         return;
       }
       break;
@@ -728,15 +747,15 @@ static void netlink_Read_Msg(struct sk_buff *skb_in) {
     case FW_COMMAND_PAUSE:
     case FW_COMMAND_START:
       if (command.payload_size != 0) {
-        send_response(port_id, command.command, FW_STATUS_INVALID_MESSAGE, 0, 0,
-                      NULL);
+        send_response(port_id, netlink_sequence, command.command,
+                      FW_STATUS_INVALID_MESSAGE, 0, 0, NULL);
         return;
       }
       break;
 
     default:
-      send_response(port_id, command.command, FW_STATUS_INVALID_COMMAND, 0, 0,
-                    NULL);
+      send_response(port_id, netlink_sequence, command.command,
+                    FW_STATUS_INVALID_COMMAND, 0, 0, NULL);
       return;
   }
 
@@ -744,7 +763,8 @@ static void netlink_Read_Msg(struct sk_buff *skb_in) {
        command.command == FW_COMMAND_DELETE_RULE ||
        command.command == FW_COMMAND_UPDATE_RULE) &&
       !is_rule_message_valid(&command.rule)) {
-    send_response(port_id, command.command, FW_STATUS_INVALID_RULE, 0, 0, NULL);
+    send_response(port_id, netlink_sequence, command.command,
+                  FW_STATUS_INVALID_RULE, 0, 0, NULL);
     return;
   }
 
@@ -789,8 +809,8 @@ static void netlink_Read_Msg(struct sk_buff *skb_in) {
         snapshot = kcalloc(capacity, sizeof(*snapshot), GFP_KERNEL);
 
         if (snapshot == NULL) {
-          send_response(port_id, command.command, FW_STATUS_INTERNAL_ERROR, 0,
-                        0, NULL);
+          send_response(port_id, netlink_sequence, command.command,
+                        FW_STATUS_INTERNAL_ERROR, 0, 0, NULL);
           return;
         }
       }
@@ -822,15 +842,15 @@ static void netlink_Read_Msg(struct sk_buff *skb_in) {
 
       spin_unlock_bh(&policy_lock);
 
-      if (send_response(port_id, command.command, FW_STATUS_OK, count, 0,
-                        NULL) < 0) {
+      send_response(port_id, netlink_sequence, command.command,
+                    FW_STATUS_OK, count, 0, NULL) < 0) {
         kfree(snapshot);
         return;
       }
 
       for (index = 0; index < count; ++index) {
-        if (send_response(port_id, command.command, FW_STATUS_OK, count, index,
-                          &snapshot[index]) < 0) {
+        send_response(port_id, netlink_sequence, command.command,
+              FW_STATUS_OK, count, index, &snapshot[index]) < 0) {
           kfree(snapshot);
           return;
         }
@@ -844,7 +864,7 @@ static void netlink_Read_Msg(struct sk_buff *skb_in) {
       return;
   }
 
-  send_response(port_id, command.command, status, 0, 0, NULL);
+  send_response(port_id, netlink_sequence, status, 0, 0, NULL);
 }
 
 /* Initialization routine */

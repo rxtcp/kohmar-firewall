@@ -1,5 +1,7 @@
 #include "dbmanager.h"
 
+#include <QThread>
+
 DbManager::DbManager() {}
 
 void DbManager::addToDb(Rule *r) {
@@ -10,8 +12,17 @@ void DbManager::addToDb(Rule *r) {
   QSqlDatabase dBase;
 
   try {
-    dBase = QSqlDatabase::addDatabase("QSQLITE");
-    dBase.setDatabaseName("../Common/db_firewall.sqlite");
+    const QString connectionName =
+        QStringLiteral("firewall-%1")
+            .arg(reinterpret_cast<quintptr>(QThread::currentThreadId()));
+
+    dBase = QSqlDatabase::contains(connectionName)
+                ? QSqlDatabase::database(connectionName)
+                : QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"),
+                                            connectionName);
+
+    dBase.setDatabaseName(
+        QStringLiteral("data/seeds/common/db_firewall.sqlite"));
 
     if (!dBase.open()) {
 #ifndef ADS_DAEMON
@@ -75,7 +86,7 @@ void DbManager::removeFromDb(int id) {
   try {
     qDebug() << "Remove from DB: id=" + QString::number(id);
     dBase = QSqlDatabase::addDatabase("QSQLITE");
-    dBase.setDatabaseName("../Common/db_firewall.sqlite");
+    dBase.setDatabaseName("data/seeds/common/db_firewall.sqlite");
 
     if (!dBase.open()) {
 #ifndef ADS_DAEMON
@@ -127,7 +138,7 @@ void DbManager::updateInDb(Rule *r) {
   try {
     qDebug() << "Update in DB: id=" + QString::number(r->id_rule);
     dBase = QSqlDatabase::addDatabase("QSQLITE");
-    dBase.setDatabaseName("../Common/db_firewall.sqlite");
+    dBase.setDatabaseName("data/seeds/common/db_firewall.sqlite");
 
     if (!dBase.open()) {
 #ifndef ADS_DAEMON
@@ -181,7 +192,7 @@ QList<Rule *> *DbManager::getRulesFromDb() {
   // connect to DB
   QSqlDatabase dBase;
   dBase = QSqlDatabase::addDatabase("QSQLITE");
-  dBase.setDatabaseName("../Common/db_firewall.sqlite");
+  dBase.setDatabaseName("data/seeds/common/db_firewall.sqlite");
 
   if (!dBase.open()) {
 #ifndef ADS_DAEMON

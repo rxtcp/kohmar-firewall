@@ -197,7 +197,7 @@ int main(int argc, char **argv) {
 
   logger->log("reading config...");
 
-  ConfigReader reader("module.conf");
+  ConfigReader reader("config/module.conf");
   path = reader.getGlobalProperty("path_to_ads_drv", ".");
   iface = reader.getGlobalProperty("iface", "eth0");
   drop = reader.getGlobalProperty("drop_packets", "on");

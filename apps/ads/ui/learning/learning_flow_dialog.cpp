@@ -67,7 +67,7 @@ void LearningFlowDialog::on_pushButton_3_clicked() {
   }
 
   int dim, i;
-  FILE *file = fopen("flow.samples", file_mode);
+  FILE *file = fopen("data/samples/ads/flow.samples", file_mode);
 
   if (!file) {
     msgBox.setText("Unable to open the file for saving!");

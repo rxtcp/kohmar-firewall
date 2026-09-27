@@ -63,7 +63,18 @@ void NetLinkManager::closeNetlinkSocket() {
   }
 }
 
-bool NetLinkManager::sendRequest(const struct fw_command_message &request) {
+fw_u32 NetLinkManager::nextNetlinkSequence() {
+  const fw_u32 sequence = nextNetlinkSequence_++;
+
+  if (nextNetlinkSequence_ == 0) {
+    nextNetlinkSequence_ = 1;
+  }
+
+  return sequence;
+}
+
+bool NetLinkManager::sendRequest(const struct fw_command_message &request,
+                                 fw_u32 netlinkSequence) {
   if (!isOpen()) {
     return false;
   }
@@ -74,10 +85,12 @@ bool NetLinkManager::sendRequest(const struct fw_command_message &request) {
   auto *header = reinterpret_cast<struct nlmsghdr *>(buffer);
 
   header->nlmsg_len = NLMSG_LENGTH(sizeof(request));
-  header->nlmsg_pid = static_cast<unsigned int>(getpid());
+  header->nlmsg_type = NLMSG_DONE;
   header->nlmsg_flags = 0;
+  header->nlmsg_seq = netlinkSequence;
+  header->nlmsg_pid = sourceAddress_.nl_pid;
 
-  memcpy(NLMSG_DATA(header), &request, sizeof(request));
+  std::memcpy(NLMSG_DATA(header), &request, sizeof(request));
 
   struct iovec vector{};
   vector.iov_base = header;
@@ -92,92 +105,108 @@ bool NetLinkManager::sendRequest(const struct fw_command_message &request) {
   const ssize_t sent = sendmsg(netlinkSocket_, &message, 0);
 
   if (sent < 0) {
-    qWarning() << "Netlink send failed:" << strerror(errno);
+    qWarning() << "Netlink send failed:" << std::strerror(errno);
     return false;
   }
 
-  return static_cast<std::size_t>(sent) == header->nlmsg_len;
-}
-
-bool NetLinkManager::receiveResponse(struct fw_response_message *response) {
-  if (!isOpen() || response == nullptr) {
-    return false;
-  }
-
-  alignas(struct nlmsghdr) unsigned char
-      buffer[NLMSG_SPACE(sizeof(*response))] = {};
-
-  auto *header = reinterpret_cast<struct nlmsghdr *>(buffer);
-
-  struct iovec vector{};
-  vector.iov_base = header;
-  vector.iov_len = sizeof(buffer);
-
-  struct sockaddr_nl sender{};
-
-  struct msghdr message{};
-  message.msg_name = &sender;
-  message.msg_namelen = sizeof(sender);
-  message.msg_iov = &vector;
-  message.msg_iovlen = 1;
-
-  const ssize_t received = recvmsg(netlinkSocket_, &message, 0);
-
-  if (received < 0) {
-    qWarning() << "Netlink receive failed:" << strerror(errno);
-    return false;
-  }
-
-  if ((message.msg_flags & MSG_TRUNC) != 0) {
-    qWarning() << "Truncated Netlink response";
-    return false;
-  }
-
-  if (message.msg_namelen < sizeof(struct sockaddr_nl) ||
-      sender.nl_family != AF_NETLINK || sender.nl_pid != 0) {
-    qWarning() << "Unexpected Netlink sender";
-    return false;
-  }
-
-  int remaining = static_cast<int>(received);
-
-  if (received < static_cast<ssize_t>(NLMSG_LENGTH(sizeof(*response))) ||
-      !NLMSG_OK(header, remaining) ||
-      NLMSG_PAYLOAD(header, 0) != sizeof(*response)) {
-    qWarning() << "Invalid Netlink response size";
-    return false;
-  }
-
-  if (header->nlmsg_type != NLMSG_DONE) {
-    qWarning() << "Unexpected Netlink message type:" << header->nlmsg_type;
-    return false;
-  }
-
-  memcpy(response, NLMSG_DATA(header), sizeof(*response));
-
-  if (response->version != FW_PROTOCOL_VERSION) {
-    qWarning() << "Unsupported protocol version:" << response->version;
+  if (static_cast<std::size_t>(sent) != header->nlmsg_len) {
+    qWarning() << "Incomplete Netlink request";
     return false;
   }
 
   return true;
 }
 
+bool NetLinkManager::receiveResponse(struct fw_response_message *response,
+                                     fw_u32 expectedNetlinkSequence) {
+  if (!isOpen() || response == nullptr) {
+    return false;
+  }
+
+  for (;;) {
+    alignas(struct nlmsghdr) unsigned char
+        buffer[NLMSG_SPACE(sizeof(*response))] = {};
+
+    auto *header = reinterpret_cast<struct nlmsghdr *>(buffer);
+
+    struct iovec vector{};
+    vector.iov_base = buffer;
+    vector.iov_len = sizeof(buffer);
+
+    struct sockaddr_nl sender{};
+
+    struct msghdr message{};
+    message.msg_name = &sender;
+    message.msg_namelen = sizeof(sender);
+    message.msg_iov = &vector;
+    message.msg_iovlen = 1;
+
+    const ssize_t received = recvmsg(netlinkSocket_, &message, 0);
+
+    if (received < 0) {
+      qWarning() << "Netlink receive failed:" << std::strerror(errno);
+      return false;
+    }
+
+    if ((message.msg_flags & (MSG_TRUNC | MSG_CTRUNC)) != 0) {
+      qWarning() << "Truncated Netlink response";
+      return false;
+    }
+
+    if (message.msg_namelen < sizeof(struct sockaddr_nl) ||
+        sender.nl_family != AF_NETLINK || sender.nl_pid != 0) {
+      qWarning() << "Unexpected Netlink sender";
+      continue;
+    }
+
+    int remaining = static_cast<int>(received);
+
+    if (received < static_cast<ssize_t>(NLMSG_LENGTH(sizeof(*response))) ||
+        !NLMSG_OK(header, remaining) ||
+        NLMSG_PAYLOAD(header, 0) != sizeof(*response)) {
+      qWarning() << "Invalid Netlink response size";
+      continue;
+    }
+
+    if (header->nlmsg_type != NLMSG_DONE) {
+      qWarning() << "Unexpected Netlink message type:" << header->nlmsg_type;
+      continue;
+    }
+
+    if (header->nlmsg_seq != expectedNetlinkSequence) {
+      qWarning() << "Ignoring stale Netlink response:" << header->nlmsg_seq
+                 << "expected:" << expectedNetlinkSequence;
+      continue;
+    }
+
+    std::memcpy(response, NLMSG_DATA(header), sizeof(*response));
+
+    if (response->version != FW_PROTOCOL_VERSION) {
+      qWarning() << "Unsupported protocol version:" << response->version;
+      return false;
+    }
+
+    return true;
+  }
+}
+
 bool NetLinkManager::sendCommand(enum fw_command_type command) {
   std::lock_guard<std::mutex> lock(transactionMutex_);
+
+  const fw_u32 netlinkSequence = nextNetlinkSequence();
 
   struct fw_command_message request{};
   request.version = FW_PROTOCOL_VERSION;
   request.command = static_cast<fw_u16>(command);
   request.payload_size = 0;
 
-  if (!sendRequest(request)) {
+  if (!sendRequest(request, netlinkSequence)) {
     return false;
   }
 
   struct fw_response_message response{};
 
-  if (!receiveResponse(&response)) {
+  if (!receiveResponse(&response, netlinkSequence)) {
     return false;
   }
 
@@ -260,6 +289,9 @@ bool NetLinkManager::encodeRule(const Rule &source,
 bool NetLinkManager::sendRuleCommand(enum fw_command_type command,
                                      const Rule &rule) {
   std::lock_guard<std::mutex> lock(transactionMutex_);
+
+  const fw_u32 netlinkSequence = nextNetlinkSequence();
+
   struct fw_command_message request{};
   request.version = FW_PROTOCOL_VERSION;
   request.command = static_cast<fw_u16>(command);
@@ -270,13 +302,13 @@ bool NetLinkManager::sendRuleCommand(enum fw_command_type command,
     return false;
   }
 
-  if (!sendRequest(request)) {
+  if (!sendRequest(request, netlinkSequence)) {
     return false;
   }
 
   struct fw_response_message response{};
 
-  if (!receiveResponse(&response)) {
+  if (!receiveResponse(&response, netlinkSequence)) {
     return false;
   }
 
@@ -307,15 +339,17 @@ bool NetLinkManager::getDynamicRulesFromKernel(QList<Rule *> *dynamicRules) {
   request.command = FW_COMMAND_GET_DYNAMIC_RULES;
   request.payload_size = 0;
 
-  if (!sendRequest(request)) {
+  const fw_u32 netlinkSequence = nextNetlinkSequence();
+
+  if (!sendRequest(request, netlinkSequence)) {
     return false;
   }
 
   struct fw_response_message response{};
 
-  if (!receiveResponse(&response) ||
+  if (!receiveResponse(&response, netlinkSequence) ||
       response.command != FW_COMMAND_GET_DYNAMIC_RULES ||
-      response.status != FW_STATUS_OK) {
+      response.status != FW_STATUS_OK || response.sequence != 0) {
     return false;
   }
 
@@ -323,7 +357,7 @@ bool NetLinkManager::getDynamicRulesFromKernel(QList<Rule *> *dynamicRules) {
   QList<Rule *> receivedRules;
 
   for (fw_u32 index = 0; index < ruleCount; ++index) {
-    if (!receiveResponse(&response) ||
+    if (!receiveResponse(&response, netlinkSequence) ||
         response.command != FW_COMMAND_GET_DYNAMIC_RULES ||
         response.status != FW_STATUS_OK || response.item_count != ruleCount ||
         response.sequence != index) {

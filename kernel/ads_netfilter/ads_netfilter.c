@@ -797,9 +797,7 @@ static void netlink_Read_Msg(struct sk_buff *skb_in) {
       fw_u32 count = 0;
       fw_u32 index;
 
-      spin_lock_bh(&policy_lock);
-      capacity = dyn_rules_count > 0 ? (fw_u32)dyn_rules_count : 0;
-      spin_unlock_bh(&policy_lock);
+      capacity = max_filter_rules > 0 ? (fw_u32)max_filter_rules : 0;
 
       if (capacity > 0) {
         snapshot = kcalloc(capacity, sizeof(*snapshot), GFP_KERNEL);

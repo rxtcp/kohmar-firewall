@@ -356,9 +356,15 @@ void RulesForm::on_pushButton_2_clicked() {
       if (!isExist(rule_to_edit)) {
         DbManager::updateInDb(rule_to_edit);
         updateInGrid(cur_row, rule_to_edit);
-        //---nlManager->updateRuleInKernel(rule_to_edit);
-        nlManager->deleteRuleFromKernel(rule_to_edit);
-        nlManager->sendRuleToKernel(rule_to_edit);
+        if (!nlManager->updateRuleInKernel(rule_to_edit)) {
+          QMessageBox::critical(
+              this, tr("Firewall"),
+              tr("The rule could not be updated in the kernel."));
+          return;
+        }
+
+        DbManager::updateInDb(rule_to_edit);
+        updateInGrid(cur_row, rule_to_edit);
       } else {
         qDebug() << "rule already exist!";
         QMessageBox msgBox;

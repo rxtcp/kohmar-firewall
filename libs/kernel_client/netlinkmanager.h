@@ -1,10 +1,11 @@
 #ifndef NETLINKMANAGER_H
 #define NETLINKMANAGER_H
 
+#include <mutex>
+
 #ifndef ADS_DAEMON
 #include <QList>
 #include <QString>
-#include <mutex>
 #endif
 
 #include <linux/netlink.h>
@@ -49,5 +50,6 @@ class NetLinkManager {
   int netlinkSocket_ = -1;
   struct sockaddr_nl sourceAddress_{};
   struct sockaddr_nl destinationAddress_{};
+};
 
-#endif
+#endif  // NETLINKMANAGER_H

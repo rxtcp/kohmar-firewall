@@ -123,36 +123,33 @@ bool NetLinkManager::receiveResponse(struct fw_response_message *response) {
 
   const ssize_t received = recvmsg(netlinkSocket_, &message, 0);
 
-  if ((message.msg_flags & MSG_TRUNC) != 0) {
-    qWarning() << "Truncated Netlink response";
-    return false;
-  }
-
-  if (message.msg_namelen < sizeof(sockaddr_nl) ||
-      sender.nl_family != AF_NETLINK || sender.nl_pid != 0) {
-    qWarning() << "Unexpected Netlink sender";
-    return false;
-  }
-
-  if (header->nlmsg_type != NLMSG_DONE) {
-    qWarning() << "Unexpected Netlink message type:" << header->nlmsg_type;
-    return false;
-  }
-
   if (received < 0) {
     qWarning() << "Netlink receive failed:" << strerror(errno);
     return false;
   }
 
-  if (sender.nl_pid != 0) {
-    qWarning() << "Unexpected Netlink sender:" << sender.nl_pid;
+  if ((message.msg_flags & MSG_TRUNC) != 0) {
+    qWarning() << "Truncated Netlink response";
     return false;
   }
 
+  if (message.msg_namelen < sizeof(struct sockaddr_nl) ||
+      sender.nl_family != AF_NETLINK || sender.nl_pid != 0) {
+    qWarning() << "Unexpected Netlink sender";
+    return false;
+  }
+
+  int remaining = static_cast<int>(received);
+
   if (received < static_cast<ssize_t>(NLMSG_LENGTH(sizeof(*response))) ||
-      !NLMSG_OK(header, received) ||
-      NLMSG_PAYLOAD(header, 0) < sizeof(*response)) {
+      !NLMSG_OK(header, remaining) ||
+      NLMSG_PAYLOAD(header, 0) != sizeof(*response)) {
     qWarning() << "Invalid Netlink response size";
+    return false;
+  }
+
+  if (header->nlmsg_type != NLMSG_DONE) {
+    qWarning() << "Unexpected Netlink message type:" << header->nlmsg_type;
     return false;
   }
 

@@ -512,26 +512,26 @@ static int add_a_rule(const struct fw_rule_message *description) {
     return 0;
   }
 
-  list_for_each(position, &policy_list.list) {
-    existing_rule = list_entry(position, struct RuleListItem, list);
-
-    if (existing_rule->in_out == description->direction &&
-        existing_rule->src_ip == description->source_ipv4 &&
-        existing_rule->dest_ip == description->destination_ipv4 &&
-        existing_rule->src_port == description->source_port &&
-        existing_rule->dest_port == description->destination_port &&
-        existing_rule->proto == description->protocol &&
-        existing_rule->action == description->action) {
-      return 0;
-    }
-  }
-
-  new_rule = kmalloc(sizeof(*new_rule), GFP_KERNEL);
+  new_rule = kzalloc(sizeof(*new_rule), GFP_KERNEL);
   if (new_rule == NULL) {
     return 0;
   }
 
-  /* Заполнение new_rule выполняется до блокировки. */
+  new_rule->id_rule = description->id;
+  new_rule->in_out = description->direction;
+
+  new_rule->src_ip = description->source_ipv4;
+  new_rule->src_netmask = 0;
+  new_rule->src_port = description->source_port;
+
+  new_rule->dest_ip = description->destination_ipv4;
+  new_rule->dest_netmask = 0;
+  new_rule->dest_port = description->destination_port;
+
+  new_rule->proto = description->protocol;
+  new_rule->action = description->action;
+
+  INIT_LIST_HEAD(&new_rule->list);
 
   spin_lock_bh(&policy_lock);
 
@@ -553,7 +553,7 @@ static int add_a_rule(const struct fw_rule_message *description) {
 
   list_add_tail(&new_rule->list, &policy_list.list);
 
-  if (description->id < 0) {
+  if (new_rule->id_rule < 0) {
     dyn_rules_count++;
   }
 
@@ -607,18 +607,24 @@ static int update_a_rule(const struct fw_rule_message *description) {
 
     if (rule->id_rule == description->id) {
       rule->in_out = description->direction;
+
       rule->src_ip = description->source_ipv4;
+      rule->src_netmask = 0;
       rule->src_port = description->source_port;
+
       rule->dest_ip = description->destination_ipv4;
+      rule->dest_netmask = 0;
       rule->dest_port = description->destination_port;
+
       rule->proto = description->protocol;
       rule->action = description->action;
+
+      spin_unlock_bh(&policy_lock);
       return 1;
     }
   }
 
   spin_unlock_bh(&policy_lock);
-
   return 0;
 }
 
@@ -665,16 +671,17 @@ static int send_response(fw_u32 port_id, fw_u16 command, fw_s32 status,
 static void netlink_Read_Msg(struct sk_buff *skb_in) {
   struct nlmsghdr *header;
   struct fw_command_message command;
-  fw_u32 port_id = NETLINK_CB(skb_in).portid;
-
-  if (!netlink_capable(skb_in, CAP_NET_ADMIN)) {
-    send_response(port_id, 0, FW_STATUS_PERMISSION_DENIED, 0, 0, NULL);
-    return;
-  }
-
+  fw_u32 port_id;
   fw_s32 status = FW_STATUS_OK;
 
   if (skb_in == NULL) {
+    return;
+  }
+
+  port_id = NETLINK_CB(skb_in).portid;
+
+  if (!netlink_capable(skb_in, CAP_NET_ADMIN)) {
+    send_response(port_id, 0, FW_STATUS_PERMISSION_DENIED, 0, 0, NULL);
     return;
   }
 
@@ -684,8 +691,6 @@ static void netlink_Read_Msg(struct sk_buff *skb_in) {
       nlmsg_len(header) < sizeof(command)) {
     return;
   }
-
-  port_id = NETLINK_CB(skb_in).portid;
 
   memcpy(&command, nlmsg_data(header), sizeof(command));
 
@@ -704,14 +709,6 @@ static void netlink_Read_Msg(struct sk_buff *skb_in) {
                       NULL);
         return;
       }
-      if ((command.command == FW_COMMAND_ADD_RULE ||
-           command.command == FW_COMMAND_DELETE_RULE ||
-           command.command == FW_COMMAND_UPDATE_RULE) &&
-          !is_rule_message_valid(&command.rule)) {
-        send_response(port_id, command.command, FW_STATUS_INVALID_RULE, 0, 0,
-                      NULL);
-        return;
-      }
       break;
 
     case FW_COMMAND_GET_DYNAMIC_RULES:
@@ -719,14 +716,6 @@ static void netlink_Read_Msg(struct sk_buff *skb_in) {
     case FW_COMMAND_START:
       if (command.payload_size != 0) {
         send_response(port_id, command.command, FW_STATUS_INVALID_MESSAGE, 0, 0,
-                      NULL);
-        return;
-      }
-      if ((command.command == FW_COMMAND_ADD_RULE ||
-           command.command == FW_COMMAND_DELETE_RULE ||
-           command.command == FW_COMMAND_UPDATE_RULE) &&
-          !is_rule_message_valid(&command.rule)) {
-        send_response(port_id, command.command, FW_STATUS_INVALID_RULE, 0, 0,
                       NULL);
         return;
       }
@@ -741,7 +730,7 @@ static void netlink_Read_Msg(struct sk_buff *skb_in) {
   switch (command.command) {
     case FW_COMMAND_ADD_RULE:
       if (!add_a_rule(&command.rule)) {
-        status = FW_STATUS_INTERNAL_ERROR;
+        status = FW_STATUS_RULE_ALREADY_EXISTS;
       }
       break;
 
@@ -768,39 +757,67 @@ static void netlink_Read_Msg(struct sk_buff *skb_in) {
     case FW_COMMAND_GET_DYNAMIC_RULES: {
       struct list_head *position;
       struct RuleListItem *item;
-      fw_u32 sequence = 0;
+      struct fw_rule_message *snapshot = NULL;
+      fw_u32 capacity;
+      fw_u32 count = 0;
+      fw_u32 index;
 
-      if (send_response(port_id, command.command, FW_STATUS_OK, dyn_rules_count,
-                        0, NULL) < 0) {
-        return;
+      spin_lock_bh(&policy_lock);
+      capacity = dyn_rules_count > 0 ? (fw_u32)dyn_rules_count : 0;
+      spin_unlock_bh(&policy_lock);
+
+      if (capacity > 0) {
+        snapshot = kcalloc(capacity, sizeof(*snapshot), GFP_KERNEL);
+
+        if (snapshot == NULL) {
+          send_response(port_id, command.command, FW_STATUS_INTERNAL_ERROR, 0,
+                        0, NULL);
+          return;
+        }
       }
 
-      list_for_each(position, &policy_list.list) {
-        struct fw_rule_message rule = {};
+      spin_lock_bh(&policy_lock);
 
+      list_for_each(position, &policy_list.list) {
         item = list_entry(position, struct RuleListItem, list);
 
         if (item->id_rule >= 0) {
           continue;
         }
 
-        rule.id = item->id_rule;
-        rule.direction = item->in_out;
-        rule.source_ipv4 = item->src_ip;
-        rule.destination_ipv4 = item->dest_ip;
-        rule.source_port = item->src_port;
-        rule.destination_port = item->dest_port;
-        rule.protocol = item->proto;
-        rule.action = item->action;
-
-        if (send_response(port_id, command.command, FW_STATUS_OK,
-                          dyn_rules_count, sequence, &rule) < 0) {
-          return;
+        if (count >= capacity) {
+          break;
         }
 
-        sequence++;
+        snapshot[count].id = item->id_rule;
+        snapshot[count].direction = item->in_out;
+        snapshot[count].source_ipv4 = item->src_ip;
+        snapshot[count].destination_ipv4 = item->dest_ip;
+        snapshot[count].source_port = item->src_port;
+        snapshot[count].destination_port = item->dest_port;
+        snapshot[count].protocol = item->proto;
+        snapshot[count].action = item->action;
+
+        count++;
       }
 
+      spin_unlock_bh(&policy_lock);
+
+      if (send_response(port_id, command.command, FW_STATUS_OK, count, 0,
+                        NULL) < 0) {
+        kfree(snapshot);
+        return;
+      }
+
+      for (index = 0; index < count; ++index) {
+        if (send_response(port_id, command.command, FW_STATUS_OK, count, index,
+                          &snapshot[index]) < 0) {
+          kfree(snapshot);
+          return;
+        }
+      }
+
+      kfree(snapshot);
       return;
     }
 

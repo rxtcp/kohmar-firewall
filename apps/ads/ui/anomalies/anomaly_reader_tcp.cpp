@@ -106,42 +106,36 @@ void AnomalyReaderTcp::run() {
 
           if (isRuleExist(rule_new)) {
             delete rule_new;
-            sem_rules->post();
-            continue;
-          }
-
-          if (!nlManager->sendRuleToKernel(rule_new)) {
+          } else if (!nlManager->sendRuleToKernel(rule_new)) {
             delete rule_new;
-            sem_rules->post();
-            continue;
+          } else {
+            rules->append(rule_new);
+
+            timeItem = new QTableWidgetItem();
+            numItem = new QTableWidgetItem();
+            ipSrcItem = new QTableWidgetItem();
+            ipDestItem = new QTableWidgetItem();
+            portDestItem = new QTableWidgetItem();
+            portSrcItem = new QTableWidgetItem();
+
+            timeItem->setText(QTime::currentTime().toString("hh:mm:ss"));
+            numItem->setText(QString::number(-rule_new->id_rule));
+            ipSrcItem->setText(rule_new->ip_src);
+            ipDestItem->setText(rule_new->ip_dest);
+            portDestItem->setText(port_dest_str);
+            portSrcItem->setText(port_src_str);
+
+            rules_table->insertRow(col_rules);
+            rules_table->setItem(col_rules, 0, numItem);
+            rules_table->setItem(col_rules, 1, timeItem);
+            rules_table->setItem(col_rules, 2, ipSrcItem);
+            rules_table->setItem(col_rules, 3, portSrcItem);
+            rules_table->setItem(col_rules, 4, ipDestItem);
+            rules_table->setItem(col_rules, 5, portDestItem);
+
+            ++col_rules;
+            --(*id_rule);
           }
-
-          rules->append(rule_new);
-
-          timeItem = new QTableWidgetItem();
-          numItem = new QTableWidgetItem();
-          ipSrcItem = new QTableWidgetItem();
-          ipDestItem = new QTableWidgetItem();
-          portDestItem = new QTableWidgetItem();
-          portSrcItem = new QTableWidgetItem();
-
-          timeItem->setText(QTime::currentTime().toString("hh:mm:ss"));
-          numItem->setText(QString::number(-rule_new->id_rule));
-          ipSrcItem->setText(rule_new->ip_src);
-          ipDestItem->setText(rule_new->ip_dest);
-          portDestItem->setText(port_dest_str);
-          portSrcItem->setText(port_src_str);
-
-          rules_table->insertRow(col_rules);
-          rules_table->setItem(col_rules, 0, numItem);
-          rules_table->setItem(col_rules, 1, timeItem);
-          rules_table->setItem(col_rules, 2, ipSrcItem);
-          rules_table->setItem(col_rules, 3, portSrcItem);
-          rules_table->setItem(col_rules, 4, ipDestItem);
-          rules_table->setItem(col_rules, 5, portDestItem);
-
-          ++col_rules;
-          --(*id_rule);
 
           sem_rules->post();
         }

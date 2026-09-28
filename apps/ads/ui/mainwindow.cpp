@@ -5,9 +5,12 @@
 #include "ui_mainwindow.h"
 //
 
-MainWindow::MainWindow(QWidget *parent, NetLinkManager *mng,
-                       PacksReceiver *_packs_receiver)
-    : QMainWindow(parent), ui(new Ui::MainWindow) {
+MainWindow::MainWindow(QWidget *parent, NetLinkManager &manager,
+                       PacksReceiver &receiver)
+    : QMainWindow(parent),
+      ui(std::make_unique<Ui::MainWindow>()),
+      netlinkManager(manager),
+      packsReceiver(receiver) {
   qDebug() << "setup ui";
   // UI
   ui->setupUi(this);
@@ -24,7 +27,7 @@ MainWindow::MainWindow(QWidget *parent, NetLinkManager *mng,
   ui->tableWidgetFlowDetAnom->setColumnHidden(2, true);
 
   // som table
-  SelfOrganizedMap *som = _packs_receiver->getSOM();
+  SelfOrganizedMap *som = packsReceiver.getSOM();
   QTableWidget *som_table = ui->tableWidgetSOM;
   int N = som->getN();
   int M = som->getM();
@@ -63,20 +66,18 @@ MainWindow::MainWindow(QWidget *parent, NetLinkManager *mng,
   sem_dynamic_rules = new UnixSemaphore();
   sem_settings_tcp = new UnixSemaphore();
 
-  nlManager = mng;
-  packs_receiver = _packs_receiver;
   run_pause = true;
 
-  isLearnTcp = packs_receiver->getIsLearnTcp();
-  tcp_depth = packs_receiver->getTcpDepth();
-  tcp_anomaly_limit = packs_receiver->getTcpAnomalyLimit();
-  tcp_gen_rules = packs_receiver->getTcpGenerateRules();
-  tcp_drop_ports = packs_receiver->getTcpDropPorts();
+  isLearnTcp = packsReceiver.getIsLearnTcp();
+  tcp_depth = packsReceiver.getTcpDepth();
+  tcp_anomaly_limit = packsReceiver.getTcpAnomalyLimit();
+  tcp_gen_rules = packsReceiver.getTcpGenerateRules();
+  tcp_drop_ports = packsReceiver.getTcpDropPorts();
 
-  flow_packs_max_count = packs_receiver->getFlowPacksMaxCount();
-  flow_min_count_packs_in_conn = packs_receiver->getFlowMinCountPacksInConn();
-  flow_anomaly_limit = packs_receiver->getFlowAnomalyLimit();
-  flow_gen_rules = packs_receiver->getFlowGenerateRules();
+  flow_packs_max_count = packsReceiver.getFlowPacksMaxCount();
+  flow_min_count_packs_in_conn = packsReceiver.getFlowMinCountPacksInConn();
+  flow_anomaly_limit = packsReceiver.getFlowAnomalyLimit();
+  flow_gen_rules = packsReceiver.getFlowGenerateRules();
   flow_drop_ports = 0;
 
   // FRAMES
@@ -110,16 +111,17 @@ MainWindow::MainWindow(QWidget *parent, NetLinkManager *mng,
 
   qDebug() << "main: nl maenagr";
 
-  if (nlManager != nullptr) {
-    if (!nlManager->getDynamicRulesFromKernel(ads_rules)) {
-      qWarning() << "Cannot read dynamic rules from kernel";
-    }
+  if (!netlinkManager.getDynamicRulesFromKernel(ads_rules)) {
+    qWarning() << "Cannot read dynamic rules from kernel";
+  }
 
-    user_rules = DbManager::getRulesFromDb();
-    loadRulesToKernel();
-  } else {
+  user_rules = DbManager::getRulesFromDb();
+
+  if (user_rules == nullptr) {
     user_rules = new QList<Rule *>();
   }
+
+  loadRulesToKernel();
 
   id_rule_dynamic = -1;
 
@@ -134,43 +136,69 @@ MainWindow::MainWindow(QWidget *parent, NetLinkManager *mng,
 
   // READERS
   tcp_anomaly_reader = new AnomalyReaderTcp(
-      0, ui->tableWidgetTCPDetAnom, ui->tableWidgetGenRules, packs_receiver,
-      tcp_anomaly_frame, ads_rules, nlManager, &tcp_anomaly_limit,
+      this, ui->tableWidgetTCPDetAnom, ui->tableWidgetGenRules, &packsReceiver,
+      tcp_anomaly_frame, ads_rules, netlinkManager, &tcp_anomaly_limit,
       sem_dynamic_rules, &tcp_gen_rules, sem_settings_tcp, &tcp_drop_ports,
       &id_rule_dynamic);
 
   flow_anomaly_reader = new AnomalyReaderFlow(
-      0, ui->tableWidgetSOM, ui->tableWidgetFlowDetAnom,
-      ui->tableWidgetGroupRules, packs_receiver, flow_anomaly_frame, ads_rules,
-      nlManager, &flow_anomaly_limit, sem_dynamic_rules, &flow_gen_rules,
+      this, ui->tableWidgetSOM, ui->tableWidgetFlowDetAnom,
+      ui->tableWidgetGroupRules, &packsReceiver, flow_anomaly_frame, ads_rules,
+      netlinkManager, &flow_anomaly_limit, sem_dynamic_rules, &flow_gen_rules,
       sem_settings_tcp, &flow_drop_ports, &id_rule_dynamic);
 
   tcp_anomaly_reader->start();
   flow_anomaly_reader->start();
 }
 
-MainWindow::~MainWindow() {
-  delete ui;
+void MainWindow::stopAnomalyReaders() noexcept {
+  if (tcp_anomaly_reader != nullptr) {
+    tcp_anomaly_reader->requestInterruption();
+  }
 
-  if (nlManager != nullptr) {
-    for (Rule *rule : *ads_rules) {
-      nlManager->deleteRuleFromKernel(rule);
-    }
+  if (flow_anomaly_reader != nullptr) {
+    flow_anomaly_reader->requestInterruption();
+  }
 
-    nlManager->closeNetlinkSocket();
+  if (tcp_anomaly_reader != nullptr && tcp_anomaly_reader->isRunning()) {
+    tcp_anomaly_reader->wait();
+  }
+
+  if (flow_anomaly_reader != nullptr && flow_anomaly_reader->isRunning()) {
+    flow_anomaly_reader->wait();
   }
 }
 
+MainWindow::~MainWindow() {
+  stopAnomalyReaders();
+
+  if (ads_rules != nullptr) {
+    for (Rule *rule : *ads_rules) {
+      if (rule == nullptr) {
+        continue;
+      }
+
+      if (!netlinkManager.deleteRuleFromKernel(rule)) {
+        qWarning() << "Cannot remove dynamic rule from kernel:"
+                   << rule->id_rule;
+      }
+    }
+  }
+
+  // Netlink-сокет здесь не закрывается.
+  // Его закроет деструктор NetLinkManager в main().
+}
+
 void MainWindow::showRulesForm() {
-  RulesForm *form =
-      new RulesForm(0, user_rules, ads_rules, nlManager, sem_dynamic_rules);
-  form->setWindowFlags(((form->windowFlags() | Qt::CustomizeWindowHint) &
-                        ~Qt::WindowMaximizeButtonHint));
+  auto *form = new RulesForm(this, user_rules, ads_rules, netlinkManager,
+                             sem_dynamic_rules);
+
+  form->setAttribute(Qt::WA_DeleteOnClose);
+  form->setWindowFlags((form->windowFlags() | Qt::CustomizeWindowHint) &
+                       ~Qt::WindowMaximizeButtonHint);
   form->setFixedSize(form->size());
   form->show();
 }
-
-void MainWindow::on_MainWindow_destroyed() {}
 
 void MainWindow::loadRulesToKernel() {
   for (Rule *rule : *user_rules) {
@@ -178,28 +206,30 @@ void MainWindow::loadRulesToKernel() {
       continue;
     }
 
-    if (!nlManager->sendRuleToKernel(rule)) {
+    if (!netlinkManager.sendRuleToKernel(rule)) {
       qWarning() << "Cannot load rule into kernel:" << rule->id_rule;
     }
   }
 }
 
 void MainWindow::learnTcp() {
-  LearningTcpDialog *form = new LearningTcpDialog(0, packs_receiver);
-  form->setWindowFlags(((form->windowFlags() | Qt::CustomizeWindowHint) &
-                        ~Qt::WindowMaximizeButtonHint &
-                        ~Qt::WindowCloseButtonHint));
-  form->setFixedSize(form->size());
-  form->exec();
+  LearningTcpDialog form(this, &packsReceiver);
+
+  form.setWindowFlags((form.windowFlags() | Qt::CustomizeWindowHint) &
+                      ~Qt::WindowMaximizeButtonHint &
+                      ~Qt::WindowCloseButtonHint);
+  form.setFixedSize(form.size());
+  form.exec();
 }
 
 void MainWindow::learnFlow() {
-  LearningFlowDialog *form = new LearningFlowDialog(0, packs_receiver);
-  form->setWindowFlags(((form->windowFlags() | Qt::CustomizeWindowHint) &
-                        ~Qt::WindowMaximizeButtonHint &
-                        ~Qt::WindowCloseButtonHint));
-  form->setFixedSize(form->size());
-  form->exec();
+  LearningFlowDialog form(this, &packsReceiver);
+
+  form.setWindowFlags((form.windowFlags() | Qt::CustomizeWindowHint) &
+                      ~Qt::WindowMaximizeButtonHint &
+                      ~Qt::WindowCloseButtonHint);
+  form.setFixedSize(form.size());
+  form.exec();
 }
 
 void MainWindow::showSettings() {
@@ -215,7 +245,7 @@ void MainWindow::showSettings() {
   if (form->exec()) {
     tcp_anomaly_frame->setLimit(tcp_anomaly_limit);
     flow_anomaly_frame->setLimit(flow_anomaly_limit);
-    packs_receiver->setFlowPacksMaxCount(flow_packs_max_count);
+    packsReceiver.setFlowPacksMaxCount(flow_packs_max_count);
 
     FILE *file = fopen("ads.settings", "w");
 
@@ -247,17 +277,13 @@ void MainWindow::showSettings() {
 }
 
 void MainWindow::run_pause_firewall() {
-  if (nlManager == nullptr) {
-    return;
-  }
-
   if (run_pause) {
-    if (nlManager->sendCommand(FW_COMMAND_PAUSE)) {
+    if (netlinkManager.sendCommand(FW_COMMAND_PAUSE)) {
       run_pause = false;
       ui->run_stop_action->setText("Continue");
     }
   } else {
-    if (nlManager->sendCommand(FW_COMMAND_START)) {
+    if (netlinkManager.sendCommand(FW_COMMAND_START)) {
       run_pause = true;
       ui->run_stop_action->setText("Pause");
     }
@@ -279,7 +305,7 @@ void MainWindow::on_pushButtonFalseAlarm_clicked() {
     char *states =
         ui->tableWidgetTCPDetAnom->item(cur_row, 6)->text().toUtf8().data();
     int predictor = ui->tableWidgetTCPDetAnom->item(cur_row, 7)->text().toInt();
-    packs_receiver->retrainPredictor(states, predictor);
+    packsReceiver.retrainPredictor(states, predictor);
     ui->tableWidgetTCPDetAnom->removeRow(cur_row);
   }
 }
@@ -318,7 +344,7 @@ void MainWindow::on_tableWidgetSOM_cellClicked(int row, int column) {
 
   QString txt;
 
-  Neuron *n = this->packs_receiver->getSOM()->getNeuron(row, column);
+  Neuron *n = packsReceiver.getSOM()->getNeuron(row, column);
 
   txt = "Anomaly : " + QString::number(n->getAnomaly()) + "\n\n";
   txt += "Vector blurred: \n";

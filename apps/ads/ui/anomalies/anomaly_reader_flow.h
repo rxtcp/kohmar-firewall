@@ -18,14 +18,15 @@ class AnomalyReaderFlow : public QThread {
   Q_OBJECT
 
  public:
-  explicit AnomalyReaderFlow(
-      QObject *parent = 0, QTableWidget *_som_table = 0,
-      QTableWidget *_anomalies_table = 0, QTableWidget *_rules_table = 0,
-      PacksReceiver *_receiver = 0, AnomalyTcpFrame *_painter = 0,
-      QList<Rule *> *_rules = 0, NetLinkManager *_nlMngr = 0,
-      int *_limit_flow = 0, UnixSemaphore *_sem_dynamic_rules = 0,
-      bool *_gen_rules = 0, UnixSemaphore *_sem_settings = 0,
-      int *_flow_drop_ports = 0, int *_id_rules_dyn = 0);
+  explicit AnomalyReaderFlow(QObject *parent, QTableWidget *somTable,
+                             QTableWidget *anomaliesTable,
+                             QTableWidget *rulesTable, PacksReceiver *receiver,
+                             AnomalyTcpFrame *painter, QList<Rule *> *rules,
+                             NetLinkManager &netlinkManager, int *limitFlow,
+                             UnixSemaphore *dynamicRulesSemaphore,
+                             bool *generateRules,
+                             UnixSemaphore *settingsSemaphore,
+                             int *flowDropPorts, int *dynamicRuleId);
 
   void run();
 
@@ -43,7 +44,7 @@ class AnomalyReaderFlow : public QThread {
   PacksReceiver *receiver;
   AnomalyTcpFrame *painter;
   QList<Rule *> *rules;
-  NetLinkManager *nlManager;
+  NetLinkManager &netlinkManager;
   int *limit_flow;
   bool *gen_rules;
   int *flow_drop_ports;

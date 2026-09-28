@@ -17,13 +17,14 @@
 class NetLinkManager {
  public:
   explicit NetLinkManager(int netlinkProtocol);
-  ~NetLinkManager();
+  ~NetLinkManager() noexcept;
 
   NetLinkManager(const NetLinkManager &) = delete;
   NetLinkManager &operator=(const NetLinkManager &) = delete;
+  NetLinkManager(NetLinkManager &&) = delete;
+  NetLinkManager &operator=(NetLinkManager &&) = delete;
 
-  bool isOpen() const;
-  void closeNetlinkSocket();
+  [[nodiscard]] bool isOpen() const noexcept;
 
   bool sendCommand(enum fw_command_type command);
 
@@ -37,6 +38,8 @@ class NetLinkManager {
 #endif
 
  private:
+  void closeNetlinkSocket() noexcept;
+
   bool sendRuleCommand(enum fw_command_type command, const Rule &rule);
 
   bool sendRequest(const struct fw_command_message &request,

@@ -8,6 +8,7 @@
 #include <QtAlgorithms>
 #include <cerrno>
 #include <cstring>
+#include <utility>
 
 NetLinkManager::NetLinkManager(int netlinkProtocol) {
   netlinkSocket_ = socket(PF_NETLINK, SOCK_RAW, netlinkProtocol);
@@ -52,15 +53,17 @@ NetLinkManager::NetLinkManager(int netlinkProtocol) {
   destinationAddress_.nl_groups = 0;
 }
 
-NetLinkManager::~NetLinkManager() { closeNetlinkSocket(); }
+NetLinkManager::~NetLinkManager() noexcept { closeNetlinkSocket(); }
 
-bool NetLinkManager::isOpen() const { return netlinkSocket_ >= 0; }
+bool NetLinkManager::isOpen() const noexcept { return netlinkSocket_ >= 0; }
 
-void NetLinkManager::closeNetlinkSocket() {
-  if (netlinkSocket_ >= 0) {
-    close(netlinkSocket_);
-    netlinkSocket_ = -1;
+void NetLinkManager::closeNetlinkSocket() noexcept {
+  if (netlinkSocket_ < 0) {
+    return;
   }
+
+  const int socketToClose = std::exchange(netlinkSocket_, -1);
+  ::close(socketToClose);
 }
 
 fw_u32 NetLinkManager::nextNetlinkSequence() {

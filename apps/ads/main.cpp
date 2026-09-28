@@ -7,6 +7,7 @@
 #include <QApplication>
 #include <QDebug>
 #include <QMessageBox>
+#include <cstdlib>
 
 #include "detectors/pst/pst_predictor.h"
 #include "engine/packsreceiver.h"
@@ -15,72 +16,44 @@
 
 bool checkModLoaded();
 
-NetLinkManager *nl_mngr = NULL;
-
 int main(int argc, char *argv[]) {
-  // pthread_t thread1;
-  // int  iret1;
-  // Rule * r = new Rule;
+  QApplication application(argc, argv);
 
-  QApplication a(argc, argv);
+  qDebug() << "starting netlink manager";
 
-  /*
-    if(checkModLoaded())
-    {
-        qDebug() << "Module is already loaded!";
-    }
-    else
-    {
+  NetLinkManager netlinkManager(NETLINK_USERSOCK);
 
-        qDebug() << "Module is not loaded! Loading...";//printf ("module is
-not loaded! Loading...\n"); QMessageBox msgBox; msgBox.setText("Module is not
-loaded! Loading..."); msgBox.show();
-
-        //system("insmod ../Common/netfilter.ko");
-
-        if(checkModLoaded())
-            qDebug() << "Module loaded!";//printf ("module loaded!\n");
-        else {
-            qDebug() << "Error! Module not loaded!";
-            msgBox.close();
-            msgBox.setText("Ошибка! Сетевой экран не запущен!");
-            msgBox.exec();
-            return 0;
-        }
-        msgBox.close();
-        //qDebug() << "Module is not loaded!";
-
-        return 0;
-    }
-*/
-
-  qDebug() << "starting pack rcv";
-  PacksReceiver *packs_receiver = new PacksReceiver();
-  packs_receiver->start();
-
-  qDebug() << "starting netlink man";
-
-  nl_mngr = new NetLinkManager(NETLINK_USERSOCK);
-
-  if (!nl_mngr->isOpen()) {
+  if (!netlinkManager.isOpen()) {
     QMessageBox::critical(
         nullptr, "Firewall",
         "Cannot open Netlink connection to the kernel module.");
-
-    delete nl_mngr;
-    return 1;
+    return EXIT_FAILURE;
   }
 
-  qDebug() << "start ui";
+  qDebug() << "starting packet receiver";
 
-  MainWindow *w = new MainWindow(nullptr, nl_mngr, packs_receiver);
-  
-  w->setWindowFlags(((w->windowFlags() | Qt::CustomizeWindowHint) &
-                     ~Qt::WindowMaximizeButtonHint));
-  // w->setFixedSize(w->size());
-  w->show();
+  auto *packsReceiver = new PacksReceiver();
+  packsReceiver->start();
 
-  return a.exec();
+  int exitCode = EXIT_FAILURE;
+
+  {
+    qDebug() << "starting ui";
+
+    MainWindow window(nullptr, netlinkManager, *packsReceiver);
+
+    window.setWindowFlags((window.windowFlags() | Qt::CustomizeWindowHint) &
+                          ~Qt::WindowMaximizeButtonHint);
+    window.show();
+
+    exitCode = application.exec();
+  }
+
+  // Здесь MainWindow и его anomaly reader уже уничтожены.
+  // Никто больше не может вызвать NetLinkManager.
+  // Сам NetLinkManager будет уничтожен при выходе из main().
+
+  return exitCode;
 }
 
 bool checkModLoaded() {

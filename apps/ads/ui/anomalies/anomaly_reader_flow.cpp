@@ -1,32 +1,28 @@
 #include "anomaly_reader_flow.h"
 
 AnomalyReaderFlow::AnomalyReaderFlow(
-    QObject *parent, QTableWidget *_som_table, QTableWidget *_anomalies_table,
-    QTableWidget *_rules_table, PacksReceiver *_receiver,
-    AnomalyTcpFrame *_painter, QList<Rule *> *_rules, NetLinkManager *_nlMngr,
-    int *_limit_flow, UnixSemaphore *_sem_dynamic_rules, bool *_gen_rules,
-    UnixSemaphore *_sem_settings, int *_flow_drop_ports, int *_id_rules_dyn)
-    : QThread(parent) {
-  som_table = _som_table;
-  anomalies_table = _anomalies_table;
-  rules_table = _rules_table;
-  receiver = _receiver;
-  painter = _painter;
-
-  sem_rules = _sem_dynamic_rules;
-  sem_settings = _sem_settings;
-
-  rules = _rules;
-  nlManager = _nlMngr;
-
-  limit_flow = _limit_flow;
-  gen_rules = _gen_rules;
-  flow_drop_ports = _flow_drop_ports;
-
-  id_rule = _id_rules_dyn;
-  col_rules = 0;
-  col_anomalies = 0;
-}
+    QObject *parent, QTableWidget *somTable, QTableWidget *anomaliesTable,
+    QTableWidget *rulesTable, PacksReceiver *packsReceiver,
+    AnomalyTcpFrame *anomalyPainter, QList<Rule *> *dynamicRules,
+    NetLinkManager &manager, int *limitFlow,
+    UnixSemaphore *dynamicRulesSemaphore, bool *generateRules,
+    UnixSemaphore *settingsSemaphore, int *flowDropPorts, int *dynamicRuleId)
+    : QThread(parent),
+      rules_table(rulesTable),
+      anomalies_table(anomaliesTable),
+      som_table(somTable),
+      receiver(packsReceiver),
+      painter(anomalyPainter),
+      rules(dynamicRules),
+      netlinkManager(manager),
+      limit_flow(limitFlow),
+      gen_rules(generateRules),
+      flow_drop_ports(flowDropPorts),
+      id_rule(dynamicRuleId),
+      col_rules(0),
+      col_anomalies(0),
+      sem_rules(dynamicRulesSemaphore),
+      sem_settings(settingsSemaphore) {}
 
 void AnomalyReaderFlow::run() {
   AnomalyNodeFlow anomaly_node;
@@ -37,8 +33,12 @@ void AnomalyReaderFlow::run() {
   int old_i = 0, old_j = 0;
   QDateTime prevTime = QDateTime::currentDateTime();
 
-  while (true) {
+  while (!isInterruptionRequested()) {
     if (receiver->getFlowAnomalyFromQueue(&anomaly_node)) {
+      if (isInterruptionRequested()) {
+        break;
+      }
+
       painter->addPoint(anomaly_node.anomaly);
       painter->paintGraphic();
 
@@ -129,7 +129,7 @@ else typeItem->setText("Смешанный");
 
           if (isRuleExist(rule_new)) {
             delete rule_new;
-          } else if (!nlManager->sendRuleToKernel(rule_new)) {
+          } else if (!netlinkManager.sendRuleToKernel(rule_new)) {
             delete rule_new;
           } else {
             rules->append(rule_new);

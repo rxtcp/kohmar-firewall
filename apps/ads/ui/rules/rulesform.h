@@ -19,9 +19,10 @@ class RulesForm : public QWidget {
   Q_OBJECT
 
  public:
-  explicit RulesForm(QWidget *parent = 0, QList<Rule *> *_user_rules = 0,
-                     QList<Rule *> *_dyn_rules = 0, NetLinkManager *mng = 0,
-                     UnixSemaphore *_sem_dyn_rules = 0);
+  explicit RulesForm(QWidget *parent, QList<Rule *> *userRules,
+                     QList<Rule *> *dynamicRules,
+                     NetLinkManager &netlinkManager,
+                     UnixSemaphore *dynamicRulesSemaphore);
 
   ~RulesForm();
 
@@ -41,7 +42,7 @@ class RulesForm : public QWidget {
   Ui::RulesForm *ui;
   QList<Rule *> *user_rules;
   QList<Rule *> *dynamic_rules;
-  NetLinkManager *nlManager;
+  NetLinkManager &netlinkManager;
   UnixSemaphore *sem_dyn_rules;
 
   void fillUserGrid();

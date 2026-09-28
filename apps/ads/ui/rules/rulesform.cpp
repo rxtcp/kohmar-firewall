@@ -2,10 +2,15 @@
 
 #include "ui_rulesform.h"
 
-RulesForm::RulesForm(QWidget *parent, QList<Rule *> *_user_rules,
-                     QList<Rule *> *_dyn_rules, NetLinkManager *mng,
-                     UnixSemaphore *_sem_dyn_rules)
-    : QWidget(parent), ui(new Ui::RulesForm) {
+RulesForm::RulesForm(QWidget *parent, QList<Rule *> *userRules,
+                     QList<Rule *> *dynamicRules, NetLinkManager &manager,
+                     UnixSemaphore *dynamicRulesSemaphore)
+    : QWidget(parent),
+      ui(new Ui::RulesForm),
+      user_rules(userRules),
+      dynamic_rules(dynamicRules),
+      netlinkManager(manager),
+      sem_dyn_rules(dynamicRulesSemaphore) {
   ui->setupUi(this);
   ui->tableWidget->setColumnWidth(2, 140);
   ui->tableWidget->setColumnWidth(3, 120);
@@ -17,13 +22,6 @@ RulesForm::RulesForm(QWidget *parent, QList<Rule *> *_user_rules,
   ui->tableWidget_2->setColumnWidth(5, 120);
   ui->tableWidget_2->setColumnWidth(8, 145);
   ui->tableWidget_2->setColumnWidth(9, 145);
-
-  user_rules = _user_rules;
-  dynamic_rules = _dyn_rules;
-
-  nlManager = mng;
-  sem_dyn_rules = _sem_dyn_rules;
-
   ui->tableWidget->setColumnHidden(0, true);
   // ui->tableWidget_2->setColumnHidden(0, true);
 
@@ -321,7 +319,7 @@ void RulesForm::on_pushButton_clicked() {
       continue;
     }
 
-    if (!nlManager->sendRuleToKernel(rule)) {
+    if (!netlinkManager.sendRuleToKernel(rule)) {
       const int ruleId = rule->id_rule;
 
       if (!DbManager::removeFromDb(ruleId)) {
@@ -386,14 +384,14 @@ void RulesForm::on_pushButton_2_clicked() {
     return;
   }
 
-  if (!nlManager->updateRuleInKernel(&editedRule)) {
+  if (!netlinkManager.updateRuleInKernel(&editedRule)) {
     QMessageBox::critical(this, tr("Firewall"),
                           tr("The rule could not be updated in the kernel."));
     return;
   }
 
   if (!DbManager::updateInDb(&editedRule)) {
-    if (!nlManager->updateRuleInKernel(&oldRule)) {
+    if (!netlinkManager.updateRuleInKernel(&oldRule)) {
       qCritical() << "Cannot roll back kernel rule:" << oldRule.id_rule;
     }
 
@@ -444,14 +442,14 @@ void RulesForm::on_pushButton_3_clicked() {
     return;
   }
 
-  if (!nlManager->deleteRuleFromKernel(ruleToDelete)) {
+  if (!netlinkManager.deleteRuleFromKernel(ruleToDelete)) {
     QMessageBox::critical(this, tr("Firewall"),
                           tr("The rule could not be deleted from the kernel."));
     return;
   }
 
   if (!DbManager::removeFromDb(ruleToDelete->id_rule)) {
-    if (!nlManager->sendRuleToKernel(ruleToDelete)) {
+    if (!netlinkManager.sendRuleToKernel(ruleToDelete)) {
       qCritical() << "Cannot restore kernel rule:" << ruleToDelete->id_rule;
     }
 
@@ -589,7 +587,7 @@ void RulesForm::on_pushButton_6_clicked() {
     return;
   }
 
-  if (!nlManager->deleteRuleFromKernel(ruleToDelete)) {
+  if (!netlinkManager.deleteRuleFromKernel(ruleToDelete)) {
     QMessageBox::critical(
         this, tr("Firewall"),
         tr("The dynamic rule could not be deleted from the kernel."));

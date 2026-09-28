@@ -1,32 +1,27 @@
 #include "anomaly_reader_tcp.h"
 
 AnomalyReaderTcp::AnomalyReaderTcp(
-    QObject *parent, QTableWidget *_anomalies_table, QTableWidget *_rules_table,
-    PacksReceiver *_receiver, AnomalyTcpFrame *_painter, QList<Rule *> *_rules,
-    NetLinkManager *_nlMngr, int *_limit_tcp, UnixSemaphore *_sem_dynamic_rules,
-    bool *_gen_rules, UnixSemaphore *_sem_settings, int *_tcp_drop_ports,
-    int *_id_rules_dyn)
-    : QThread(parent) {
-  anomalies_table = _anomalies_table;
-  rules_table = _rules_table;
-  receiver = _receiver;
-  painter = _painter;
-
-  sem_rules = _sem_dynamic_rules;
-  sem_settings = _sem_settings;
-
-  rules = _rules;
-  nlManager = _nlMngr;
-
-  limit_tcp = _limit_tcp;
-  gen_rules = _gen_rules;
-  tcp_drop_ports = _tcp_drop_ports;
-
-  id_rule = _id_rules_dyn;
-  __id = -1;
-  col_rules = 0;
-  col_anomalies = 0;
-}
+    QObject *parent, QTableWidget *anomaliesTable, QTableWidget *rulesTable,
+    PacksReceiver *packsReceiver, AnomalyTcpFrame *anomalyPainter,
+    QList<Rule *> *dynamicRules, NetLinkManager &manager, int *limitTcp,
+    UnixSemaphore *dynamicRulesSemaphore, bool *generateRules,
+    UnixSemaphore *settingsSemaphore, int *tcpDropPorts, int *dynamicRuleId)
+    : QThread(parent),
+      anomalies_table(anomaliesTable),
+      rules_table(rulesTable),
+      receiver(packsReceiver),
+      painter(anomalyPainter),
+      rules(dynamicRules),
+      netlinkManager(manager),
+      limit_tcp(limitTcp),
+      gen_rules(generateRules),
+      tcp_drop_ports(tcpDropPorts),
+      id_rule(dynamicRuleId),
+      __id(-1),
+      col_rules(0),
+      col_anomalies(0),
+      sem_rules(dynamicRulesSemaphore),
+      sem_settings(settingsSemaphore) {}
 
 void AnomalyReaderTcp::run() {
   AnomalyNodeTCP anomaly_node;
@@ -34,8 +29,12 @@ void AnomalyReaderTcp::run() {
   QTableWidgetItem *timeItem, *numItem, *ipSrcItem, *ipDestItem, *portSrcItem,
       *portDestItem, *valItem, *statesItem, *predictorItem;
 
-  while (true) {
+  while (!isInterruptionRequested()) {
     if (receiver->getTcpAnomalyFromQueue(&anomaly_node)) {
+      if (isInterruptionRequested()) {
+        break;
+      }
+
       painter->addPoint(anomaly_node.anomaly);
       painter->paintGraphic();
 
@@ -106,7 +105,7 @@ void AnomalyReaderTcp::run() {
 
           if (isRuleExist(rule_new)) {
             delete rule_new;
-          } else if (!nlManager->sendRuleToKernel(rule_new)) {
+          } else if (!netlinkManager.sendRuleToKernel(rule_new)) {
             delete rule_new;
           } else {
             rules->append(rule_new);

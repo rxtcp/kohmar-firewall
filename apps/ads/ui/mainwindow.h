@@ -7,6 +7,7 @@
 #include <QGridLayout>
 #include <QMainWindow>
 #include <QMessageBox>
+#include <memory>
 
 #include "anomalies/anomaly_frame.h"
 #include "anomalies/anomaly_reader_flow.h"
@@ -27,10 +28,10 @@ class MainWindow : public QMainWindow {
   Q_OBJECT
 
  public:
-  explicit MainWindow(QWidget *parent = 0, NetLinkManager *mng = 0,
-                      PacksReceiver *_packs_receiver = 0);
+  explicit MainWindow(QWidget *parent, NetLinkManager &netlinkManager,
+                      PacksReceiver &packsReceiver);
 
-  ~MainWindow();
+  ~MainWindow() override;
 
  private slots:
 
@@ -46,8 +47,6 @@ class MainWindow : public QMainWindow {
 
   void showAbout();
 
-  void on_MainWindow_destroyed();
-
   void on_pushButtonFalseAlarm_clicked();
 
   void on_pushButtonFalseAlarmFlow_clicked();
@@ -55,20 +54,24 @@ class MainWindow : public QMainWindow {
   void on_tableWidgetSOM_cellClicked(int row, int column);
 
  private:
-  Ui::MainWindow *ui;
-  // QSqlDatabase dBase;
-  QList<Rule *> *user_rules;
-  QList<Rule *> *ads_rules;
-  NetLinkManager *nlManager;
-  PacksReceiver *packs_receiver;
+  std::unique_ptr<Ui::MainWindow> ui;
+
+  // Списки пока остаются в старом представлении,
+  // потому что изменение Rule-ownership является отдельным рефакторингом.
+  QList<Rule *> *user_rules = nullptr;
+  QList<Rule *> *ads_rules = nullptr;
+
+  NetLinkManager &netlinkManager;
+  PacksReceiver &packsReceiver;
 
   void loadRulesToKernel();
+  void stopAnomalyReaders() noexcept;
 
   bool isLearnTcp;
   bool run_pause;
 
-  AnomalyReaderTcp *tcp_anomaly_reader;
-  AnomalyReaderFlow *flow_anomaly_reader;
+  AnomalyReaderTcp *tcp_anomaly_reader = nullptr;
+  AnomalyReaderFlow *flow_anomaly_reader = nullptr;
 
   AnomalyTcpFrame *tcp_anomaly_frame;
   AnomalyTcpFrame *flow_anomaly_frame;

@@ -234,8 +234,8 @@ QList<Rule *> *DbManager::getRulesFromDb() {
       QList<QHostAddress> dest_adrs = AddressResolver::resolve(dest_name);
 
       if (src_adrs.count() != 0 && dest_adrs.count() != 0) {
-        foreach (const QHostAddress &src_address, src_adrs) {
-          foreach (const QHostAddress &dest_address, dest_adrs) {
+        for (const QHostAddress &src_address : src_adrs) {
+          for (const QHostAddress &dest_address : dest_adrs) {
             rule = new Rule;
 
             rule->id_rule = id_rule;
@@ -254,7 +254,7 @@ QList<Rule *> *DbManager::getRulesFromDb() {
         }
       } else {
         if (src_adrs.count() == 0 && dest_adrs.count() != 0) {
-          foreach (const QHostAddress &dest_address, dest_adrs) {
+          for (const QHostAddress &dest_address : dest_adrs) {
             rule = new Rule;
 
             rule->id_rule = id_rule;
@@ -272,7 +272,7 @@ QList<Rule *> *DbManager::getRulesFromDb() {
           }
         } else {
           if (src_adrs.count() != 0 && dest_adrs.count() == 0) {
-            foreach (const QHostAddress &src_address, src_adrs) {
+            for (const QHostAddress &src_address : src_adrs) {
               rule = new Rule;
 
               rule->id_rule = id_rule;
@@ -311,7 +311,7 @@ QList<Rule *> *DbManager::getRulesFromDb() {
         QList<QHostAddress> src_adrs = AddressResolver::resolve(src_name);
 
         if (src_adrs.count() != 0) {
-          foreach (const QHostAddress &src_address, src_adrs) {
+          for (const QHostAddress &src_address : src_adrs) {
             rule = new Rule;
 
             rule->id_rule = id_rule;
@@ -348,7 +348,7 @@ QList<Rule *> *DbManager::getRulesFromDb() {
           QList<QHostAddress> dest_adrs = AddressResolver::resolve(dest_name);
 
           if (dest_adrs.count() != 0) {
-            foreach (const QHostAddress &dest_address, dest_adrs) {
+            for (const QHostAddress &dest_address : dest_adrs) {
               rule = new Rule;
 
               rule->id_rule = id_rule;

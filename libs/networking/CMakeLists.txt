@@ -16,8 +16,8 @@ target_include_directories(
 target_link_libraries(
         networking
         PUBLIC
-        Qt${QT_VERSION_MAJOR}::Core
-        Qt${QT_VERSION_MAJOR}::Network
+        Qt6::Core
+        Qt6::Network
 )
 
 target_compile_features(networking PUBLIC cxx_std_23)

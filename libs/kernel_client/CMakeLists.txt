@@ -18,9 +18,9 @@ target_link_libraries(
         PUBLIC
         firewall_protocol
         firewall_types
-        Qt${QT_VERSION_MAJOR}::Core
-        Qt${QT_VERSION_MAJOR}::Network
-        Qt${QT_VERSION_MAJOR}::Widgets
+        Qt6::Core
+        Qt6::Network
+        Qt6::Widgets
         Threads::Threads
 )
 

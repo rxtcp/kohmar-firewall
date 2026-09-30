@@ -27,7 +27,7 @@ target_include_directories(
 target_link_libraries(
         pst
         PUBLIC
-        Qt${QT_VERSION_MAJOR}::Core
+        Qt6::Core
 )
 
 target_compile_features(pst PUBLIC cxx_std_23)

@@ -18,9 +18,9 @@ target_link_libraries(
         PUBLIC
         firewall_types
         networking
-        Qt${QT_VERSION_MAJOR}::Core
-        Qt${QT_VERSION_MAJOR}::Widgets
-        Qt${QT_VERSION_MAJOR}::Sql
+        Qt6::Core
+        Qt6::Widgets
+        Qt6::Sql
 )
 
 target_compile_features(storage PUBLIC cxx_std_23)

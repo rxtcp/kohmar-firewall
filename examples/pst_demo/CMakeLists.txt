@@ -13,7 +13,7 @@ target_link_libraries(
         pst_demo
         PRIVATE
         pst
-        Qt${QT_VERSION_MAJOR}::Core
+        Qt6::Core
 )
 
 target_compile_features(pst_demo PRIVATE cxx_std_23)

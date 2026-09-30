@@ -98,10 +98,8 @@ void AnomalyTcpFrame::addPoint(double y) {
 
     curX -= 4;
 
-    QPoint *p;
-
     sem->wait();
-    foreach (p, points) {
+    for (QPoint *p : points) {
       p->setX(p->x() - 4);
     }
     sem->post();

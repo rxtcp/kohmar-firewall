@@ -183,8 +183,8 @@ void AddRuleForm::on_pushButtonOk_clicked() {
     rule->proto = proto;
   } else {
     if (srcIsName && destIsName) {
-      foreach (const QHostAddress &src_address, src_adrs) {
-        foreach (const QHostAddress &dest_address, dest_adrs) {
+      for (const QHostAddress &src_address : src_adrs) {
+        for (const QHostAddress &dest_address : dest_adrs) {
           rule = new Rule;
 
           rule->action = action;
@@ -202,7 +202,7 @@ void AddRuleForm::on_pushButtonOk_clicked() {
       }
     } else {
       if (srcIsName) {
-        foreach (const QHostAddress &src_address, src_adrs) {
+        for (const QHostAddress &src_address : src_adrs) {
           rule = new Rule;
 
           rule->action = action;
@@ -219,7 +219,7 @@ void AddRuleForm::on_pushButtonOk_clicked() {
         }
       } else {
         if (destIsName) {
-          foreach (const QHostAddress &dest_address, dest_adrs) {
+          for (const QHostAddress &dest_address : dest_adrs) {
             rule = new Rule;
 
             rule->action = action;

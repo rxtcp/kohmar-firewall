@@ -35,8 +35,7 @@ void LearningFlowDialog::on_pushButton_2_clicked() {
   QList<SampleSom *> cur_samples =
       packs_receiver->getFlowLearningSamplesFromQueue();
 
-  SampleSom *s;
-  foreach (s, cur_samples) {
+  for (SampleSom *s : cur_samples) {
     samples.append(s);
   }
 
@@ -79,8 +78,7 @@ void LearningFlowDialog::on_pushButton_3_clicked() {
 
   if (retrain) fprintf(file, "%d\n\n", dim);
 
-  SampleSom *s;
-  foreach (s, samples) {
+  for (SampleSom *s : samples) {
     fprintf(file, "%lf\n", s->getAnomaly());
 
     for (i = 0; i < dim; i++) {

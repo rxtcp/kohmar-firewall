@@ -46,7 +46,6 @@ void LearningTcpDialog::on_pushButton_2_clicked() {
   packs_receiver->setIsLearnTcp(false, learned_protocol);
   QList<char *> strings =
       packs_receiver->getLerningStrings(learned_protocol, &max_len);
-  char *tn;
 
   if (ui->radioButton_5->isChecked()) {
     // retrain = true;
@@ -87,7 +86,7 @@ void LearningTcpDialog::on_pushButton_2_clicked() {
     // if(retrain)
     // fprintf(file, "%d\n", max_len+1);
 
-    foreach (tn, strings) {
+    for (char *tn : strings) {
       qDebug() << tn;
       fprintf(file, "%s\n", tn);
     }

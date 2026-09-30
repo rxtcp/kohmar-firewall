@@ -16,7 +16,7 @@ target_include_directories(
 target_link_libraries(
         firewall_types
         INTERFACE
-        Qt${QT_VERSION_MAJOR}::Core
+        Qt6::Core
         platform
 )
 
@@ -49,7 +49,7 @@ target_link_libraries(
         platform
         pst
         som
-        Qt${QT_VERSION_MAJOR}::Core
+        Qt6::Core
         Threads::Threads
 )
 

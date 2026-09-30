@@ -270,7 +270,6 @@ void PacksReceiver::OutputThread::processing_packet(const char *data, int len) {
   else if (len > 2000)
     flow_big_count++;
 
-  ConnectionTreeNode node;
   ConnectionTreeNode *conn_to_add_state;
 
   if (ip_dest == receiver->my_ip)
@@ -280,7 +279,7 @@ void PacksReceiver::OutputThread::processing_packet(const char *data, int len) {
 
   sem_con->wait();
 
-  foreach (node, *connections) {
+  for (ConnectionTreeNode node : *connections) {
     if (pack_is_in && node.ip_src == ip_src) {
       ip_exist_in_conns = true;
     }
@@ -451,7 +450,7 @@ void PacksReceiver::OutputThread::processing_packet(const char *data, int len) {
 
   //------------------------------SOM--------------------------------------
   if (flow_cur_count == receiver->flow_packs_max_count) {
-    foreach (node, receiver->connections_tcp) {
+    for (ConnectionTreeNode node : receiver->connections_tcp) {
       if (node.packs_transmitted < receiver->flow_min_count_packs_in_conn) {
         flow_low_active_conn_count++;
       }
@@ -459,7 +458,7 @@ void PacksReceiver::OutputThread::processing_packet(const char *data, int len) {
       node.packs_transmitted = 0;
     }
 
-    foreach (node, receiver->connections_udp) {
+    for (ConnectionTreeNode node : receiver->connections_udp) {
       if (node.packs_transmitted < receiver->flow_min_count_packs_in_conn) {
         flow_low_active_conn_count++;
       }
@@ -934,11 +933,9 @@ QList<char *> PacksReceiver::getLerningStrings(int learned_proto,
   // os.clear();
 
   if (isLearnTcp == false) {
-    ConnectionTreeNode tn;
-
     sem_con_tcp->wait();
     qDebug() << "FALSE11";
-    foreach (tn, connections_tcp) {
+    for (ConnectionTreeNode tn : connections_tcp) {
       if (packCanLearned(tn.port_dest, tn.port_src)) {
         if (tn.learning_string[0]) {
           res.append(tn.learning_string);
@@ -1286,11 +1283,9 @@ void PacksReceiver::clearFlowLearningSamples() {
 
 void PacksReceiver::clearLearningStrings() {
   if (!isLearnTcp) {
-    ConnectionTreeNode tn;
-
     sem_con_tcp->wait();
     qDebug() << "FALSE12";
-    foreach (tn, connections_tcp) {
+    for (ConnectionTreeNode tn : connections_tcp) {
       if (packCanLearned(tn.port_dest, tn.port_src)) {
         if (tn.learning_string[0]) {
           tn.learning_string = new char[1];

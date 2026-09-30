@@ -23,17 +23,7 @@ option(BUILD_EXAMPLES "Build PST and SOM demonstration applications" ON)
 option(BUILD_TESTING "Build project tests" OFF)
 
 find_package(
-        QT NAMES Qt6 Qt5
-        REQUIRED COMPONENTS
-        Core
-        Gui
-        Widgets
-        Network
-        Sql
-)
-
-find_package(
-        Qt${QT_VERSION_MAJOR}
+        Qt6
         REQUIRED COMPONENTS
         Core
         Gui

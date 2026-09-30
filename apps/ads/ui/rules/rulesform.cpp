@@ -35,9 +35,8 @@ void RulesForm::fillUserGrid() {
   QTableWidgetItem *idItem, *inOutItem, *ipSrcItem, *portSrcItem, *ipDestItem,
       *portDestItem, *protoItem, *actItem, *hostNameSrc, *hostNameDest;
   int count = 0;
-  Rule *r;
 
-  foreach (r, *user_rules) {
+  for (Rule *r : *user_rules) {
     idItem = new QTableWidgetItem();
     inOutItem = new QTableWidgetItem();
     ipSrcItem = new QTableWidgetItem();

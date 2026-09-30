@@ -1,5 +1,7 @@
 #include "mainwindow.h"
 
+#include <QBrush>
+
 #include "detectors/som/samplesom.h"
 #include "detectors/som/selforganizedmap.h"
 #include "ui_mainwindow.h"
@@ -83,7 +85,7 @@ void MainWindow::on_pushButton_clicked() {
           QString::number(som->getNeuron(i, j)->getKoeff(0)));
 
       color.setRgbF(1.0, 0, 0, som->getNeuron(i, j)->getAnomaly() / 100);
-      ui->table->item(i, j)->setBackgroundColor(color);
+      ui->table->item(i, j)->setBackground(QBrush{color});
     }
   }
 }

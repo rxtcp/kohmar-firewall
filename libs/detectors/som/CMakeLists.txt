@@ -20,8 +20,8 @@ target_include_directories(
 target_link_libraries(
         som
         PUBLIC
-        Qt${QT_VERSION_MAJOR}::Core
-        Qt${QT_VERSION_MAJOR}::Widgets
+        Qt6::Core
+        Qt6::Widgets
 )
 
 target_compile_features(som PUBLIC cxx_std_23)

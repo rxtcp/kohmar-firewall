@@ -97,17 +97,20 @@ MainWindow::MainWindow(QWidget *parent, NetLinkManager &manager,
   user_rules = nullptr;
   ads_rules = new QList<Rule *>();
 
-  connect(ui->menu_2->actions()[0], SIGNAL(triggered()), this,
-          SLOT(showSettings()));
-  connect(ui->menu_3->actions()[0], SIGNAL(triggered()), this,
-          SLOT(showRulesForm()));
-  // connect(ui->menu_3->actions()[1], SIGNAL(triggered()), this,
-  // SLOT(run_pause_firewall()));
-  connect(ui->menu_4->actions()[0], SIGNAL(triggered()), this,
-          SLOT(learnTcp()));
-  connect(ui->menu_4->actions()[1], SIGNAL(triggered()), this,
-          SLOT(learnFlow()));
-  connect(ui->menu->actions()[0], SIGNAL(triggered()), this, SLOT(showAbout()));
+  connect(ui->menu_2->actions()[0], &QAction::triggered, this,
+          &MainWindow::showSettings);
+
+  connect(ui->menu_3->actions()[0], &QAction::triggered, this,
+          &MainWindow::showRulesForm);
+
+  connect(ui->menu_4->actions()[0], &QAction::triggered, this,
+          &MainWindow::learnTcp);
+
+  connect(ui->menu_4->actions()[1], &QAction::triggered, this,
+          &MainWindow::learnFlow);
+
+  connect(ui->menu->actions()[0], &QAction::triggered, this,
+          &MainWindow::showAbout);
 
   qDebug() << "main: nl maenagr";
 

@@ -18,9 +18,9 @@ target_link_libraries(
         som_demo
         PRIVATE
         som
-        Qt${QT_VERSION_MAJOR}::Core
-        Qt${QT_VERSION_MAJOR}::Gui
-        Qt${QT_VERSION_MAJOR}::Widgets
+        Qt6::Core
+        Qt6::Gui
+        Qt6::Widgets
 )
 
 target_compile_features(som_demo PRIVATE cxx_std_23)

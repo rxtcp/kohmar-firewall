@@ -209,8 +209,7 @@ bool AnomalyReaderFlow::isIpFromLAN(unsigned int ip) {
 }
 
 bool AnomalyReaderFlow::isRuleExist(Rule *rule_to_check) {
-  Rule *r;
-  foreach (r, *rules) {
+  for (Rule *r : *rules) {
     if (r->action == rule_to_check->action &&
         r->in_out == rule_to_check->in_out &&
         r->ip_dest == rule_to_check->ip_dest &&

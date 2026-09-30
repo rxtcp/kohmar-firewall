@@ -2,12 +2,17 @@
 
 ## Requirements
 
-- CMake 3.16 or newer
-- C11 compiler
-- C++17 compiler
+- CMake 3.20 or newer
+- C11 compiler for the C components
+- C++23-capable compiler for the userspace components
 - Qt 5 or Qt 6 with Core, Gui, Widgets, Network and Sql
 - Linux kernel headers matching the running kernel
 - SQLite Qt plugin
+
+## Recommended toolchain:
+
+- GCC 13 or newer, or Clang 17 or newer
+- Qt 6
 
 ## Userspace build
 

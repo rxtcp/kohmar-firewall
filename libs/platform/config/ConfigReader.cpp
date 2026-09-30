@@ -1,31 +1,36 @@
 #include "ConfigReader.h"
 
-#include <stdlib.h>
-
 #include <algorithm>
+#include <cctype>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 
-// trim from start
-static inline std::string &ltrim(std::string &s) {
-  s.erase(s.begin(),
-          std::find_if(s.begin(), s.end(),
-                       std::not1(std::ptr_fun<int, int>(std::isspace))));
-  return s;
+namespace {
+
+[[nodiscard]] bool isSpace(char value) noexcept {
+  return std::isspace(static_cast<unsigned char>(value)) != 0;
 }
 
-// trim from end
-static inline std::string &rtrim(std::string &s) {
-  s.erase(std::find_if(s.rbegin(), s.rend(),
-                       std::not1(std::ptr_fun<int, int>(std::isspace)))
-              .base(),
-          s.end());
-  return s;
+std::string &ltrim(std::string &value) {
+  const auto firstNonSpace =
+      std::find_if_not(value.begin(), value.end(), isSpace);
+
+  value.erase(value.begin(), firstNonSpace);
+  return value;
 }
 
-// trim from both ends
-static inline std::string &trim(std::string &s) { return ltrim(rtrim(s)); }
+std::string &rtrim(std::string &value) {
+  const auto lastNonSpace =
+      std::find_if_not(value.rbegin(), value.rend(), isSpace);
+
+  value.erase(lastNonSpace.base(), value.end());
+  return value;
+}
+
+std::string &trim(std::string &value) { return ltrim(rtrim(value)); }
+
+}  // namespace
 
 bool ConfigReader::readConfig(bool show) {
   string activeSection = "_global";

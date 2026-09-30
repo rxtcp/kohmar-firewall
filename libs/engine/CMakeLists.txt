@@ -53,4 +53,4 @@ target_link_libraries(
         Threads::Threads
 )
 
-target_compile_features(engine PUBLIC cxx_std_17)
+target_compile_features(engine PUBLIC cxx_std_23)

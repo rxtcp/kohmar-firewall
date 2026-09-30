@@ -24,4 +24,4 @@ target_link_libraries(
         Qt${QT_VERSION_MAJOR}::Widgets
 )
 
-target_compile_features(som PUBLIC cxx_std_17)
+target_compile_features(som PUBLIC cxx_std_23)

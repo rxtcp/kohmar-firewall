@@ -30,4 +30,4 @@ target_link_libraries(
         Qt${QT_VERSION_MAJOR}::Core
 )
 
-target_compile_features(pst PUBLIC cxx_std_17)
+target_compile_features(pst PUBLIC cxx_std_23)

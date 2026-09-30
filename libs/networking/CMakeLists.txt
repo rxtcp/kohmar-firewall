@@ -20,4 +20,4 @@ target_link_libraries(
         Qt${QT_VERSION_MAJOR}::Network
 )
 
-target_compile_features(networking PUBLIC cxx_std_17)
+target_compile_features(networking PUBLIC cxx_std_23)

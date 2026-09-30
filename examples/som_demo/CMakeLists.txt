@@ -23,7 +23,7 @@ target_link_libraries(
         Qt${QT_VERSION_MAJOR}::Widgets
 )
 
-target_compile_features(som_demo PRIVATE cxx_std_17)
+target_compile_features(som_demo PRIVATE cxx_std_23)
 
 install(
         TARGETS som_demo

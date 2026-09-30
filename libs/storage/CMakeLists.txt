@@ -23,4 +23,4 @@ target_link_libraries(
         Qt${QT_VERSION_MAJOR}::Sql
 )
 
-target_compile_features(storage PUBLIC cxx_std_17)
+target_compile_features(storage PUBLIC cxx_std_23)

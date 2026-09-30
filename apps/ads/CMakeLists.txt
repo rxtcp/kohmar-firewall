@@ -40,6 +40,8 @@ add_executable(
         ${PROJECT_SOURCE_DIR}/resources/resources.qrc
 )
 
+target_compile_features(ads PRIVATE cxx_std_23)
+
 target_include_directories(
         ads
         PRIVATE

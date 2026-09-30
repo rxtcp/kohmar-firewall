@@ -16,7 +16,7 @@ target_link_libraries(
         Threads::Threads
 )
 
-target_compile_features(ads_drvctl PRIVATE cxx_std_17)
+target_compile_features(ads_drvctl PRIVATE cxx_std_23)
 
 install(
         TARGETS ads_drvctl

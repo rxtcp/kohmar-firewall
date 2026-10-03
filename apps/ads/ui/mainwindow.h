@@ -77,8 +77,8 @@ class MainWindow : public QMainWindow {
   AnomalyTcpFrame *flow_anomaly_frame;
   QGridLayout *tcp_layout;
 
-  UnixSemaphore *sem_dynamic_rules;
-  UnixSemaphore *sem_settings_tcp;
+  UnixSemaphore sem_dynamic_rules;
+  UnixSemaphore sem_settings_tcp;
 
   int tcp_depth;
   int tcp_anomaly_limit;

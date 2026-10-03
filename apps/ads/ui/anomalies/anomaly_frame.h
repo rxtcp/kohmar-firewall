@@ -15,7 +15,8 @@ class AnomalyTcpFrame : public QFrame {
   Q_OBJECT
 
  public:
-  explicit AnomalyTcpFrame(QObject *parent = 0, int _anomaly_limit = 40);
+  explicit AnomalyTcpFrame(QObject *parent = nullptr, int anomalyLimit = 40);
+  ~AnomalyTcpFrame() override;
 
   void paintGraphic();
 
@@ -35,7 +36,7 @@ class AnomalyTcpFrame : public QFrame {
   int anomaly_limit;
   QList<QPoint *> points;
   QDateTime prevTime;
-  UnixSemaphore *sem;
+  UnixSemaphore sem;
 
  signals:
 

@@ -2,43 +2,34 @@
 #define STDTHREAD_H
 
 #include <QObject>
+#include <atomic>
 #include <thread>
 
-#include "Thread.h"
-
-/*
- * A QT-friendly wrapper for std::thread
- */
 class StdThread : public QObject {
   Q_OBJECT
 
  public:
-  StdThread();
+  StdThread() = default;
 
-  virtual ~StdThread();
+  ~StdThread() override;
 
-  inline void start() {
-    is_stopped = false;
-    threadik.reset(new std::thread(StdThread::exec, this));
-  }
+  StdThread(const StdThread &) = delete;
+  StdThread &operator=(const StdThread &) = delete;
 
-  inline void wait() {
-    if (threadik != nullptr) {
-      threadik->join();
-      threadik = nullptr;
-    }
-  }
+  void start();
 
-  inline void terminate() { is_stopped = true; }
+  void requestStop() noexcept;
+
+  [[nodiscard]] bool isStopRequested() const noexcept;
+
+  void wait() noexcept;
 
  protected:
   virtual void run() = 0;
 
-  bool is_stopped;
-
  private:
-  std::unique_ptr<std::thread> threadik = nullptr;
-  static void exec(StdThread *stdThread) { stdThread->run(); }
+  std::atomic_bool stopRequested_{false};
+  std::thread thread_;
 };
 
 #endif  // STDTHREAD_H

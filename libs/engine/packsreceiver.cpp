@@ -3,6 +3,48 @@
 #include <QByteArray>
 #include <QFile>
 
+namespace {
+
+class ScopedFd {
+ public:
+  explicit ScopedFd(int fd = -1) noexcept : fd_(fd) {}
+
+  ~ScopedFd() {
+    if (fd_ >= 0) {
+      ::close(fd_);
+    }
+  }
+
+  ScopedFd(const ScopedFd &) = delete;
+  ScopedFd &operator=(const ScopedFd &) = delete;
+
+  [[nodiscard]] int get() const noexcept { return fd_; }
+
+ private:
+  int fd_;
+};
+
+class ScopedMmap {
+ public:
+  ScopedMmap(void *address, std::size_t size) noexcept
+      : address_(address), size_(size) {}
+
+  ~ScopedMmap() {
+    if (address_ != MAP_FAILED && address_ != nullptr) {
+      ::munmap(address_, size_);
+    }
+  }
+
+  ScopedMmap(const ScopedMmap &) = delete;
+  ScopedMmap &operator=(const ScopedMmap &) = delete;
+
+ private:
+  void *address_;
+  std::size_t size_;
+};
+
+}  // namespace
+
 PacksReceiver::PacksReceiver() : StdThread() {
   // maxBufferLenConst = 20 * 1024 * 1024 * 2;
   isLearnTcp = false;
@@ -36,18 +78,18 @@ PacksReceiver::PacksReceiver() : StdThread() {
   bufferLength = 0;
   mmapBufSize = 0;
 
-  sem_output = new UnixSemaphore();  // sems for queue locking
-  sem_send = new UnixSemaphore();
-  sem_pause_kernel_reader = new UnixSemaphore();
-  sem_is_learn_tcp = new UnixSemaphore();
-  sem_is_learn_flow = new UnixSemaphore();
-  sem_anomaly_tcp = new UnixSemaphore();
-  sem_anomaly_flow = new UnixSemaphore();
-  sem_flow_cur_anomaly = new UnixSemaphore();
+  sem_output = std::make_unique<UnixSemaphore>();
+  sem_send = std::make_unique<UnixSemaphore>();
+  sem_pause_kernel_reader = std::make_unique<UnixSemaphore>();
+  sem_is_learn_tcp = std::make_unique<UnixSemaphore>();
+  sem_is_learn_flow = std::make_unique<UnixSemaphore>();
+  sem_anomaly_tcp = std::make_unique<UnixSemaphore>();
+  sem_anomaly_flow = std::make_unique<UnixSemaphore>();
+  sem_flow_cur_anomaly = std::make_unique<UnixSemaphore>();
 
-  sem_con_tcp = new UnixSemaphore();
-  sem_con_udp = new UnixSemaphore();
-  sem_con_icmp = new UnixSemaphore();
+  sem_con_tcp = std::make_unique<UnixSemaphore>();
+  sem_con_udp = std::make_unique<UnixSemaphore>();
+  sem_con_icmp = std::make_unique<UnixSemaphore>();
   // sem_con_tree = new UnixSemaphore();
 
   needPauseKernelReader = false;
@@ -63,6 +105,26 @@ PacksReceiver::PacksReceiver() : StdThread() {
   initPredictors();
 
   initSOM();
+}
+
+PacksReceiver::~PacksReceiver() {
+  stop();
+
+  while (!outputQueue.empty()) {
+    DataSaved *data = outputQueue.front();
+    outputQueue.pop();
+
+    if (data != nullptr) {
+      delete[] data->buffer;
+      delete data;
+    }
+  }
+
+  pthread_cond_destroy(&cond_kernel_data_arrive);
+  pthread_mutex_destroy(&mutex_kernel_data_arrive);
+
+  pthread_cond_destroy(&cond_kernel_reader_paused);
+  pthread_mutex_destroy(&mutex_kernel_reader_paused);
 }
 
 void PacksReceiver::run() {
@@ -243,20 +305,20 @@ void PacksReceiver::OutputThread::processing_packet(const char *data, int len) {
     cur_state = syn + ack * 2 + psh * 4 + rst * 8 + urg * 16 + fin * 32 + 48;
 
     connections = &(receiver->connections_tcp);
-    sem_con = receiver->sem_con_tcp;
+    sem_con = receiver->sem_con_tcp.get();
   } else if (iph->protocol == 17) {
     // return;
     udp_header = (udphdr *)(data + sizeof(iphdr));
     src_port = (unsigned int)ntohs(udp_header->source);
     dest_port = (unsigned int)ntohs(udp_header->dest);
     connections = &(receiver->connections_udp);
-    sem_con = receiver->sem_con_udp;
+    sem_con = receiver->sem_con_udp.get();
 
     flow_udp_count++;
   } else if (iph->protocol == 1) {
     // return;
     connections = &(receiver->connections_icmp);
-    sem_con = receiver->sem_con_icmp;
+    sem_con = receiver->sem_con_icmp.get();
 
     flow_icmp_count++;
   } else
@@ -599,28 +661,49 @@ void PacksReceiver::OutputThread::addTcpAnomalyToQueue(ConnectionTreeNode *node,
 }
 
 int PacksReceiver::ReaderDaemonWork() {
-  flagStopOutput = 0;
-  flagStopKernelReader = 0;
-  OutputThread *othread;
+  outputThread_ = std::make_unique<OutputThread>(this);
+  kernelDataReaderThread_ = std::make_unique<KernelDataReaderThread>(this);
 
-  // create threads
-
-  othread = new OutputThread(this);
-  othread->start();
-
-  // kernel reader thread
-  KernelDataReaderThread *thread = new KernelDataReaderThread(this);
-  thread->start();
+  outputThread_->start();
+  kernelDataReaderThread_->start();
 
   qDebug() << "end_start_work";
+
   return 0;
 }
 
-int PacksReceiver::ReaderDaemonStopWork() {
-  flagStopOutput = 1;
-  flagStopKernelReader = 1;
+void PacksReceiver::stop() noexcept {
+  if (outputThread_ != nullptr) {
+    outputThread_->requestStop();
+  }
 
-  sleep(2);
+  if (kernelDataReaderThread_ != nullptr) {
+    kernelDataReaderThread_->requestStop();
+  }
+
+  // OutputThread может находиться в pthread_cond_wait().
+  pthread_mutex_lock(&mutex_kernel_data_arrive);
+  pthread_cond_broadcast(&cond_kernel_data_arrive);
+  pthread_mutex_unlock(&mutex_kernel_data_arrive);
+
+  if (kernelDataReaderThread_ != nullptr) {
+    kernelDataReaderThread_->wait();
+  }
+
+  if (outputThread_ != nullptr) {
+    outputThread_->wait();
+  }
+
+  kernelDataReaderThread_.reset();
+  outputThread_.reset();
+
+  // Останавливаем/дожидаемся также основного StdThread PacksReceiver.
+  requestStop();
+  wait();
+}
+
+int PacksReceiver::ReaderDaemonStopWork() {
+  stop();
   return 0;
 }
 
@@ -629,30 +712,34 @@ int PacksReceiver::ReaderDaemonRereadConfig() { return 0; }
 void PacksReceiver::OutputThread::run() {
   DataSaved *data = NULL;
 
-  while (!this->is_stopped) {
-    if (receiver->flagStopOutput) break;
+  while (!isStopRequested()) {
+    pthread_mutex_lock(&receiver->mutex_kernel_data_arrive);
 
-    if (receiver->outputQueue.empty()) {
-      // waiting for data in queue
-      pthread_mutex_lock(&(receiver->mutex_kernel_data_arrive));
-      pthread_cond_wait(&(receiver->cond_kernel_data_arrive),
-                        &(receiver->mutex_kernel_data_arrive));
-      pthread_mutex_unlock(&(receiver->mutex_kernel_data_arrive));
+    while (receiver->outputQueue.empty() && !isStopRequested()) {
+      pthread_cond_wait(&receiver->cond_kernel_data_arrive,
+                        &receiver->mutex_kernel_data_arrive);
     }
 
-    receiver->sem_output->wait();  // lock
+    pthread_mutex_unlock(&receiver->mutex_kernel_data_arrive);
+
+    if (isStopRequested()) {
+      break;
+    }
+
+    data = nullptr;
+
+    receiver->sem_output->wait();
+
     if (!receiver->outputQueue.empty()) {
-      // if anything exist in queue
-      data = receiver->outputQueue.front();  // get it
+      data = receiver->outputQueue.front();
       receiver->outputQueue.pop();
-      receiver->sem_output->post();  // unlock
-    } else {
-      receiver->outputQueue.pop();
-      receiver->sem_output->post();  // unlock
+    }
+
+    receiver->sem_output->post();
+
+    if (data == nullptr) {
       continue;
     }
-
-    if (!data) continue;
 
     // print packets here!!!!
 
@@ -704,17 +791,11 @@ void PacksReceiver::OutputThread::run() {
 }
 
 void PacksReceiver::KernelDataReaderThread::run() {
-  char *output_buf;  // sender buffers
-  char *output_buf_start;
+  std::vector<char> outputStorage(
+      static_cast<std::size_t>(receiver->bufferLength));
 
-  output_buf = new char[receiver->bufferLength];  // see private data later
-  if (output_buf == NULL) {
-#ifdef ADS_QT
-    qDebug() << "Can't alloc memory for Remote's buffer";
-#endif
-    return;
-  }
-  output_buf_start = output_buf;
+  char *output_buf = outputStorage.data();
+  char *output_buf_start = outputStorage.data();
 
   // for buffer read delay calculation
   struct timespec timetoexpire;
@@ -727,18 +808,6 @@ void PacksReceiver::KernelDataReaderThread::run() {
 
   pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
   pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
-
-  char *outputBuffer = new char[receiver->bufferLength];
-
-  if (!outputBuffer) {
-#ifndef ADS_QT
-    // receiver->logger->log("thread: no memory!");
-#endif
-#ifdef ADS_QT
-    // qDebug() << "thread: no memory!";
-#endif
-    return;
-  }
 
 #if DEBUG
 #ifndef ADS_QT
@@ -762,26 +831,31 @@ void PacksReceiver::KernelDataReaderThread::run() {
   int size = s_packet_req.tp_block_size * s_packet_req.tp_block_nr;
 
   // mmap Tx ring buffers memory
-  int fd;
+  ScopedFd fd{::open("/dev/ads_sniff_mmap", O_RDWR | O_SYNC)};
 
-  if ((fd = open("/dev/ads_sniff_mmap", O_RDWR | O_SYNC)) < 0) {
+  if (fd.get() < 0) {
+    qWarning() << "Cannot open /dev/ads_sniff_mmap";
     return;
   }
 
-  char *ps_header_start =
-      (char *)mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-  if (ps_header_start == (void *)-1) {
-    return;  // exit(1);
+  void *mapping = ::mmap(nullptr, static_cast<std::size_t>(size),
+                         PROT_READ | PROT_WRITE, MAP_SHARED, fd.get(), 0);
+
+  if (mapping == MAP_FAILED) {
+    qWarning() << "Cannot mmap /dev/ads_sniff_mmap";
+    return;
   }
+
+  ScopedMmap mappedMemory(mapping, static_cast<std::size_t>(size));
+
+  auto *ps_header_start = static_cast<char *>(mapping);
 
   snifferLastReadIndex = s_packet_req.tp_frame_nr;
   output_buf_start = output_buf;
   char *pkt;
 
-  while (true) {
-    if (receiver->flagStopKernelReader) break;
-
-    if (receiver->needPauseKernelReader) {
+  while (!isStopRequested()) {
+    if (receiver->needPauseKernelReader.load(std::memory_order_acquire)) {
       // notify we are here
       pthread_mutex_lock(&(receiver->mutex_kernel_reader_paused));
       pthread_cond_signal(&(receiver->cond_kernel_reader_paused));

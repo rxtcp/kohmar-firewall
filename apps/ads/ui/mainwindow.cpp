@@ -62,10 +62,6 @@ MainWindow::MainWindow(QWidget *parent, NetLinkManager &manager,
     }
   }
 
-  // SEMAPHORES
-  sem_dynamic_rules = new UnixSemaphore();
-  sem_settings_tcp = new UnixSemaphore();
-
   run_pause = true;
 
   isLearnTcp = packsReceiver.getIsLearnTcp();
@@ -141,14 +137,14 @@ MainWindow::MainWindow(QWidget *parent, NetLinkManager &manager,
   tcp_anomaly_reader = new AnomalyReaderTcp(
       this, ui->tableWidgetTCPDetAnom, ui->tableWidgetGenRules, &packsReceiver,
       tcp_anomaly_frame, ads_rules, netlinkManager, &tcp_anomaly_limit,
-      sem_dynamic_rules, &tcp_gen_rules, sem_settings_tcp, &tcp_drop_ports,
+      &sem_dynamic_rules, &tcp_gen_rules, &sem_settings_tcp, &tcp_drop_ports,
       &id_rule_dynamic);
 
   flow_anomaly_reader = new AnomalyReaderFlow(
       this, ui->tableWidgetSOM, ui->tableWidgetFlowDetAnom,
       ui->tableWidgetGroupRules, &packsReceiver, flow_anomaly_frame, ads_rules,
-      netlinkManager, &flow_anomaly_limit, sem_dynamic_rules, &flow_gen_rules,
-      sem_settings_tcp, &flow_drop_ports, &id_rule_dynamic);
+      netlinkManager, &flow_anomaly_limit, &sem_dynamic_rules, &flow_gen_rules,
+      &sem_settings_tcp, &flow_drop_ports, &id_rule_dynamic);
 
   tcp_anomaly_reader->start();
   flow_anomaly_reader->start();
@@ -186,15 +182,25 @@ MainWindow::~MainWindow() {
                    << rule->id_rule;
       }
     }
+
+    qDeleteAll(*ads_rules);
+    delete ads_rules;
+    ads_rules = nullptr;
   }
 
-  // Netlink-сокет здесь не закрывается.
-  // Его закроет деструктор NetLinkManager в main().
+  if (user_rules != nullptr) {
+    qDeleteAll(*user_rules);
+    delete user_rules;
+    user_rules = nullptr;
+  }
+
+  // NetLinkManager принадлежит main().
+  // Здесь его уничтожать или закрывать нельзя.
 }
 
 void MainWindow::showRulesForm() {
   auto *form = new RulesForm(this, user_rules, ads_rules, netlinkManager,
-                             sem_dynamic_rules);
+                             &sem_dynamic_rules);
 
   form->setAttribute(Qt::WA_DeleteOnClose);
   form->setWindowFlags((form->windowFlags() | Qt::CustomizeWindowHint) &
@@ -237,7 +243,7 @@ void MainWindow::learnFlow() {
 
 void MainWindow::showSettings() {
   AdsSettingsDialog *form = new AdsSettingsDialog(
-      0, sem_settings_tcp, &tcp_depth, &tcp_anomaly_limit, &tcp_gen_rules,
+      0, &sem_settings_tcp, &tcp_depth, &tcp_anomaly_limit, &tcp_gen_rules,
       &tcp_drop_ports, &flow_anomaly_limit, &flow_gen_rules,
       &flow_packs_max_count);
 

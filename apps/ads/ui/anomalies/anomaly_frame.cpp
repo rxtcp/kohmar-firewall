@@ -12,7 +12,6 @@ AnomalyTcpFrame::AnomalyTcpFrame(QObject *parent, int _anomaly_limit)
   this->setAutoFillBackground(true);
 
   prevTime = QDateTime::currentDateTime();
-  sem = new UnixSemaphore();
 
   /*
 QScrollArea *scroll = new QScrollArea;
@@ -22,6 +21,18 @@ layout->addWidget(scroll);
 
 this->setLayout(layout);
 */
+}
+
+AnomalyTcpFrame::~AnomalyTcpFrame() {
+  sem.wait();
+
+  for (QPoint *point : points) {
+    delete[] point;
+  }
+
+  points.clear();
+
+  sem.post();
 }
 
 void AnomalyTcpFrame::paintEvent(QPaintEvent *e) {
@@ -60,13 +71,13 @@ void AnomalyTcpFrame::paintEvent(QPaintEvent *e) {
       // int height = this->height();
 
       p.setPen(QPen(Qt::blue, 1));
-      sem->wait();
+      sem.wait();
       for (int i = 0; i < points.count() - 1; i++) {
         // qDebug() << "y = " << QString::number(points[i]->y());
         p.drawLine(points[i]->x(), points[i]->y(), points[i + 1]->x(),
                    points[i + 1]->y());
       }
-      sem->post();
+      sem.post();
 
       p.end();  // painting done
 
@@ -90,19 +101,20 @@ void AnomalyTcpFrame::addPoint(double y) {
 
   // scroll?
   if (4 * (points.count()) >= this->width()) {
-    QPoint *p0 = points.at(0);
-    sem->wait();
-    points.removeAt(0);
-    if (p0) delete[] p0;
-    sem->post();
+    sem.wait();
+
+    QPoint *p0 = points.takeFirst();
+    delete[] p0;
+
+    sem.post();
 
     curX -= 4;
 
-    sem->wait();
+    sem.wait();
     for (QPoint *p : points) {
       p->setX(p->x() - 4);
     }
-    sem->post();
+    sem.post();
   }
 
   QPoint *p = new QPoint[2];
@@ -125,9 +137,9 @@ void AnomalyTcpFrame::addPoint(double y) {
 
   curX += 2;
 
-  sem->wait();
+  sem.wait();
   points.append(p);
-  sem->post();
+  sem.post();
 
   prevTime = QDateTime::currentDateTime();
 }

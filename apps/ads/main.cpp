@@ -32,15 +32,15 @@ int main(int argc, char *argv[]) {
 
   qDebug() << "starting packet receiver";
 
-  auto *packsReceiver = new PacksReceiver();
-  packsReceiver->start();
+  PacksReceiver packsReceiver;
+  packsReceiver.start();
 
   int exitCode = EXIT_FAILURE;
 
   {
     qDebug() << "starting ui";
 
-    MainWindow window(nullptr, netlinkManager, *packsReceiver);
+    MainWindow window(nullptr, netlinkManager, packsReceiver);
 
     window.setWindowFlags((window.windowFlags() | Qt::CustomizeWindowHint) &
                           ~Qt::WindowMaximizeButtonHint);
@@ -48,6 +48,12 @@ int main(int argc, char *argv[]) {
 
     exitCode = application.exec();
   }
+
+  // MainWindow и его anomaly readers уже уничтожены.
+  // После этого можно безопасно остановить backend.
+  packsReceiver.stop();
+
+  return exitCode;
 
   // Здесь MainWindow и его anomaly reader уже уничтожены.
   // Никто больше не может вызвать NetLinkManager.

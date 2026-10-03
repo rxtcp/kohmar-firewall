@@ -26,7 +26,9 @@
 #include <QList>
 #include <QObject>
 #include <QThread>
+#include <atomic>
 #include <iostream>
+#include <memory>
 #include <queue>
 #include <sstream>
 #include <vector>
@@ -74,8 +76,11 @@ struct NewPacketHeader {
 class PacksReceiver : public StdThread {
  public:
   explicit PacksReceiver();
+  ~PacksReceiver() override;
 
-  void run();
+  void run() override;
+
+  void stop() noexcept;
 
   void setIsLearnTcp(bool _isLearn, int _learnedProto);
 
@@ -129,9 +134,7 @@ class PacksReceiver : public StdThread {
  private:
   class OutputThread : public StdThread {
    public:
-    OutputThread(PacksReceiver *_receiver) : StdThread() {
-      receiver = _receiver;
-
+    explicit OutputThread(PacksReceiver *receiver) : receiver(receiver) {
       flow_cur_count = 0;
       flow_big_count = 0;
       flow_cur_count = 0;
@@ -145,7 +148,7 @@ class PacksReceiver : public StdThread {
       flow_udp_count = 0;
     }
 
-    void run();
+    void run() override;
 
    private:
     PacksReceiver *receiver;
@@ -181,11 +184,10 @@ class PacksReceiver : public StdThread {
 
   class KernelDataReaderThread : public StdThread {
    public:
-    KernelDataReaderThread(PacksReceiver *_receiver) : StdThread() {
-      receiver = _receiver;
-    }
+    explicit KernelDataReaderThread(PacksReceiver *receiver)
+        : receiver(receiver) {}
 
-    void run();
+    void run() override;
 
    private:
     PacksReceiver *receiver;
@@ -238,35 +240,22 @@ class PacksReceiver : public StdThread {
 
   string pathToConfig;  // need for daemons
 
-  // c-style for naming to semaphores, buffers, etc
-  /*static*/
-  UnixSemaphore *sem_output;  // sems for queue locking
-  /*static*/
-  UnixSemaphore *sem_send;
-  /*static*/
-  UnixSemaphore *sem_pause_kernel_reader;
-  /*static*/
-  UnixSemaphore *sem_con_tcp;
-  /*static*/
-  UnixSemaphore *sem_con_udp;
-  /*static*/
-  UnixSemaphore *sem_con_icmp;
-  /*static*/
-  UnixSemaphore *sem_is_learn_tcp;
-  /*static*/
-  UnixSemaphore *sem_is_learn_flow;
-  /*static*/
-  UnixSemaphore *sem_anomaly_tcp;
-  /*static*/
-  UnixSemaphore *sem_anomaly_flow;
-  /*static*/
-  UnixSemaphore *sem_flow_cur_anomaly;
+  std::unique_ptr<UnixSemaphore> sem_output;
+  std::unique_ptr<UnixSemaphore> sem_send;
+  std::unique_ptr<UnixSemaphore> sem_pause_kernel_reader;
+  std::unique_ptr<UnixSemaphore> sem_con_tcp;
+  std::unique_ptr<UnixSemaphore> sem_con_udp;
+  std::unique_ptr<UnixSemaphore> sem_con_icmp;
+  std::unique_ptr<UnixSemaphore> sem_is_learn_tcp;
+  std::unique_ptr<UnixSemaphore> sem_is_learn_flow;
+  std::unique_ptr<UnixSemaphore> sem_anomaly_tcp;
+  std::unique_ptr<UnixSemaphore> sem_anomaly_flow;
+  std::unique_ptr<UnixSemaphore> sem_flow_cur_anomaly;
 
-  volatile bool needPauseKernelReader;
+  std::atomic_bool needPauseKernelReader{false};
 
-  // flags for thread control
-  volatile bool flagStopOutput;
-  volatile bool flagStopKernelReader;
+  std::unique_ptr<OutputThread> outputThread_;
+  std::unique_ptr<KernelDataReaderThread> kernelDataReaderThread_;
   // count
 
   // queue

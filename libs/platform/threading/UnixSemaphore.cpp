@@ -4,6 +4,8 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include <cerrno>
 /*
  * create mutex
  */
@@ -31,5 +33,10 @@ void UnixSemaphore::wait() {
 }
 
 UnixSemaphore::~UnixSemaphore() {
-  // TODO Auto-generated destructor stub
+  const int result = pthread_mutex_destroy(&cs_mutex);
+
+  if (result != 0) {
+    errno = result;
+    perror("pthread_mutex_destroy");
+  }
 }

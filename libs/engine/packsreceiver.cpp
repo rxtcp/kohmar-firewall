@@ -2,6 +2,9 @@
 
 #include <QByteArray>
 #include <QFile>
+#include <utility>
+
+#include "platform/paths/SystemPaths.h"
 
 namespace {
 
@@ -45,7 +48,8 @@ class ScopedMmap {
 
 }  // namespace
 
-PacksReceiver::PacksReceiver() : StdThread() {
+PacksReceiver::PacksReceiver(firewall::RuntimePaths paths)
+    : StdThread(), paths_(std::move(paths)) {
   // maxBufferLenConst = 20 * 1024 * 1024 * 2;
   isLearnTcp = false;
   isLearnFlow = false;
@@ -142,12 +146,7 @@ void PacksReceiver::run() {
 #endif
 
   // know path
-  char pathbuf[PATH_MAX + 1];
-  char *pathres = realpath("config/readerd.conf", pathbuf);
-  if (!pathres) {
-    return;
-  }
-  pathToConfig = (string)pathbuf;
+  pathToConfig = paths_.readerConfig().string();
 
   bool isDaemon = false;
 
@@ -831,10 +830,12 @@ void PacksReceiver::KernelDataReaderThread::run() {
   int size = s_packet_req.tp_block_size * s_packet_req.tp_block_nr;
 
   // mmap Tx ring buffers memory
-  ScopedFd fd{::open("/dev/ads_sniff_mmap", O_RDWR | O_SYNC)};
+  constexpr auto device = firewall::system_paths::mmapDevice;
+
+  ScopedFd fd{::open(device.data(), O_RDWR | O_SYNC)};
 
   if (fd.get() < 0) {
-    qWarning() << "Cannot open /dev/ads_sniff_mmap";
+    qWarning() << "Cannot open" << device.data();
     return;
   }
 
@@ -842,11 +843,11 @@ void PacksReceiver::KernelDataReaderThread::run() {
                          PROT_READ | PROT_WRITE, MAP_SHARED, fd.get(), 0);
 
   if (mapping == MAP_FAILED) {
-    qWarning() << "Cannot mmap /dev/ads_sniff_mmap";
+    qWarning() << "Cannot mmap" << device.data();
     return;
   }
 
-  ScopedMmap mappedMemory(mapping, static_cast<std::size_t>(size));
+  ScopedMmap mappedMemory{mapping, static_cast<std::size_t>(size)};
 
   auto *ps_header_start = static_cast<char *>(mapping);
 
@@ -1086,7 +1087,9 @@ int PacksReceiver::getFlowAnomalyLimit() { return flow_anomaly_limit; }
 
 void PacksReceiver::loadSettings() {
   stringstream os;
-  FILE *file = fopen("ads.settings", "r");
+
+  const auto settingsPath = paths_.adsSettings();
+  FILE *file = std::fopen(settingsPath.c_str(), "r");
   char str[20];
   int depth;
   int tcplimit;
@@ -1101,7 +1104,9 @@ void PacksReceiver::loadSettings() {
   os.clear();
 
   if (file == nullptr) {
-    qWarning() << "ads.settings not found; default settings will be used";
+    qWarning() << "Settings file not found:"
+               << QString::fromStdString(settingsPath.string())
+               << "; default settings will be used";
     return;
   }
 
@@ -1217,62 +1222,54 @@ bool PacksReceiver::packCanLearned(unsigned int port_dest,
 }
 
 void PacksReceiver::initPredictors() {
-  const QString samplesDirectory = QStringLiteral("data/samples/ads");
-
-  const auto loadSamples = [&samplesDirectory](Samples *samples,
-                                               const QString &fileName) -> int {
+  const auto loadSamples = [this](Samples *samples,
+                                  std::string_view fileName) -> int {
     if (samples == nullptr) {
       return -1;
     }
 
-    const QString path = samplesDirectory + QLatin1Char('/') + fileName;
-
-    const QByteArray nativePath = QFile::encodeName(path);
-    return samples->loadFromFile(nativePath.constData());
+    const auto path = paths_.sample(fileName);
+    return samples->loadFromFile(path.c_str());
   };
 
   http_predictor = new PstPredictor();
   Samples *http_samples = new Samples();
-  const int http_len =
-      loadSamples(http_samples, QStringLiteral("http.samples"));
+  const int http_len = loadSamples(http_samples, "http.samples");
   http_predictor->init(256, 0.0001, 0.0, 0.0001, 1.05, http_len, 2);
   http_predictor->setName("http");
   http_predictor->learn(http_samples);
 
   ftp_predictor = new PstPredictor();
   Samples *ftp_samples = new Samples();
-  const int ftp_len = loadSamples(ftp_samples, QStringLiteral("ftp.samples"));
+  const int ftp_len = loadSamples(ftp_samples, "ftp.samples");
   ftp_predictor->init(256, 0.0001, 0.0, 0.0001, 1.05, ftp_len, 2);
   ftp_predictor->setName("ftp");
   ftp_predictor->learn(ftp_samples);
 
   https_predictor = new PstPredictor();
   Samples *https_samples = new Samples();
-  const int https_len =
-      loadSamples(https_samples, QStringLiteral("https.samples"));
+  const int https_len = loadSamples(https_samples, "https.samples");
   https_predictor->init(256, 0.0001, 0.0, 0.0001, 1.05, https_len, 2);
   https_predictor->setName("https");
   https_predictor->learn(https_samples);
 
   ssh_predictor = new PstPredictor();
   Samples *ssh_samples = new Samples();
-  const int ssh_len = loadSamples(ssh_samples, QStringLiteral("ssh.samples"));
+  const int ssh_len = loadSamples(ssh_samples, "ssh.samples");
   ssh_predictor->init(256, 0.0001, 0.0, 0.0001, 1.05, ssh_len, 2);
   ssh_predictor->setName("ssh");
   ssh_predictor->learn(ssh_samples);
 
   telnet_predictor = new PstPredictor();
   Samples *telnet_samples = new Samples();
-  const int telnet_len =
-      loadSamples(telnet_samples, QStringLiteral("telnet.samples"));
+  const int telnet_len = loadSamples(telnet_samples, "telnet.samples");
   telnet_predictor->init(256, 0.0001, 0.0, 0.0001, 1.05, telnet_len, 2);
   telnet_predictor->setName("telnet");
   telnet_predictor->learn(telnet_samples);
 
   common_predictor = new PstPredictor();
   Samples *common_samples = new Samples();
-  const int common_len =
-      loadSamples(common_samples, QStringLiteral("common.samples"));
+  const int common_len = loadSamples(common_samples, "common.samples");
   common_predictor->init(256, 0.0001, 0.0, 0.0001, 1.05, common_len, 2);
   common_predictor->setName("common");
   common_predictor->learn(common_samples);
@@ -1341,8 +1338,10 @@ void PacksReceiver::initSOM() {
   som = new SelfOrganizedMap(N, M, flow_som_dimension, Iters, Radius, G, lambda,
                              eta, 0);
 
+  const auto samplesPath = paths_.sample("flow.samples");
+
   QList<SampleSom *> samples =
-      SampleSom::loadFromFile("data/samples/ads/flow.samples");
+      SampleSom::loadFromFile(QString::fromStdString(samplesPath.string()));
 
   som->learn(&samples);
 }

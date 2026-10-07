@@ -44,6 +44,10 @@ target_sources(
         services/Service.cpp
         services/Service.h
 
+        paths/RuntimePaths.cpp
+        paths/RuntimePaths.h
+        paths/SystemPaths.h
+
         PlatformFactory.cpp
         PlatformFactory.h
 )
@@ -52,6 +56,7 @@ target_include_directories(
         platform
         PUBLIC
         ${PROJECT_SOURCE_DIR}/libs
+        ${PROJECT_BINARY_DIR}/generated
 )
 
 target_link_libraries(

@@ -21,7 +21,7 @@ class RulesForm : public QWidget {
  public:
   explicit RulesForm(QWidget *parent, QList<Rule *> *userRules,
                      QList<Rule *> *dynamicRules,
-                     NetLinkManager &netlinkManager,
+                     NetLinkManager &netlinkManager, DbManager &database,
                      UnixSemaphore *dynamicRulesSemaphore);
 
   ~RulesForm();
@@ -43,6 +43,7 @@ class RulesForm : public QWidget {
   QList<Rule *> *user_rules;
   QList<Rule *> *dynamic_rules;
   NetLinkManager &netlinkManager;
+  DbManager &database;
   UnixSemaphore *sem_dyn_rules;
 
   void fillUserGrid();

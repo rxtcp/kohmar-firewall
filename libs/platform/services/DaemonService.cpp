@@ -21,6 +21,7 @@
 #include "platform/logging/Logger.h"
 #include "platform/logging/PrintfLogger.h"
 #include "platform/logging/SyslogLogger.h"
+#include "platform/paths/SystemPaths.h"
 
 using namespace std;
 
@@ -152,7 +153,7 @@ void DaemonService::setup() {
     close(idx);
   }
   // reopen stdout to /dev/null and another strems to it
-  int fd0 = open("/dev/null", O_RDWR);
+  int fd0 = open(firewall::system_paths::nullDevice.data(), O_RDWR);
   int fd1 = dup(0);
   int fd2 = dup(0);
 

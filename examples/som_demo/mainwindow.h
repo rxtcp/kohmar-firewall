@@ -5,6 +5,7 @@
 #include <QMainWindow>
 #include <QMessageBox>
 #include <QSystemTrayIcon>
+#include <filesystem>
 
 #include "detectors/som/samplesom.h"
 #include "detectors/som/selforganizedmap.h"
@@ -17,38 +18,27 @@ class MainWindow : public QMainWindow {
   Q_OBJECT
 
  public:
-  explicit MainWindow(QWidget *parent = 0);
+  explicit MainWindow(std::filesystem::path dataDirectory,
+                      QWidget* parent = nullptr);
 
-  ~MainWindow();
-
-  // void setVisible(bool visible);
+  ~MainWindow() override;
 
  private slots:
-
   void on_pushButton_clicked();
-
   void on_table_cellClicked(int row, int column);
-
   void on_pushButton_2_clicked();
-
-  // void iconActivated(QSystemTrayIcon::ActivationReason reason);
-
   void on_table_cellActivated(int row, int column);
 
  private:
   void loadToRecognizeVector();
 
-  // void createActions();
-  // void createTrayIcon();
+  Ui::MainWindow* ui;
+  std::filesystem::path dataDirectory_;
 
- protected:
-  // void closeEvent(QCloseEvent *);
+  QList<SampleSom*> list;
+  SelfOrganizedMap* som = nullptr;
+  SampleSom* toRecognize = nullptr;
 
- private:
-  Ui::MainWindow *ui;
-  QList<SampleSom *> list;
-  SelfOrganizedMap *som;
-  SampleSom *toRecognize;
   int N;
   int M;
   int dimension;
@@ -57,14 +47,6 @@ class MainWindow : public QMainWindow {
   double G;
   double lambda;
   double eta;
-
-  // QAction *minimizeAction;
-  // QAction *maximizeAction;
-  // QAction *restoreAction;
-  // QAction *quitAction;
-
-  // QSystemTrayIcon *trayIcon;
-  // QMenu *trayIconMenu;
 };
 
 #endif  // MAINWINDOW_H

@@ -44,6 +44,7 @@
 #include "platform/logging/NullLogger.h"
 #include "platform/logging/PrintfLogger.h"
 #include "platform/logging/SyslogLogger.h"
+#include "platform/paths/RuntimePaths.h"
 #include "platform/services/DaemonService.h"
 #include "platform/services/Service.h"
 #include "platform/sockets/LowLevelSocket.h"
@@ -75,7 +76,7 @@ struct NewPacketHeader {
 
 class PacksReceiver : public StdThread {
  public:
-  explicit PacksReceiver();
+  explicit PacksReceiver(firewall::RuntimePaths paths);
   ~PacksReceiver() override;
 
   void run() override;
@@ -132,6 +133,8 @@ class PacksReceiver : public StdThread {
  public slots:
 
  private:
+  firewall::RuntimePaths paths_;
+
   class OutputThread : public StdThread {
    public:
     explicit OutputThread(PacksReceiver *receiver) : receiver(receiver) {

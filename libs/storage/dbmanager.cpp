@@ -1,10 +1,16 @@
 #include "dbmanager.h"
 
 #include <QThread>
+#include <utility>
 
-DbManager::DbManager() {}
+DbManager::DbManager(std::filesystem::path databasePath)
+    : databasePath_(std::move(databasePath)) {}
 
-bool DbManager::addToDb(Rule *rule) {
+QString DbManager::databaseFileName() const {
+  return QString::fromStdString(databasePath_.string());
+}
+
+bool DbManager::addToDb(Rule *rule) const {
   if (rule == nullptr) {
     qWarning() << "Cannot insert a null rule";
     return false;
@@ -19,8 +25,7 @@ bool DbManager::addToDb(Rule *rule) {
                               : QSqlDatabase::addDatabase(
                                     QStringLiteral("QSQLITE"), connectionName);
 
-  database.setDatabaseName(
-      QStringLiteral("data/seeds/common/db_firewall.sqlite"));
+  database.setDatabaseName(databaseFileName());
 
   if (!database.open()) {
     qWarning() << "Cannot open firewall database:"
@@ -68,7 +73,7 @@ bool DbManager::addToDb(Rule *rule) {
   return true;
 }
 
-bool DbManager::removeFromDb(int id) {
+bool DbManager::removeFromDb(int id) const {
   if (id <= 0) {
     qWarning() << "Invalid firewall rule ID:" << id;
     return false;
@@ -83,8 +88,7 @@ bool DbManager::removeFromDb(int id) {
                               : QSqlDatabase::addDatabase(
                                     QStringLiteral("QSQLITE"), connectionName);
 
-  database.setDatabaseName(
-      QStringLiteral("data/seeds/common/db_firewall.sqlite"));
+  database.setDatabaseName(databaseFileName());
 
   if (!database.open()) {
     qWarning() << "Cannot open firewall database:"
@@ -112,7 +116,7 @@ bool DbManager::removeFromDb(int id) {
   return true;
 }
 
-bool DbManager::updateInDb(const Rule *rule) {
+bool DbManager::updateInDb(const Rule *rule) const {
   if (rule == nullptr || rule->id_rule <= 0) {
     qWarning() << "Cannot update an invalid firewall rule";
     return false;
@@ -127,8 +131,7 @@ bool DbManager::updateInDb(const Rule *rule) {
                               : QSqlDatabase::addDatabase(
                                     QStringLiteral("QSQLITE"), connectionName);
 
-  database.setDatabaseName(
-      QStringLiteral("data/seeds/common/db_firewall.sqlite"));
+  database.setDatabaseName(databaseFileName());
 
   if (!database.open()) {
     qWarning() << "Cannot open firewall database:"
@@ -177,13 +180,13 @@ bool DbManager::updateInDb(const Rule *rule) {
   return true;
 }
 
-QList<Rule *> *DbManager::getRulesFromDb() {
+QList<Rule *> *DbManager::getRulesFromDb() const {
   QList<Rule *> *user_rules = new QList<Rule *>();
 
   // connect to DB
   QSqlDatabase dBase;
   dBase = QSqlDatabase::addDatabase("QSQLITE");
-  dBase.setDatabaseName("data/seeds/common/db_firewall.sqlite");
+  dBase.setDatabaseName(databaseFileName());
 
   if (!dBase.open()) {
 #ifndef ADS_DAEMON

@@ -68,11 +68,13 @@ Semaphore *PlatformFactory::createSemaphore() {
 }
 
 /* how can we calculate a file for pid storing? */
+#include "platform/paths/RuntimePaths.h"
+
 std::string PlatformFactory::calculateFilenameToStorePID(
     std::string processName) {
-  return "/var/run/" + processName + ".pid";
+  const auto paths = firewall::RuntimePaths::fromEnvironment();
+  return paths.pidFile(processName).string();
 }
-
 /*
  *  create a platform specific background service - for *nix it is a daemon
  */

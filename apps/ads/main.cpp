@@ -12,6 +12,8 @@
 #include "detectors/pst/pst_predictor.h"
 #include "engine/packsreceiver.h"
 #include "kernel_client/netlinkmanager.h"
+#include "platform/paths/RuntimePaths.h"
+#include "storage/dbmanager.h"
 #include "ui/mainwindow.h"
 
 bool checkModLoaded();
@@ -30,9 +32,14 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
+  const firewall::RuntimePaths paths =
+      firewall::RuntimePaths::fromEnvironment();
+
+  DbManager database(paths.firewallDatabase());
+
   qDebug() << "starting packet receiver";
 
-  PacksReceiver packsReceiver;
+  PacksReceiver packsReceiver(paths);
   packsReceiver.start();
 
   int exitCode = EXIT_FAILURE;
@@ -40,7 +47,7 @@ int main(int argc, char *argv[]) {
   {
     qDebug() << "starting ui";
 
-    MainWindow window(nullptr, netlinkManager, packsReceiver);
+    MainWindow window(nullptr, netlinkManager, packsReceiver, database, paths);
 
     window.setWindowFlags((window.windowFlags() | Qt::CustomizeWindowHint) &
                           ~Qt::WindowMaximizeButtonHint);

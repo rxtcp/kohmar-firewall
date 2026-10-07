@@ -2,16 +2,19 @@
 
 #include "ui_learning_flow_dialog.h"
 
-LearningFlowDialog::LearningFlowDialog(QWidget *parent,
-                                       PacksReceiver *_packs_receiver)
-    : QDialog(parent), ui(new Ui::LearningFlowDialog) {
+LearningFlowDialog::LearningFlowDialog(
+    QWidget *parent, PacksReceiver &receiver,
+    const firewall::RuntimePaths &runtimePaths)
+    : QDialog(parent),
+      ui(new Ui::LearningFlowDialog),
+      packs_receiver(receiver),
+      paths(runtimePaths) {
   ui->setupUi(this);
 
   ui->pushButton->setEnabled(true);
   ui->pushButton_2->setEnabled(false);
   ui->pushButton_3->setEnabled(false);
 
-  packs_receiver = _packs_receiver;
   isLearn = false;
 }
 
@@ -22,24 +25,24 @@ void LearningFlowDialog::on_pushButton_clicked() {
   ui->pushButton_2->setEnabled(true);
   cur_anomaly_level = ui->horizontalSlider->value();
   isLearn = true;
-  packs_receiver->setCurFlowAnomaly(cur_anomaly_level);
-  packs_receiver->setIsLearnFlow(true);
+  packs_receiver.setCurFlowAnomaly(cur_anomaly_level);
+  packs_receiver.setIsLearnFlow(true);
 }
 
 void LearningFlowDialog::on_pushButton_2_clicked() {
   ui->pushButton_2->setEnabled(false);
 
   isLearn = false;
-  packs_receiver->setIsLearnFlow(false);
+  packs_receiver.setIsLearnFlow(false);
 
   QList<SampleSom *> cur_samples =
-      packs_receiver->getFlowLearningSamplesFromQueue();
+      packs_receiver.getFlowLearningSamplesFromQueue();
 
   for (SampleSom *s : cur_samples) {
     samples.append(s);
   }
 
-  packs_receiver->clearFlowLearningSamples();
+  packs_receiver.clearFlowLearningSamples();
 
   ui->pushButton->setEnabled(true);
   ui->pushButton_3->setEnabled(true);
@@ -66,7 +69,8 @@ void LearningFlowDialog::on_pushButton_3_clicked() {
   }
 
   int dim, i;
-  FILE *file = fopen("data/samples/ads/flow.samples", file_mode);
+  const auto samplePath = paths.sample("flow.samples");
+  FILE *file = std::fopen(samplePath.c_str(), file_mode);
 
   if (!file) {
     msgBox.setText("Unable to open the file for saving!");
@@ -112,8 +116,8 @@ void LearningFlowDialog::on_pushButton_4_clicked() {
         break;
       case QMessageBox::Ok: {
         isLearn = false;
-        packs_receiver->setIsLearnFlow(false);
-        packs_receiver->clearFlowLearningSamples();
+        packs_receiver.setIsLearnFlow(false);
+        packs_receiver.clearFlowLearningSamples();
         this->close();
       } break;
       default:

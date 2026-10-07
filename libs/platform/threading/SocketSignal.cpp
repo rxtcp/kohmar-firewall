@@ -6,6 +6,7 @@
 #include <iostream>
 
 #include "platform/PlatformFactory.h"
+#include "platform/paths/RuntimePaths.h"
 /* Constructor of SocketSignal. Creates new SocketSignal and sets
  * its name that will be used as part of the name of the socket and
  * the role (waiter or sender)
@@ -19,8 +20,10 @@ SocketSignal::SocketSignal(std::string name, bool role) : Signal(name, role) {
                        0);
     socket->setReuse(true);
     // name is used for create path to socket map in filesystem
-    socket->bindAndListen("/tmp/signal_" + name, 0, LowLevelSocket::AF_UNIX_,
-                          10);
+    const auto paths = firewall::RuntimePaths::fromEnvironment();
+
+    socket->bindAndListen(paths.socketFile(name).string(), 0,
+                          LowLevelSocket::AF_UNIX_, 10);
   }
 }
 
@@ -33,7 +36,9 @@ void SocketSignal::signal() {
                        0);
     socket->setReuse(true);
     // connect makes waitor asleep
-    socket->connect(std::string("/tmp/signal_" + name), 0,
+    const auto paths = firewall::RuntimePaths::fromEnvironment();
+
+    socket->connect(paths.socketFile(name).string(), 0,
                     LowLevelSocket::AF_UNIX_);
     socket->close();
     delete socket;

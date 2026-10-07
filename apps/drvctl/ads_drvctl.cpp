@@ -17,13 +17,15 @@
 #include "platform/config/ConfigReader.h"
 #include "platform/logging/Logger.h"
 #include "platform/logging/PrintfLogger.h"
+#include "platform/paths/RuntimePaths.h"
+#include "platform/paths/SystemPaths.h"
 #include "platform/threading/Thread.h"
 
 using namespace std;
 
 Logger *logger;
 
-string path;
+std::filesystem::path moduleFile;
 string iface;
 string drop;
 long buf_size;
@@ -45,11 +47,11 @@ char buf[255];
 
 bool connect() {
   logger->log("Connecting to device...");
-  fd = open("/dev/ads_drv_setup", O_WRONLY);
+  fd = open(firewall::system_paths::setupDevice.data(), O_WRONLY);
   if (fd == -1) {
-    logger->log(
-        "Can't access character data device /dev/ads_drv_setup! Module "
-        "works wrong");
+    logger->log("Can't access character data device " +
+                std::string{firewall::system_paths::setupDevice} +
+                "! Module works wrong");
     return false;
   }
   return true;
@@ -60,8 +62,9 @@ void start() {
   logger->log("STARTING");
 
   logger->log("Loading our module via insmod...");
-  sprintf(buf, "insmod %s/ads_netfilter.ko", path.c_str());
-  int res = system(buf);
+  const std::string command = "insmod \"" + moduleFile.string() + "\"";
+
+  const int res = std::system(command.c_str());
   if (res != 0) {
     logger->log("Unable to install module!");
     exit(1);
@@ -69,8 +72,10 @@ void start() {
   logger->log("Creating virtual device...");
 
   dev_t dev = makedev(232, 0);
-  mknod("/dev/ads_drv_setup", S_IFCHR + O_RDWR, dev);
-  chmod("/dev/ads_drv_setup", 0777);
+  mknod(firewall::system_paths::setupDevice.data(),
+        S_IFCHR | S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP, dev);
+
+  chmod(firewall::system_paths::setupDevice.data(), 0660);
 
   connect();
 
@@ -126,7 +131,7 @@ void start() {
 
     bool mmapFoundDev = false;
     // read major number for mmap device file
-    std::ifstream in("/proc/devices");
+    std::ifstream in{firewall::system_paths::procDevices.data()};
     std::string line;
 
     int ndev = 0;
@@ -146,8 +151,10 @@ void start() {
       exit(1);
     }
     dev_t dev = makedev(ndev, 0);
-    mknod("/dev/ads_sniff_mmap", S_IFCHR + O_RDWR, dev);
-    chmod("/dev/ads_sniff_mmap", 0777);
+    mknod(firewall::system_paths::mmapDevice.data(),
+          S_IFCHR | S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP, dev);
+
+    chmod(firewall::system_paths::mmapDevice.data(), 0660);
 
     in.close();
   }
@@ -174,8 +181,8 @@ void stop() {
   sleep(2);
 
   logger->log("Unlinking virtual devices...");
-  unlink("/dev/ads_drv_setup");
-  unlink("/dev/ads_sniff_mmap");
+  unlink(firewall::system_paths::setupDevice.data());
+  unlink(firewall::system_paths::mmapDevice.data());
 
   logger->log("Unloading module via rmmod...");
   sprintf(buf, "rmmod ads_netfilter");
@@ -197,8 +204,11 @@ int main(int argc, char **argv) {
 
   logger->log("reading config...");
 
-  ConfigReader reader("config/module.conf");
-  path = reader.getGlobalProperty("path_to_ads_drv", ".");
+  const firewall::RuntimePaths paths =
+      firewall::RuntimePaths::fromEnvironment();
+
+  ConfigReader reader(paths.moduleConfig().string());
+  moduleFile = paths.kernelModule();
   iface = reader.getGlobalProperty("iface", "eth0");
   drop = reader.getGlobalProperty("drop_packets", "on");
   buf_size = reader.getGlobalProperty("sniffer_memory_map_size", 41943040);

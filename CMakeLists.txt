@@ -19,6 +19,19 @@ set(CMAKE_AUTORCC ON)
 
 include(GNUInstallDirs)
 
+if (NOT DEFINED CMAKE_INSTALL_RUNSTATEDIR)
+    set(
+            CMAKE_INSTALL_RUNSTATEDIR
+            "${CMAKE_INSTALL_LOCALSTATEDIR}/run"
+    )
+endif ()
+
+configure_file(
+        ${PROJECT_SOURCE_DIR}/cmake/install_paths.h.in
+        ${PROJECT_BINARY_DIR}/generated/firewall/install_paths.h
+        @ONLY
+)
+
 option(BUILD_EXAMPLES "Build PST and SOM demonstration applications" ON)
 option(BUILD_TESTING "Build project tests" OFF)
 

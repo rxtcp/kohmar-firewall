@@ -6,11 +6,14 @@
 //
 
 MainWindow::MainWindow(QWidget *parent, NetLinkManager &manager,
-                       PacksReceiver &receiver)
+                       PacksReceiver &receiver, DbManager &databaseManager,
+                       const firewall::RuntimePaths &runtimePaths)
     : QMainWindow(parent),
       ui(std::make_unique<Ui::MainWindow>()),
       netlinkManager(manager),
-      packsReceiver(receiver) {
+      packsReceiver(receiver),
+      database(databaseManager),
+      paths(runtimePaths) {
   qDebug() << "setup ui";
   // UI
   ui->setupUi(this);
@@ -114,7 +117,7 @@ MainWindow::MainWindow(QWidget *parent, NetLinkManager &manager,
     qWarning() << "Cannot read dynamic rules from kernel";
   }
 
-  user_rules = DbManager::getRulesFromDb();
+  user_rules = database.getRulesFromDb();
 
   if (user_rules == nullptr) {
     user_rules = new QList<Rule *>();
@@ -200,7 +203,7 @@ MainWindow::~MainWindow() {
 
 void MainWindow::showRulesForm() {
   auto *form = new RulesForm(this, user_rules, ads_rules, netlinkManager,
-                             &sem_dynamic_rules);
+                             database, &sem_dynamic_rules);
 
   form->setAttribute(Qt::WA_DeleteOnClose);
   form->setWindowFlags((form->windowFlags() | Qt::CustomizeWindowHint) &
@@ -222,7 +225,7 @@ void MainWindow::loadRulesToKernel() {
 }
 
 void MainWindow::learnTcp() {
-  LearningTcpDialog form(this, &packsReceiver);
+  LearningTcpDialog form(this, packsReceiver, paths);
 
   form.setWindowFlags((form.windowFlags() | Qt::CustomizeWindowHint) &
                       ~Qt::WindowMaximizeButtonHint &
@@ -232,7 +235,7 @@ void MainWindow::learnTcp() {
 }
 
 void MainWindow::learnFlow() {
-  LearningFlowDialog form(this, &packsReceiver);
+  LearningFlowDialog form(this, packsReceiver, paths);
 
   form.setWindowFlags((form.windowFlags() | Qt::CustomizeWindowHint) &
                       ~Qt::WindowMaximizeButtonHint &
@@ -256,7 +259,8 @@ void MainWindow::showSettings() {
     flow_anomaly_frame->setLimit(flow_anomaly_limit);
     packsReceiver.setFlowPacksMaxCount(flow_packs_max_count);
 
-    FILE *file = fopen("ads.settings", "w");
+    const auto settingsPath = paths.adsSettings();
+    FILE *file = std::fopen(settingsPath.c_str(), "w");
 
     if (file) {
       char str1[10];
@@ -326,7 +330,8 @@ void MainWindow::on_pushButtonFalseAlarmFlow_clicked() {
         ui->tableWidgetFlowDetAnom->item(cur_row, 2)->text().toInt();
     SampleSom *smp = flow_anomaly_reader->getSample(numAnomaly);
     // packs_receiver->retrainSom(flow_anomaly_reader->getSample(numAnomaly));
-    FILE *file = fopen("data/samples/ads/flow.samples", "a");
+    const auto samplePath = paths.sample("flow.samples");
+    FILE *file = std::fopen(samplePath.c_str(), "a");
 
     if (!file) {
       QMessageBox msgBox;

@@ -1,57 +1,42 @@
-#include <stdio.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
 
 #include "detectors/pst/pst_predictor.h"
 #include "detectors/pst/pst_samples.h"
 
-using namespace std;
+int main(int argc, char* argv[]) {
+  if (argc != 2) {
+    std::cerr << "Usage: pst_demo <samples-file>\n";
+    return EXIT_FAILURE;
+  }
 
-int main() {
-  PstPredictor *predictor = new PstPredictor();
-  Samples *samples = new Samples();
-  int maxlen;
+  Samples samples;
 
-  maxlen = samples->loadFromFile("http.samples");
+  const int maxLength = samples.loadFromFile(argv[1]);
 
-  if (maxlen == -1) return 0;
+  if (maxLength < 0) {
+    std::cerr << "Cannot load samples file: " << argv[1] << '\n';
+    return EXIT_FAILURE;
+  }
 
-  /*
-      char * s1 = new char[20];
-      char * s2 = new char[20];
-      char * s3 = new char[20];
-      strcpy(s1, "1326262662R2R2");
-      strcpy(s2, "13232RR2");
-      strcpy(s3, "1326262662662662RR2");
+  PstPredictor predictor;
 
-      samples->add(s1);
-      samples->add(s2);
-      samples->add(s3);
-      */
+  predictor.init(256, 0.0001, 2, 0.000001, 2, maxLength, 1);
 
-  // printf("%d", samples->numOfSamples());
+  predictor.learn(&samples);
 
-  char *toPredict = new char[20];
-  strcpy(toPredict, "13R");
+  std::cout << "\nLearned!";
 
-  // char * seq = new char[20];
-  // strcpy(seq, "bra");
+  char sequence[] = "13R";
 
-  // predictor->init(256, 0.0001, 0, 0.0001, 1.05, 20);
-  predictor->init(256, 0.0001, 2, 0.000001, 2, maxlen, 1);
-  predictor->learn(samples);
+  double logEvaluation = predictor.logEval(sequence);
+  std::cout << "\nlogEval = " << logEvaluation;
 
-  printf("\nLearned!");
+  predictor.retrainForSeq(sequence);
 
-  // predictor->root->printRecursively();
+  logEvaluation = predictor.logEval(sequence);
+  std::cout << "\nafter_retrain_logEval = " << logEvaluation << '\n';
 
-  double loge = predictor->logEval(toPredict);
-  printf("\nlogEval = %f", loge);
-
-  predictor->retrainForSeq(toPredict);
-  loge = predictor->logEval(toPredict);
-  printf("\nafter_retrain_logEval = %f", loge);
-
-  // printf("\nP(%c|%s) = %f", ch, seq, predictor->predict(ch, seq));
-
-  return 1;
+  return EXIT_SUCCESS;
 }

@@ -1,17 +1,20 @@
 #include "learning_tcp_dialog.h"
 
-#include <QFile>
+#include <cstdio>
+#include <string_view>
 
 #include "ui_learning_tcp_dialog.h"
 
-LearningTcpDialog::LearningTcpDialog(QWidget *parent,
-                                     PacksReceiver *_packs_receiver)
-    : QDialog(parent), ui(new Ui::LearningTcpDialog) {
+LearningTcpDialog::LearningTcpDialog(QWidget *parent, PacksReceiver &receiver,
+                                     const firewall::RuntimePaths &runtimePaths)
+    : QDialog(parent),
+      ui(new Ui::LearningTcpDialog),
+      packs_receiver(receiver),
+      paths(runtimePaths) {
   ui->setupUi(this);
   ui->pushButton->setEnabled(true);
   ui->pushButton_2->setEnabled(false);
 
-  packs_receiver = _packs_receiver;
   isLearn = false;
 }
 
@@ -31,7 +34,7 @@ void LearningTcpDialog::on_pushButton_clicked() {
 
   if (isLearn == false) {
     isLearn = true;
-    packs_receiver->setIsLearnTcp(true, learned_protocol);
+    packs_receiver.setIsLearnTcp(true, learned_protocol);
   } else {
   }
 }
@@ -43,9 +46,9 @@ void LearningTcpDialog::on_pushButton_2_clicked() {
   char file_mode[2];
 
   isLearn = false;
-  packs_receiver->setIsLearnTcp(false, learned_protocol);
+  packs_receiver.setIsLearnTcp(false, learned_protocol);
   QList<char *> strings =
-      packs_receiver->getLerningStrings(learned_protocol, &max_len);
+      packs_receiver.getLerningStrings(learned_protocol, &max_len);
 
   if (ui->radioButton_5->isChecked()) {
     // retrain = true;
@@ -57,24 +60,24 @@ void LearningTcpDialog::on_pushButton_2_clicked() {
   file_mode[1] = '\0';
 
   if (max_len) {
-    QString fileName;
+    std::string_view sampleName;
 
     if (learned_protocol == LEARN_HTTP) {
-      fileName = QStringLiteral("data/samples/ads/http.samples");
+      sampleName = "http.samples";
     } else if (learned_protocol == LEARN_FTP) {
-      fileName = QStringLiteral("data/samples/ads/ftp.samples");
+      sampleName = "ftp.samples";
     } else if (learned_protocol == LEARN_SSH) {
-      fileName = QStringLiteral("data/samples/ads/ssh.samples");
+      sampleName = "ssh.samples";
     } else if (learned_protocol == LEARN_ALL) {
-      fileName = QStringLiteral("data/samples/ads/common.samples");
+      sampleName = "common.samples";
     } else {
       msgBox.setText("Unsupported learning protocol");
       msgBox.exec();
       return;
     }
 
-    const QByteArray nativeFileName = QFile::encodeName(fileName);
-    FILE *file = fopen(nativeFileName.constData(), file_mode);
+    const auto filePath = paths.sample(sampleName);
+    FILE *file = std::fopen(filePath.c_str(), file_mode);
 
     if (!file) {
       qDebug() << "Error! File not opened!";
@@ -128,8 +131,8 @@ void LearningTcpDialog::on_pushButton_3_clicked() {
         break;
       case QMessageBox::Ok: {
         isLearn = false;
-        packs_receiver->setIsLearnTcp(false, learned_protocol);
-        packs_receiver->clearLearningStrings();
+        packs_receiver.setIsLearnTcp(false, learned_protocol);
+        packs_receiver.clearLearningStrings();
         this->close();
       } break;
       default:

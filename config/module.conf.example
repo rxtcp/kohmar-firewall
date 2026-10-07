@@ -1,7 +1,7 @@
 #ads drv module config, use with ads_drvctl
 
-# path to .ko
-path_to_ads_drv = ../netfilter
+# Путь к модулю задаётся через KOHMAR_MODULE_FILE.
+# В установленной версии используется CMake install path.
 
 sniffer = on
 

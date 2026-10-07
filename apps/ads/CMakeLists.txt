@@ -95,19 +95,25 @@ install(
 
 install(
         DIRECTORY ${PROJECT_SOURCE_DIR}/data/samples/ads/
-        DESTINATION ${CMAKE_INSTALL_DATADIR}/kohmar-firewall/samples
+        DESTINATION
+        ${CMAKE_INSTALL_LOCALSTATEDIR}/lib/kohmar-firewall/samples
 )
 
 install(
         FILES
-        ${PROJECT_SOURCE_DIR}/data/seeds/ads/db_firewall.sqlite
         ${PROJECT_SOURCE_DIR}/data/seeds/common/db_firewall.sqlite
-        DESTINATION ${CMAKE_INSTALL_DATADIR}/kohmar-firewall/seeds
+        DESTINATION
+        ${CMAKE_INSTALL_LOCALSTATEDIR}/lib/kohmar-firewall/db
 )
 
 install(
-        FILES
-        ${PROJECT_SOURCE_DIR}/config/ads.settings.example
-        ${PROJECT_SOURCE_DIR}/config/readerd.conf.example
+        FILES ${PROJECT_SOURCE_DIR}/config/ads.settings.example
         DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/kohmar-firewall
+        RENAME ads.settings
+)
+
+install(
+        FILES ${PROJECT_SOURCE_DIR}/config/readerd.conf.example
+        DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/kohmar-firewall
+        RENAME readerd.conf
 )

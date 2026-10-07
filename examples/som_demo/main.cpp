@@ -1,19 +1,21 @@
 #include <QApplication>
+#include <cstdlib>
+#include <filesystem>
+#include <iostream>
 
 #include "mainwindow.h"
 
-int main(int argc, char *argv[]) {
-  QApplication a(argc, argv);
+int main(int argc, char* argv[]) {
+  QApplication application(argc, argv);
 
-  /*if (!QSystemTrayIcon::isSystemTrayAvailable()) {
-      QMessageBox::critical(0, QObject::tr("Systray"),
-                            QObject::tr("I couldn't detect any system tray "
-                                        "on this system."));
-      return 1;
-  }*/
-  //------------------------------------------------------------------------------------
-  MainWindow w;
-  w.show();
+  if (argc != 2) {
+    std::cerr << "Usage: som_demo <data-directory>\n";
+    return EXIT_FAILURE;
+  }
 
-  return a.exec();
+  MainWindow window{std::filesystem::path{argv[1]}};
+
+  window.show();
+
+  return application.exec();
 }

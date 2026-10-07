@@ -6,6 +6,7 @@
 
 #include "engine/packsreceiver.h"
 #include "engine/structs.h"
+#include "platform/paths/RuntimePaths.h"
 
 namespace Ui {
 class LearningTcpDialog;
@@ -15,8 +16,8 @@ class LearningTcpDialog : public QDialog {
   Q_OBJECT
 
  public:
-  explicit LearningTcpDialog(QWidget *parent = 0,
-                             PacksReceiver *_packs_receiver = 0);
+  explicit LearningTcpDialog(QWidget* parent, PacksReceiver& packsReceiver,
+                             const firewall::RuntimePaths& paths);
 
   ~LearningTcpDialog();
 
@@ -29,12 +30,13 @@ class LearningTcpDialog : public QDialog {
   void on_pushButton_3_clicked();
 
  private:
-  Ui::LearningTcpDialog *ui;
+  Ui::LearningTcpDialog* ui;
   int learned_protocol;
   bool isLearn;
-  PacksReceiver *packs_receiver;
+  PacksReceiver& packs_receiver;
+  const firewall::RuntimePaths& paths;
 
-  void closeEvent(QCloseEvent *event);
+  void closeEvent(QCloseEvent* event);
 };
 
 #endif  // LEARNING_TCP_DIALOG_H

@@ -5,21 +5,26 @@
 #include <QMessageBox>
 #endif  // ADS_DAEMON
 
+#include <filesystem>
+
 #include "QtSql"
 #include "engine/structs.h"
 #include "networking/addressresolver.h"
 
-class DbManager {
+class DbManager final {
  public:
-  DbManager();
+  explicit DbManager(std::filesystem::path databasePath);
 
-  static bool addToDb(Rule *rule);
+  bool addToDb(Rule* rule) const;
+  bool updateInDb(const Rule* rule) const;
+  bool removeFromDb(int id) const;
 
-  static bool updateInDb(const Rule *rule);
+  [[nodiscard]] QList<Rule*>* getRulesFromDb() const;
 
-  static bool removeFromDb(int id);
+ private:
+  [[nodiscard]] QString databaseFileName() const;
 
-  static QList<Rule *> *getRulesFromDb();
+  std::filesystem::path databasePath_;
 };
 
 #endif  // DBMANAGER_H

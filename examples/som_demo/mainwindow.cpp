@@ -1,13 +1,16 @@
 #include "mainwindow.h"
 
 #include <QBrush>
+#include <utility>
 
 #include "detectors/som/samplesom.h"
 #include "detectors/som/selforganizedmap.h"
 #include "ui_mainwindow.h"
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::MainWindow) {
+MainWindow::MainWindow(std::filesystem::path dataDirectory, QWidget *parent)
+    : QMainWindow(parent),
+      ui(new Ui::MainWindow),
+      dataDirectory_(std::move(dataDirectory)) {
   ui->setupUi(this);
 
   /*createActions();
@@ -34,11 +37,18 @@ trayIcon->show();*/
     ui->table->insertColumn(i);
     ui->table->setColumnWidth(i, 30);
   }
-  dimension = 9;
-  list = SampleSom::loadFromFile("samples-som.dat");
-  loadToRecognizeVector();
+  const auto samplesPath = dataDirectory_ / "flow.samples";
+
+  list = SampleSom::loadFromFile(QString::fromStdString(samplesPath.string()));
+
+  if (list.isEmpty()) {
+    qCritical() << "SOM training samples were not loaded:"
+                << QString::fromStdString(samplesPath.string());
+    return;
+  }
 
   dimension = list.first()->getDimension();
+  loadToRecognizeVector();
 
   som = new SelfOrganizedMap(N, M, dimension, Iters, Radius, G, lambda, eta, 0);
 
@@ -97,9 +107,12 @@ void MainWindow::on_table_cellClicked(int row, int column) {
 }
 
 void MainWindow::loadToRecognizeVector() {
-  QFile file("toRecognize.dat");
+  const auto recognizePath = dataDirectory_ / "toRecognize.dat";
+
+  QFile file(QString::fromStdString(recognizePath.string()));
+
   if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-    qDebug() << "Couldn't open the file.";
+    qWarning() << "Cannot open recognition sample:" << file.fileName();
     return;
   }
 

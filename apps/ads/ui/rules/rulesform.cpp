@@ -4,12 +4,14 @@
 
 RulesForm::RulesForm(QWidget *parent, QList<Rule *> *userRules,
                      QList<Rule *> *dynamicRules, NetLinkManager &manager,
+                     DbManager &databaseManager,
                      UnixSemaphore *dynamicRulesSemaphore)
     : QWidget(parent),
       ui(new Ui::RulesForm),
       user_rules(userRules),
       dynamic_rules(dynamicRules),
       netlinkManager(manager),
+      database(databaseManager),
       sem_dyn_rules(dynamicRulesSemaphore) {
   ui->setupUi(this);
   ui->tableWidget->setColumnWidth(2, 140);
@@ -311,7 +313,7 @@ void RulesForm::on_pushButton_clicked() {
       continue;
     }
 
-    if (!DbManager::addToDb(rule)) {
+    if (!database.addToDb(rule)) {
       QMessageBox::critical(this, tr("Firewall"),
                             tr("The rule could not be added to the database."));
       delete rule;
@@ -321,7 +323,7 @@ void RulesForm::on_pushButton_clicked() {
     if (!netlinkManager.sendRuleToKernel(rule)) {
       const int ruleId = rule->id_rule;
 
-      if (!DbManager::removeFromDb(ruleId)) {
+      if (!database.removeFromDb(ruleId)) {
         qCritical() << "Cannot roll back database rule:" << ruleId;
       }
 
@@ -389,7 +391,7 @@ void RulesForm::on_pushButton_2_clicked() {
     return;
   }
 
-  if (!DbManager::updateInDb(&editedRule)) {
+  if (!database.updateInDb(&editedRule)) {
     if (!netlinkManager.updateRuleInKernel(&oldRule)) {
       qCritical() << "Cannot roll back kernel rule:" << oldRule.id_rule;
     }
@@ -447,7 +449,7 @@ void RulesForm::on_pushButton_3_clicked() {
     return;
   }
 
-  if (!DbManager::removeFromDb(ruleToDelete->id_rule)) {
+  if (!database.removeFromDb(ruleToDelete->id_rule)) {
     if (!netlinkManager.sendRuleToKernel(ruleToDelete)) {
       qCritical() << "Cannot restore kernel rule:" << ruleToDelete->id_rule;
     }

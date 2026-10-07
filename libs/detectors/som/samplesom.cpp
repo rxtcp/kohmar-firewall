@@ -4,40 +4,68 @@
 
 SampleSom::SampleSom(int _dimension) : Neuron(_dimension) {}
 
-QList<SampleSom *> SampleSom::loadFromFile(QString file_name) {
+QList<SampleSom*> SampleSom::loadFromFile(const QString& fileName) {
   QMessageBox msgBox;
-  QList<SampleSom *> res;
-  SampleSom *sample = NULL;
-  int dim = 9;
-  int i;
-  double anomaly;
+  QList<SampleSom*> result;
 
-  std::fstream file("flow.samples", std::ios::in);
+  const QByteArray nativeFileName = QFile::encodeName(fileName);
+
+  std::fstream file{nativeFileName.constData(), std::ios::in};
 
   if (!file.is_open()) {
     msgBox.setText(
-        "The file containing the training sample for the traffic "
-        "flow system is not open!");
+        QStringLiteral("The file containing the training sample "
+                       "for the traffic flow system cannot be opened:\n") +
+        fileName);
     msgBox.exec();
-    return res;
+    return result;
   }
 
-  file >> dim;
-  int max = 100000;
+  int dimension = 0;
 
-  while (file >> anomaly, !file.eof()) {
-    sample = new SampleSom(dim);
+  if (!(file >> dimension) || dimension <= 0) {
+    msgBox.setText(QStringLiteral("Invalid SOM sample dimension in:\n") +
+                   fileName);
+    msgBox.exec();
+    return result;
+  }
+
+  constexpr int maxSamples = 100000;
+  int loadedSamples = 0;
+  double anomaly = 0.0;
+
+  while (loadedSamples < maxSamples && file >> anomaly) {
+    auto* sample = new SampleSom(dimension);
     sample->setAnomaly(anomaly);
-    for (i = 0; i < dim; i++) {
-      double koeff;
-      file >> koeff;
-      sample->setKoeff(i, koeff);
+
+    bool validSample = true;
+
+    for (int index = 0; index < dimension; ++index) {
+      double coefficient = 0.0;
+
+      if (!(file >> coefficient)) {
+        validSample = false;
+        break;
+      }
+
+      sample->setKoeff(index, coefficient);
     }
-    res.append(sample);
-    max--;
-    if (max == 0) break;
+
+    if (!validSample) {
+      delete sample;
+      qDeleteAll(result);
+      result.clear();
+
+      msgBox.setText(QStringLiteral("Invalid SOM sample data in:\n") +
+                     fileName);
+      msgBox.exec();
+
+      return result;
+    }
+
+    result.append(sample);
+    ++loadedSamples;
   }
 
-  file.close();
-  return res;
+  return result;
 }

@@ -8,6 +8,7 @@
 
 #include "engine/packsreceiver.h"
 #include "engine/structs.h"
+#include "platform/paths/RuntimePaths.h"
 
 namespace Ui {
 class LearningFlowDialog;
@@ -17,8 +18,8 @@ class LearningFlowDialog : public QDialog {
   Q_OBJECT
 
  public:
-  explicit LearningFlowDialog(QWidget *parent = 0,
-                              PacksReceiver *_packs_receiver = 0);
+  explicit LearningFlowDialog(QWidget* parent, PacksReceiver& packsReceiver,
+                              const firewall::RuntimePaths& paths);
 
   ~LearningFlowDialog();
 
@@ -35,12 +36,13 @@ class LearningFlowDialog : public QDialog {
   void on_horizontalSlider_valueChanged(int value);
 
  private:
-  Ui::LearningFlowDialog *ui;
+  Ui::LearningFlowDialog* ui;
 
   bool isLearn;
-  PacksReceiver *packs_receiver;
+  PacksReceiver& packs_receiver;
+  const firewall::RuntimePaths& paths;
   int cur_anomaly_level;
-  QList<SampleSom *> samples;
+  QList<SampleSom*> samples;
 };
 
 #endif  // LEARNING_FLOW_DIALOG_H

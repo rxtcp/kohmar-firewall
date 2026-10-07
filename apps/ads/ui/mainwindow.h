@@ -17,8 +17,10 @@
 #include "kernel_client/netlinkmanager.h"
 #include "learning/learning_flow_dialog.h"
 #include "learning/learning_tcp_dialog.h"
+#include "platform/paths/RuntimePaths.h"
 #include "rules/rulesform.h"
 #include "settings/ads_settings_dialog.h"
+#include "storage/dbmanager.h"
 
 namespace Ui {
 class MainWindow;
@@ -29,7 +31,8 @@ class MainWindow : public QMainWindow {
 
  public:
   explicit MainWindow(QWidget *parent, NetLinkManager &netlinkManager,
-                      PacksReceiver &packsReceiver);
+                      PacksReceiver &packsReceiver, DbManager &database,
+                      const firewall::RuntimePaths &paths);
 
   ~MainWindow() override;
 
@@ -63,6 +66,8 @@ class MainWindow : public QMainWindow {
 
   NetLinkManager &netlinkManager;
   PacksReceiver &packsReceiver;
+  DbManager &database;
+  const firewall::RuntimePaths &paths;
 
   void loadRulesToKernel();
   void stopAnomalyReaders() noexcept;

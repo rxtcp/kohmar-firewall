@@ -18,7 +18,7 @@ class SampleSom : public Neuron {
  public:
   explicit SampleSom(int _dimension);
 
-  static QList<SampleSom *> loadFromFile(QString file_name);
+  [[nodiscard]] static QList<SampleSom*> loadFromFile(const QString& fileName);
 
  signals:
 

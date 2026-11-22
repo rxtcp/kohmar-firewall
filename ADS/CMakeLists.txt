@@ -1,20 +1,16 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.20)
 project(ADS VERSION 1.0 LANGUAGES C CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-# Set up AUTOMOC and some sensible defaults for runtime execution
-# When using Qt 6.3, you can replace the code block below with
-# qt_standard_project_setup()
 set(CMAKE_AUTOMOC ON)
 include(GNUInstallDirs)
 set(CMAKE_AUTOUIC ON)
 
-find_package(QT NAMES Qt5 Qt6 REQUIRED COMPONENTS Core)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Gui Network Sql)
-find_package(Qt${QT_VERSION_MAJOR} OPTIONAL_COMPONENTS Widgets)
+find_package(Qt5 5.15 REQUIRED COMPONENTS Core Gui Widgets Network Sql)
+find_package(Threads REQUIRED)
 
-qt_add_executable(ADS WIN32 MACOSX_BUNDLE
+add_executable(ADS
     ../Common/ConnectionTree.cpp ../Common/ConnectionTree.h
     ../Common/adressresolver.cpp ../Common/adressresolver.h
     ../Common/dbmanager.cpp ../Common/dbmanager.h
@@ -63,27 +59,19 @@ qt_add_executable(ADS WIN32 MACOSX_BUNDLE
     rulesform.cpp rulesform.h rulesform.ui
 )
 target_link_libraries(ADS PRIVATE
-    Qt::Core
-    Qt::Gui
-    Qt::Network
-    Qt::Sql
+    Qt5::Core
+    Qt5::Gui
+    Qt5::Widgets
+    Qt5::Network
+    Qt5::Sql
+    Threads::Threads
 )
 
-target_compile_options(ADS
-    -g
-)
-
-if((QT_VERSION_MAJOR GREATER 4))
-    target_link_libraries(ADS PRIVATE
-        Qt::Widgets
-    )
-endif()
+target_compile_features(ADS PRIVATE cxx_std_23)
+# PST still contains a variable-length array; preserve this legacy extension until tested.
+set_target_properties(ADS PROPERTIES CXX_EXTENSIONS ON)
 
 install(TARGETS ADS
     BUNDLE DESTINATION .
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
-
-# Consider using qt_generate_deploy_app_script() for app deployment if
-# the project can use Qt 6.3. In that case rerun qmake2cmake with
-# --min-qt-version=6.3.

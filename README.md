@@ -1,4 +1,8 @@
 # kohmar-firewall
+
+For the verified, unprivileged Qt 5 userspace build commands and known limitations,
+see [the build baseline](docs/BUILDING.md).
+
 MVP: Anomaly Detection System for network traffic in real-time using Markov chains and Kohonen SOM
 
 

@@ -24,6 +24,7 @@ HEADERS  += mainwindow.h \
     selforganizedmap.h
 
 QMAKE_CXXFLAGS = -g
+QMAKE_CXXFLAGS += -std=c++23
 QMAKE_CFLAGS = -g
 QMAKE_LFLAGS = -g
 

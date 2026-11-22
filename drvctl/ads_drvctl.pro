@@ -1,18 +1,18 @@
-SOURCES += tcdrvctl.cpp \
-    ../common_src/utils/PrintfLogger.cpp \
-    ../common_src/utils/Logger.cpp \
-    ../common_src/utils/ConfigReader.cpp
-HEADERS += ../common_src/utils/PrintfLogger.h \
-    ../common_src/utils/Logger.h \
-    ../common_src/utils/ConfigReader.h \
+TEMPLATE = app
+TARGET = ads_drvctl
+CONFIG -= qt
+QMAKE_CXXFLAGS += -std=c++23
 
-INCLUDEPATH += ../common_src/utils
+SOURCES += ads_drvctl.cpp \
+    ../Common/utils/PrintfLogger.cpp \
+    ../Common/utils/Logger.cpp \
+    ../Common/utils/ConfigReader.cpp
+HEADERS += ../Common/utils/PrintfLogger.h \
+    ../Common/utils/Logger.h \
+    ../Common/utils/ConfigReader.h
+
+INCLUDEPATH += ../Common/utils
 
 #libs include
 
 LIBS += -lpthread
-
-QT -= gui
-QT -= core
-LIBS   -= -lQtGui -lQtCore
-

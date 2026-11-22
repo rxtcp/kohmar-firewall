@@ -16,6 +16,7 @@
 #include <sys/resource.h>
 #include <sys/stat.h>
 #include <syslog.h>
+#include <ucontext.h>
 #include <unistd.h>
 #include <wait.h>
 
@@ -55,10 +56,14 @@ void DaemonService::signal_handler(int sig, siginfo_t *si, void *ptr) {
   }
 
   // found error address
-#if __WORDSIZE == 64
+#if defined(__x86_64__)
+  ErrorAddr = (void *)((ucontext_t *)ptr)->uc_mcontext.gregs[REG_RIP];
+#elif defined(__aarch64__)
   ErrorAddr = (void *)((ucontext_t *)ptr)->uc_mcontext.regs[0];
-#else
+#elif defined(__i386__)
   ErrorAddr = (void *)((ucontext_t *)ptr)->uc_mcontext.gregs[REG_EIP];
+#else
+#error "DaemonService requires an audited signal context for this architecture"
 #endif
   // backtrace
   TraceSize = backtrace(Trace, 16);

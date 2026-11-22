@@ -110,6 +110,7 @@ FORMS    += mainwindow.ui \
     learning_flow_dialog.ui
 
 QMAKE_CXXFLAGS = -g
+QMAKE_CXXFLAGS += -std=c++23
 QMAKE_CFLAGS = -g
 
 
